@@ -325,6 +325,12 @@ def main() -> None:
         action="store_true",
         help="Only run retrieval and print assembled context; do not call the LLM.",
     )
+    parser.add_argument(
+        "--case-id",
+        type=str,
+        default="",
+        help="If set, save full output to outputs/{case_id}.txt (e.g., case01_dementia_pharm_treatment).",
+    )
     args = parser.parse_args()
     question = " ".join(args.question).strip()
     if not question:
@@ -371,10 +377,19 @@ def main() -> None:
 
     answer = _call_llm(question, context)
 
+    # 터미널 출력 + 파일 저장을 위해 전체 결과를 문자열로 조립
+    lines: list[str] = []
+    lines.append(f"Question:\n{question}\n")
+    lines.append(f"Vectors: {vectors_path}\n")
+    lines.append(f"topk={topk}, rerank={args.rerank}, topn={topn}\n")
+    lines.append("\nAnswer:\n")
+    lines.append(answer or "")
+    lines.append("\n\nUsed sources (with context):\n")
+
+    # Print which sources were used, along with their (possibly truncated) original text
     print("\nAnswer:\n")
     print(answer)
 
-    # Print which sources were used, along with their (possibly truncated) original text
     print("\nUsed sources (with context):")
     for pid in sorted(parent_meta.keys()):
         doc_id = parent_meta[pid]["doc_id"]
@@ -384,9 +399,11 @@ def main() -> None:
         parts = [chunk_texts.get(cid, "") for cid in cids if chunk_texts.get(cid, "")]
         if not parts:
             if title:
-                print(f"- {pid} (doc_id={doc_id}, title={title}) [no text]")
+                line = f"- {pid} (doc_id={doc_id}, title={title}) [no text]"
             else:
-                print(f"- {pid} (doc_id={doc_id}) [no text]")
+                line = f"- {pid} (doc_id={doc_id}) [no text]"
+            print(line)
+            lines.append(line + "\n")
             continue
         text = "\n\n".join(parts).strip()
         text = _truncate_tokens(text)
@@ -394,7 +411,19 @@ def main() -> None:
             header = f"=== DOC {doc_id} / {title} / {pid} ==="
         else:
             header = f"=== DOC {doc_id} / {pid} ==="
-        print(f"\n{header}\n{text}")
+        block_str = f"\n{header}\n{text}\n"
+        print(block_str)
+        lines.append(block_str)
+
+    # 선택적으로 outputs/{case_id}.txt로 저장
+    case_id = (args.case_id or "").strip()
+    if case_id:
+        out_dir = os.path.join(_here, "outputs")
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, f"{case_id}.txt")
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write("".join(lines))
+        print(f"\nSaved full output to {out_path}")
 
 
 if __name__ == "__main__":
