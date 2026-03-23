@@ -32,13 +32,13 @@ source .venv/bin/activate
 | 5b | `real_embed.py` | BGE 텍스트 임베딩 → `data/real_vectors.jsonl` |
 | 5c | `multimodal_embed.py` | CLIP 테이블·이미지 임베딩 → `data/vectors_multimodal.jsonl` |
 | 6 | `retrieval.py` | 쿼리 → 텍스트 검색 + parent 확장. `--rerank` 시 cross-encoder 재순위 |
-| 7 | `generate.py` | Kong API로 답변 생성. `--rerank` 옵션 지원 |
+| 7 | `generate.py` | Kong API로 답변 생성. `--rerank` 옵션 지원. 결과 자동 MD 저장 |
 
 ### 스크립트별 입·출력
 
 | 스크립트 | 입력 | 출력 |
 |----------|------|------|
-| `fetch.py` | 질병명 인자, (선택) 기존 `papers.jsonl`·`assets.jsonl` | `papers.jsonl`, `assets.jsonl`, `data/raw/{doc_id}/fulltext.pdf` |
+| `fetch.py` | 질병명 인자 또는 `--patient-info`, (선택) 기존 `papers.jsonl`·`assets.jsonl` | `papers.jsonl`, `assets.jsonl`, `data/raw/{doc_id}/fulltext.pdf` |
 | `parse.py` | `data/assets.jsonl` 또는 `assets.jsonl` | `data/blocks.jsonl` |
 | `chunk.py` | `data/blocks.jsonl` | `data/chunks.jsonl` |
 | `link.py` | `data/chunks.jsonl` | `data/linked_chunks.jsonl` |
@@ -46,7 +46,7 @@ source .venv/bin/activate
 | `real_embed.py` | `data/chunks.jsonl`, `data/linked_chunks.jsonl` | `data/real_vectors.jsonl` |
 | `multimodal_embed.py` | `data/chunks.jsonl`, `data/linked_chunks.jsonl` | `data/vectors_multimodal.jsonl` |
 | `retrieval.py` | 쿼리 인자, `data/real_vectors.jsonl`(또는 `vectors.jsonl`), `data/linked_chunks.jsonl`, `data/chunks.jsonl` | 터미널 출력 (검색 결과·확장 청크) |
-| `generate.py` | 질문 인자, 위 벡터·청크·linked_chunks, `papers.jsonl` | 터미널 출력 (답변·인용·사용 소스) |
+| `generate.py` | 질문 인자, 위 벡터·청크·linked_chunks, `papers.jsonl` | 터미널 출력 + `outputs/result_*.md` 자동 저장 |
 
 ### 증분 업데이트 (INCREMENTAL=1)
 
@@ -76,6 +76,29 @@ source .venv/bin/activate
     ↓
 컨텍스트 조립 → LLM (generate 시)
 ```
+
+### Optimized Query Generation (1-1, 1-2)
+
+**1-1. PubMed/문헌 검색용** (`fetch.py`): 환자 정보 기반 최적화 검색 쿼리 생성
+
+```bash
+python fetch.py --patient-info "65yo male, dementia, hypertension, on ACE inhibitor"
+```
+
+**1-2. 치료/진단 retrieval용** (`generate.py`): 환자 데이터 기반 최적화 retrieval 질문 생성
+
+```bash
+python generate.py --patient-data "hospitalized COVID-19, diabetes, renal impairment, dexamethasone consideration"
+```
+
+`query_generator.py`가 Kong API(LLM)를 사용해 best-fit 쿼리를 생성합니다. `KONG_API_KEY` 필요.
+
+### generate.py 결과 자동 저장 (2)
+
+`generate.py` 실행 후 결과가 **항상** `outputs/` 폴더에 MD 파일로 저장됩니다.
+
+- `--case-id` 지정 시: `outputs/{case_id}.md`
+- 미지정 시: `outputs/result_YYYY-MM-DD_HH-MM-SS.md`
 
 ### 환경 변수
 

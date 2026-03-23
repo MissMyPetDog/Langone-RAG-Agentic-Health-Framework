@@ -33,6 +33,8 @@ CHUNKS_JSONL = "data/chunks.jsonl"
 
 TARGET_CHARS = 1200
 OVERLAP_CHARS = 200
+# 한 블록 텍스트 최대 길이 (초과 시 잘라서 처리 → OOM 방지). 메모리 부족 시 MAX_BLOCK_CHARS=100000 등으로 낮추기
+MAX_BLOCK_CHARS = int(os.environ.get("MAX_BLOCK_CHARS", "300000"))
 
 
 def _iter_blocks(path: str) -> Iterable[Dict]:
@@ -54,10 +56,10 @@ def _split_sentences(text: str) -> List[str]:
     return out
 
 
-def _sliding_windows(sentences: List[str]) -> List[str]:
+def _sliding_windows(sentences: List[str]) -> Iterable[str]:
+    """Yield one window at a time to avoid holding all in memory."""
     if not sentences:
-        return []
-    chunks: List[str] = []
+        return
     start = 0
     n = len(sentences)
     while start < n:
@@ -71,35 +73,38 @@ def _sliding_windows(sentences: List[str]) -> List[str]:
             i += 1
         if not cur:
             break
+        # 한 문장이 TARGET_CHARS보다 길면 그대로 한 청크로 (그렇지 않으면 start가 안 늘어나 무한 루프)
         chunk_text = " ".join(cur).strip()
-        chunks.append(chunk_text)
-        # 다음 창 시작 위치: 현재 창 끝에서 OVERLAP_CHARS만큼 거슬러 올라가도록
+        yield chunk_text
         overlap_len = 0
         j = i - 1
         while j > start and overlap_len < OVERLAP_CHARS:
             overlap_len += len(sentences[j]) + 1
             j -= 1
-        start = max(j, 0)
-        if start == 0 and len(chunks) == 1 and i >= n:
+        next_start = max(j, 0)
+        # 진행이 없으면 무한 루프 방지: 최소 1칸 전진
+        if next_start <= start:
+            next_start = i
+        start = next_start
+        if start >= n:
             break
-        if start >= n - 1:
-            break
-    return chunks
 
 
-def _chunk_text_block(block: Dict) -> List[Dict]:
+def _chunk_text_block(block: Dict) -> Iterable[Dict]:
+    """Yield one chunk record at a time (low memory)."""
     text = (block.get("text") or "").strip()
     if not text:
-        return []
+        return
+    if len(text) > MAX_BLOCK_CHARS:
+        print(f"Warning: block {block.get('block_id')} text truncated ({len(text)} -> {MAX_BLOCK_CHARS} chars)", flush=True)
+        text = text[:MAX_BLOCK_CHARS]
     sentences = _split_sentences(text)
-    windows = _sliding_windows(sentences)
-    chunks: List[Dict] = []
     doc_id = block["doc_id"]
     block_id = block["block_id"]
     page = block.get("page")
-    for idx, win in enumerate(windows):
+    for idx, win in enumerate(_sliding_windows(sentences)):
         chunk_id = f"{block_id}_c{idx}"
-        rec = {
+        rec: Dict = {
             "chunk_id": chunk_id,
             "doc_id": doc_id,
             "block_id": block_id,
@@ -108,8 +113,7 @@ def _chunk_text_block(block: Dict) -> List[Dict]:
         }
         if page is not None:
             rec["page"] = page
-        chunks.append(rec)
-    return chunks
+        yield rec
 
 
 def _chunk_non_text_block(block: Dict) -> Dict:
@@ -140,20 +144,21 @@ def main() -> None:
         print(f"{BLOCKS_JSONL} not found.")
         raise SystemExit(1)
 
-    out_chunks: List[Dict] = []
-    for block in _iter_blocks(BLOCKS_JSONL):
-        modality = block.get("modality")
-        if modality == "text":
-            out_chunks.extend(_chunk_text_block(block))
-        elif modality in ("image", "table"):
-            out_chunks.append(_chunk_non_text_block(block))
-
     os.makedirs(os.path.dirname(CHUNKS_JSONL) or ".", exist_ok=True)
+    count = 0
     with open(CHUNKS_JSONL, "w", encoding="utf-8") as out:
-        for rec in out_chunks:
-            out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        for block in _iter_blocks(BLOCKS_JSONL):
+            modality = block.get("modality")
+            if modality == "text":
+                for rec in _chunk_text_block(block):
+                    out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                    count += 1
+            elif modality in ("image", "table"):
+                rec = _chunk_non_text_block(block)
+                out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                count += 1
 
-    print(f"Wrote {len(out_chunks)} chunks to {CHUNKS_JSONL}")
+    print(f"Wrote {count} chunks to {CHUNKS_JSONL}")
 
 
 if __name__ == "__main__":

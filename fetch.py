@@ -409,8 +409,37 @@ def _load_jsonl(path: str) -> list[dict]:
 
 
 def main() -> None:
-    # 인자: 환자 질병명 (예: dementia, Alzheimer, diabetes)
-    disease = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "dementia"
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Fetch papers from PubMed (patient/disease based)")
+    parser.add_argument("disease", nargs="*", help="Disease name (e.g., dementia, Alzheimer)")
+    parser.add_argument(
+        "--patient-info",
+        type=str,
+        default="",
+        help="Patient information for optimized PubMed search (e.g., '65yo male, dementia, hypertension'). "
+        "When provided, LLM generates best-fit search queries.",
+    )
+    args = parser.parse_args()
+
+    disease = " ".join(args.disease).strip() if args.disease else "dementia"
+    patient_info = (args.patient_info or "").strip()
+
+    # 1-1: Optimized query generation for literature search
+    if patient_info:
+        try:
+            from query_generator import generate_pubmed_search_queries
+
+            queries = generate_pubmed_search_queries(patient_info, max_queries=3)
+            if queries:
+                disease = queries[0]
+                print(f"Generated PubMed search query: {disease}")
+                if len(queries) > 1:
+                    print(f"  (alternatives: {queries[1:]})")
+        except ImportError:
+            print("query_generator not available; using patient-info as-is.")
+            disease = patient_info
+
     use_stub = os.environ.get("USE_STUB", "").lower() in ("1", "true", "yes")
     incremental = os.environ.get("INCREMENTAL", "").lower() in ("1", "true", "yes")
 
