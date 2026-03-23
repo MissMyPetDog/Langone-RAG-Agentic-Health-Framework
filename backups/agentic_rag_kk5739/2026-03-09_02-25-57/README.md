@@ -9,7 +9,7 @@ source .venv/bin/activate
 - **Python**: 3.10+
 - **패키지**: `typing_extensions`, `sentence-transformers`, `torch`, `python-dotenv`, `pymupdf`, `pillow` 등
 - **이메일**: PubMed/Unpaywall 사용 시 이메일 설정 권장 (예: `kk5739@nyu.edu`)
-- **Kong API 키**: `KONG_API_KEY` (`query_generator`·`generate`·`fetch --patient-info` 등 LLM 호출 시)
+- **Kong API 키**: `KONG_API_KEY` (generate 단계)
 
 **Embed 단계(5–6)**: 클러스터에서 다른 venv(예: `rag_venv`)와 섞이면 torch/typing_extensions 충돌이 납니다.  
 → 반드시 **프로젝트 `.venv`만 사용**하세요.  
@@ -47,7 +47,6 @@ source .venv/bin/activate
 | `multimodal_embed.py` | `data/chunks.jsonl`, `data/linked_chunks.jsonl` | `data/vectors_multimodal.jsonl` |
 | `retrieval.py` | 쿼리 인자, `data/real_vectors.jsonl`(또는 `vectors.jsonl`), `data/linked_chunks.jsonl`, `data/chunks.jsonl` | 터미널 출력 (검색 결과·확장 청크) |
 | `generate.py` | 질문 인자, 위 벡터·청크·linked_chunks, `papers.jsonl` | 터미널 출력 + `outputs/result_*.md` 자동 저장 |
-| `query_generator.py` | 환자/케이스 서술 문자열, `KONG_API_KEY` | 표준출력에 PubMed용 검색어(여러 개) 또는 RAG용 질문(한 줄) |
 
 ### 증분 업데이트 (INCREMENTAL=1)
 
@@ -78,41 +77,21 @@ source .venv/bin/activate
 컨텍스트 조립 → LLM (generate 시)
 ```
 
-### Optimized Query Generation (`query_generator.py`)
+### Optimized Query Generation (1-1, 1-2)
 
-환자·케이스 서술을 넣으면 Kong(LLM)으로 **두 종류**의 문구를 만들 수 있습니다. 둘 다 `KONG_API_KEY`(및 선택 `LLM_MODEL`, 기본 `gpt-4o`)가 필요합니다. 키가 없으면 API를 부르지 않고 입력 문자열을 그대로 씁니다.
-
-| 구분 | 모듈 함수 | 용도 | 파이프라인에서의 연결 |
-|------|-----------|------|------------------------|
-| **1-1** | `generate_pubmed_search_queries` | PubMed에 넣기 좋은 **짧은 검색어 여러 개** (상위 1개가 `fetch` 검색어로 사용) | `fetch.py --patient-info "..."` 가 내부에서 호출 |
-| **1-2** | `generate_retrieval_query_for_treatment` | 시맨틱 검색·근거 조회용 **질문 한 덩어리** (치료/진단 맥락 반영) | `generate.py --patient-data "..."` 가 내부에서 호출 |
-
-**통합 실행 (권장)**
+**1-1. PubMed/문헌 검색용** (`fetch.py`): 환자 정보 기반 최적화 검색 쿼리 생성
 
 ```bash
-export KONG_API_KEY=...
-
-# 1-1 → 생성된 쿼리로 PubMed fetch까지 이어짐
 python fetch.py --patient-info "65yo male, dementia, hypertension, on ACE inhibitor"
+```
 
-# 1-2 → 생성된 질문으로 retrieval 후 Kong으로 답변 생성
+**1-2. 치료/진단 retrieval용** (`generate.py`): 환자 데이터 기반 최적화 retrieval 질문 생성
+
+```bash
 python generate.py --patient-data "hospitalized COVID-19, diabetes, renal impairment, dexamethasone consideration"
 ```
 
-**`query_generator.py`만 단독 실행** (쿼리만 보고 싶을 때)
-
-```bash
-export KONG_API_KEY=...
-
-# PubMed용 검색어 여러 줄 출력
-python query_generator.py pubmed "65yo male, dementia, hypertension"
-# 선택: -n 5 로 최대 개수 조정
-
-# RAG retrieval / generate에 넣을 질문 한 줄 출력
-python query_generator.py retrieval "동일한 환자 서술..."
-```
-
-`retrieval.py`는 질문 문자열만 인자로 받으므로, `query_generator.py retrieval ...` 출력을 복사해 `python retrieval.py "복사한 질문"` 에 넣어도 됩니다.
+`query_generator.py`가 Kong API(LLM)를 사용해 best-fit 쿼리를 생성합니다. `KONG_API_KEY` 필요.
 
 ### generate.py 결과 자동 저장 (2)
 
@@ -124,8 +103,7 @@ python query_generator.py retrieval "동일한 환자 서술..."
 ### 환경 변수
 
 - `INCREMENTAL=1`: 증분 업데이트 (기존 유지 + 새 것만 추가)
-- `KONG_API_KEY`: Kong LLM (`generate`, `query_generator`, `fetch --patient-info` 등)
-- `LLM_MODEL`: `query_generator` 등에서 사용할 모델명 (미설정 시 `gpt-4o`)
+- `KONG_API_KEY`: generate용 API 키
 - `EMBED_MODEL`, `BATCH_SIZE`: real_embed (기본 BGE)
 - `MULTIMODAL_EMBED_MODEL`: multimodal_embed (기본 clip-ViT-B-32)
 

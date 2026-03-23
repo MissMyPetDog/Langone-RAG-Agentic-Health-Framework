@@ -115,32 +115,3 @@ def generate_retrieval_query_for_treatment(patient_data: str) -> str:
     except Exception as e:
         print(f"Query generation failed: {e}. Using original input.")
         return patient_data.strip()
-
-
-if __name__ == "__main__":
-    import argparse
-
-    p = argparse.ArgumentParser(
-        description="Kong(LLM)으로 검색/리트리벌용 쿼리 생성. KONG_API_KEY 필요."
-    )
-    sub = p.add_subparsers(dest="cmd", required=True)
-
-    p1 = sub.add_parser("pubmed", help="1-1: PubMed용 쿼리 여러 개 (환자 정보)")
-    p1.add_argument("text", nargs="+", help="환자 정보 문장")
-    p1.add_argument("-n", "--max", type=int, default=3, help="최대 쿼리 개수")
-
-    p2 = sub.add_parser("retrieval", help="1-2: RAG retrieval용 질문 하나 (치료/진단)")
-    p2.add_argument("text", nargs="+", help="환자 데이터 문장")
-
-    args = p.parse_args()
-    blob = " ".join(args.text).strip()
-    if not blob:
-        raise SystemExit("내용이 비었습니다.")
-
-    if args.cmd == "pubmed":
-        qs = generate_pubmed_search_queries(blob, max_queries=args.max)
-        for i, q in enumerate(qs, 1):
-            print(f"{i}. {q}")
-    else:
-        q = generate_retrieval_query_for_treatment(blob)
-        print(q)

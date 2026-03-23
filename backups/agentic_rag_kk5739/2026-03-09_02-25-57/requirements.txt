@@ -1,0 +1,10 @@
+# agentic_rag_kk5739
+python-dotenv
+openai
+sentence-transformers
+torch
+pymupdf
+requests
+typing_extensions
+pillow
+pdfplumber

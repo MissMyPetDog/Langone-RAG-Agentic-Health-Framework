@@ -9,30 +9,10 @@ from __future__ import annotations
 import sys
 import os as _os
 
-# 프로젝트 .venv 우선; rag_venv만 path에서 제거 (torch/torchvision 섞임 방지)
+# venv site-packages 최우선 (시스템 typing_extensions 등과 충돌 방지)
 _here = _os.path.dirname(_os.path.abspath(__file__))
-_vi = sys.version_info
-_venv_site = _os.path.join(
-    _here, ".venv", "lib", f"python{_vi.major}.{_vi.minor}", "site-packages"
-)
-
-
-def _strip_conflicting_venv_paths() -> None:
-    banned = ("rag_venv",)
-    kept: list[str] = []
-    for p in sys.path:
-        if p == "":
-            kept.append(p)
-            continue
-        norm = p.replace("\\", "/")
-        if any(b in norm for b in banned):
-            continue
-        kept.append(p)
-    sys.path[:] = kept
-
-
+_venv_site = _os.path.join(_here, ".venv", "lib", "python3.10", "site-packages")
 if _os.path.isdir(_venv_site):
-    _strip_conflicting_venv_paths()
     if _venv_site not in sys.path:
         sys.path.insert(0, _venv_site)
     _sys_site = _os.path.join(_os.path.sep + "gpfs", "share", "apps", "python")

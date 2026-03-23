@@ -1,8 +1,10 @@
 # agentic_rag_kk5739
+# torch: install separately (see scripts/install_venv.sh). Default PyPI torch pulls
+# CUDA + nvidia-* wheels (~multi-GB) and pip can get OOM-killed on small nodes.
 python-dotenv
 openai
 sentence-transformers
-torch
+regex
 pymupdf
 requests
 typing_extensions
