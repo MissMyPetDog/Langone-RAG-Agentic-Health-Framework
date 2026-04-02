@@ -67,6 +67,9 @@ DEFAULT_MODEL = "BAAI/bge-base-en-v1.5"
 DEFAULT_BATCH_SIZE = 1
 DEFAULT_ENCODE_WINDOW = 4
 DEFAULT_MAX_PASSAGE_CHARS = 16000
+# 0 또는 비설정 시: chunks.jsonl에서 임베딩 대상 본문을 한 번에 RAM에 적재(대량 청크 시 OOM 위험).
+# 양수: 이 개수만큼씩만 본문을 로드해 인코딩 후 비움(로그인 노드·저메모리 권장, 기본 512).
+DEFAULT_TEXT_WAVE_CHUNKS = 512
 
 
 def _l2_normalize(vec: List[float]) -> List[float]:
@@ -172,6 +175,15 @@ def main() -> None:
     except ValueError:
         max_passage_chars = DEFAULT_MAX_PASSAGE_CHARS
 
+    _tw = os.environ.get("TEXT_WAVE_CHUNKS", str(DEFAULT_TEXT_WAVE_CHUNKS)).strip().lower()
+    if _tw in ("0", "", "false", "no", "off"):
+        text_wave_chunks = 0
+    else:
+        try:
+            text_wave_chunks = max(1, int(_tw))
+        except ValueError:
+            text_wave_chunks = DEFAULT_TEXT_WAVE_CHUNKS
+
     import torch
 
     device_env = os.environ.get("DEVICE", "").lower()
@@ -232,19 +244,21 @@ def main() -> None:
         print(f"Output: {REAL_VECTORS_JSONL}")
         return
 
-    want_ids = set(ordered_chunk_ids)
-    text_by_id = _load_texts_for_chunk_ids(CHUNKS_JSONL, want_ids)
-    missing = [cid for cid in ordered_chunk_ids if cid not in text_by_id]
-    if missing:
-        print(
-            f"Warning: {len(missing)} chunk_id(s) not found or empty in chunks.jsonl; skipping.",
-            flush=True,
-        )
-        ordered_chunk_ids = [cid for cid in ordered_chunk_ids if cid in text_by_id]
-        skipped += len(missing)
-    if not ordered_chunk_ids:
-        print("No chunk texts available after load.")
-        raise SystemExit(1)
+    text_by_id: Dict[str, str] = {}
+    if text_wave_chunks <= 0:
+        want_ids = set(ordered_chunk_ids)
+        text_by_id = _load_texts_for_chunk_ids(CHUNKS_JSONL, want_ids)
+        missing = [cid for cid in ordered_chunk_ids if cid not in text_by_id]
+        if missing:
+            print(
+                f"Warning: {len(missing)} chunk_id(s) not found or empty in chunks.jsonl; skipping.",
+                flush=True,
+            )
+            ordered_chunk_ids = [cid for cid in ordered_chunk_ids if cid in text_by_id]
+            skipped += len(missing)
+        if not ordered_chunk_ids:
+            print("No chunk texts available after load.")
+            raise SystemExit(1)
 
     os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
@@ -253,16 +267,10 @@ def main() -> None:
     print(f"Loading model '{model_name}' on device={device}...", flush=True)
     print(
         f"To embed: {len(ordered_chunk_ids)} chunk(s); window={encode_window}; "
-        f"MAX_PASSAGE_CHARS={max_passage_chars}",
+        f"MAX_PASSAGE_CHARS={max_passage_chars}; TEXT_WAVE_CHUNKS={text_wave_chunks or 'all'}",
         flush=True,
     )
     model = SentenceTransformer(model_name, device=device)
-
-    n_chunks = len(ordered_chunk_ids)
-    n_win = (n_chunks + encode_window - 1) // encode_window
-    win_iter = range(0, n_chunks, encode_window)
-    if tqdm is not None:
-        win_iter = tqdm(win_iter, total=n_win, desc="encode windows", unit="win")
 
     out_dir = _os.path.dirname(REAL_VECTORS_JSONL) or _here
     os.makedirs(out_dir, exist_ok=True)
@@ -273,31 +281,15 @@ def main() -> None:
     tmp_path: str | None = None
     out_fp = None
 
-    try:
-        if append_to_existing:
-            need_nl = False
-            with open(REAL_VECTORS_JSONL, "rb") as _rf:
-                _rf.seek(0, _os.SEEK_END)
-                _sz = _rf.tell()
-                if _sz > 0:
-                    _rf.seek(-1, _os.SEEK_END)
-                    if _rf.read(1) != b"\n":
-                        need_nl = True
-            out_fp = open(REAL_VECTORS_JSONL, "a", encoding="utf-8")
-            if need_nl:
-                out_fp.write("\n")
-            print(
-                "Incremental append mode: each window is flushed to disk (safe to resume if killed).",
-                flush=True,
-            )
-        else:
-            fd, tmp_path = tempfile.mkstemp(
-                suffix=".jsonl.tmp", prefix="real_vectors_", dir=out_dir, text=True
-            )
-            out_fp = os.fdopen(fd, "w", encoding="utf-8")
-
+    def _encode_slice(
+        slice_ids: List[str],
+        text_by_id: Dict[str, str],
+        win_iter,
+    ) -> None:
+        nonlocal skipped, out_fp, model
+        assert out_fp is not None
         for start in win_iter:
-            id_slice = ordered_chunk_ids[start : start + encode_window]
+            id_slice = slice_ids[start : start + encode_window]
             batch_ids: List[str] = []
             texts: List[str] = []
             for cid in id_slice:
@@ -347,6 +339,68 @@ def main() -> None:
                 os.fsync(out_fp.fileno())
             except OSError:
                 pass
+
+    try:
+        if append_to_existing:
+            need_nl = False
+            with open(REAL_VECTORS_JSONL, "rb") as _rf:
+                _rf.seek(0, _os.SEEK_END)
+                _sz = _rf.tell()
+                if _sz > 0:
+                    _rf.seek(-1, _os.SEEK_END)
+                    if _rf.read(1) != b"\n":
+                        need_nl = True
+            out_fp = open(REAL_VECTORS_JSONL, "a", encoding="utf-8")
+            if need_nl:
+                out_fp.write("\n")
+            print(
+                "Incremental append mode: each window is flushed to disk (safe to resume if killed).",
+                flush=True,
+            )
+        else:
+            fd, tmp_path = tempfile.mkstemp(
+                suffix=".jsonl.tmp", prefix="real_vectors_", dir=out_dir, text=True
+            )
+            out_fp = os.fdopen(fd, "w", encoding="utf-8")
+
+        if text_wave_chunks <= 0:
+            n_chunks = len(ordered_chunk_ids)
+            n_win = (n_chunks + encode_window - 1) // encode_window
+            win_iter = range(0, n_chunks, encode_window)
+            if tqdm is not None:
+                win_iter = tqdm(win_iter, total=n_win, desc="encode windows", unit="win")
+            _encode_slice(ordered_chunk_ids, text_by_id, win_iter)
+        else:
+            total_win = sum(
+                (min(i + text_wave_chunks, len(ordered_chunk_ids)) - i + encode_window - 1)
+                // encode_window
+                for i in range(0, len(ordered_chunk_ids), text_wave_chunks)
+            )
+            w_start = 0
+            for i in range(0, len(ordered_chunk_ids), text_wave_chunks):
+                wave = ordered_chunk_ids[i : i + text_wave_chunks]
+                tid = _load_texts_for_chunk_ids(CHUNKS_JSONL, set(wave))
+                wave_order = [cid for cid in wave if cid in tid]
+                skipped += len(wave) - len(wave_order)
+                if not wave_order:
+                    del tid
+                    gc.collect()
+                    continue
+                n_w = len(wave_order)
+                n_win_w = (n_w + encode_window - 1) // encode_window
+                win_iter_w = range(0, n_w, encode_window)
+                if tqdm is not None:
+                    win_iter_w = tqdm(
+                        win_iter_w,
+                        total=n_win_w,
+                        desc=f"encode windows [{i // text_wave_chunks + 1}]",
+                        unit="win",
+                        initial=w_start,
+                    )
+                    w_start += n_win_w
+                _encode_slice(wave_order, tid, win_iter_w)
+                del tid
+                gc.collect()
 
         out_fp.close()
         out_fp = None

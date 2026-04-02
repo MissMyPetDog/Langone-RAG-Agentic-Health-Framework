@@ -127,7 +127,18 @@ python query_generator.py retrieval "동일한 환자 서술..."
 - `KONG_API_KEY`: Kong LLM (`generate`, `query_generator`, `fetch --patient-info` 등)
 - `LLM_MODEL`: `query_generator` 등에서 사용할 모델명 (미설정 시 `gpt-4o`)
 - `EMBED_MODEL`, `BATCH_SIZE`: real_embed (기본 BGE)
+- `TEXT_WAVE_CHUNKS`: real_embed에서 본문을 몇 개 청크씩만 RAM에 올릴지 (기본 512; OOM 시 256 등). `0`이면 전부 한 번에 로드.
 - `MULTIMODAL_EMBED_MODEL`: multimodal_embed (기본 clip-ViT-B-32)
+
+#### SLURM GPU 대화형 세션 (예시)
+
+로그인 노드에서 GPU가 필요한 작업(`real_embed`, `multimodal_embed`, `generate.py --rerank` 등)은 **GPU 파티션에서 대화형 셸**을 연 뒤 실행하는 것을 권장합니다.
+
+```bash
+srun --partition=gpu4_dev --gres=gpu:1 --cpus-per-task=4 --mem=32G --time=04:00:00 --pty bash
+```
+
+할당 후 `nvidia-smi`로 GPU가 보이는지 확인하세요.
 
 #### Embed 속도 올리기
 

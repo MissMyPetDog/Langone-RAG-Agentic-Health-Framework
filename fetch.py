@@ -1,6 +1,6 @@
 """
 Fetch papers from PubMed API, write papers.jsonl and assets.jsonl.
-환자 질병명(disease) 기반으로 Nature, Lancet, JAMA, BMJ, NEJM 등 의학저널에서
+환자 질병명(disease) 기반으로 Nature, Lancet, JAMA, BMJ, NEJM, AJKD 등 의학저널에서
 literature 검색.
 
 풀텍스트 PDF 획득 순서 (NYU VPN 연결 권장):
@@ -8,11 +8,15 @@ literature 검색.
 2. Unpaywall - DOI로 OA PDF URL (무료)
 3. NYU VPN 시 publisher URL도 접근 가능
 4. 풀텍스트 없으면 저장 안 함
+
+특정 1편: python fetch.py "doi-10...." 또는 --doi 10....
+로컬 PDF: --local-pdf (DOI 1개, PMC/Unpaywall 실패 시 복사)
 """
 
 import json
 import os
 import re
+import shutil
 import sys
 from datetime import datetime, timezone
 from urllib.request import urlopen, Request
@@ -101,45 +105,60 @@ MEDICAL_JOURNALS = [
     '"JAMA"[jour]',
     '"BMJ"[jour]',
     '"The New England Journal of Medicine"[jour]',
+    '"American Journal of Kidney Diseases"[jour]',
 ]
 JOURNAL_FILTER = " OR ".join(MEDICAL_JOURNALS)
 
 
-def _pubmed_fetch(disease: str, max_results: int = 10) -> list[dict]:
-    """
-    PubMed E-utilities로 질병명(disease) 기반 literature 검색.
-    Nature, Lancet, JAMA, BMJ, NEJM 등 주요 의학저널만 필터링.
-    """
-    import xml.etree.ElementTree as ET
+def _dois_from_positional_cli(arg_joined: str) -> list[str] | None:
+    s = (arg_joined or "").strip()
+    if not s:
+        return None
+    m = re.match(r"(?i)^doi[-:]\s*(.+)$", s)
+    if not m:
+        return None
+    rest = m.group(1).strip()
+    return [rest] if rest else None
 
-    # 질병명 정규화 (빈 값이면 dementia 기본값)
-    disease = re.sub(r"\s+", " ", disease.strip().replace('"', " ")).strip() or "dementia"
 
-    # 검색 쿼리: 질병명 + 저널 필터
-    term = f"({disease}) AND ({JOURNAL_FILTER})"
+def _normalize_doi(s: str) -> str:
+    s = (s or "").strip()
+    for prefix in (
+        "https://doi.org/",
+        "http://doi.org/",
+        "https://dx.doi.org/",
+        "http://dx.doi.org/",
+    ):
+        if s.lower().startswith(prefix.lower()):
+            s = s[len(prefix) :].strip()
+            break
+    return s.strip()
+
+
+def _pubmed_esearch_ids(term: str, max_results: int = 10, sort: str = "relevance") -> list[str]:
     params = {
         "db": "pubmed",
         "term": term,
         "retmode": "json",
         "retmax": max_results,
-        "sort": "relevance",
+        "sort": sort,
         "tool": "rag-fetch",
         "email": "kk5739@nyu.edu",
     }
     qs = "&".join(f"{k}={quote_plus(str(v))}" for k, v in params.items())
     url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?{qs}"
-
     req = Request(url, headers={"User-Agent": "multimodal-rag-fetch/1.0"})
     with urlopen(req, timeout=15) as resp:
         data = json.loads(resp.read().decode())
+    return data.get("esearchresult", {}).get("idlist", [])
 
-    idlist = data.get("esearchresult", {}).get("idlist", [])
-    if not idlist:
-        print("PubMed: no results")
+
+def _pubmed_efetch_article_dicts(pmids: list[str]) -> list[dict]:
+    import xml.etree.ElementTree as ET
+
+    if not pmids:
         return []
-
-    # efetch로 상세 정보(제목, 초록) 가져오기
-    ids = ",".join(idlist)
+    ids = ",".join(pmids)
     fetch_params = {
         "db": "pubmed",
         "id": ids,
@@ -149,13 +168,12 @@ def _pubmed_fetch(disease: str, max_results: int = 10) -> list[dict]:
     }
     fetch_qs = "&".join(f"{k}={quote_plus(str(v))}" for k, v in fetch_params.items())
     fetch_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?{fetch_qs}"
-
     req = Request(fetch_url, headers={"User-Agent": "multimodal-rag-fetch/1.0"})
     with urlopen(req, timeout=30) as resp:
         xml_data = resp.read().decode()
 
     root = ET.fromstring(xml_data)
-    entries = []
+    entries: list[dict] = []
 
     for article in root.findall(".//PubmedArticle"):
         pmid_el = article.find(".//PMID")
@@ -174,7 +192,6 @@ def _pubmed_fetch(disease: str, max_results: int = 10) -> list[dict]:
                 abstract_parts.append(f"{abst.attrib['Label']}: (no text)")
         abstract = "\n\n".join(abstract_parts) if abstract_parts else ""
 
-        # DOI, PMCID 추출
         doi = None
         pmcid = None
         for aid in article.findall(".//ArticleId"):
@@ -198,15 +215,48 @@ def _pubmed_fetch(disease: str, max_results: int = 10) -> list[dict]:
             "doi": doi,
             "pmcid": pmcid,
         })
-    # PMID → PMCID 변환 (PMC에 있는 논문만)
+
     if entries:
-        pmids = [e["pmid"] for e in entries]
-        pmcid_map = _get_pmcid_map(pmids)
+        pmids_found = [e["pmid"] for e in entries]
+        pmcid_map = _get_pmcid_map(pmids_found)
         for e in entries:
             e["pmcid"] = e.get("pmcid") or pmcid_map.get(e["pmid"])
 
-    print(f"PubMed: {len(entries)} articles from Nature/Lancet/JAMA/BMJ/NEJM")
     return entries
+
+
+def _pubmed_fetch(disease: str, max_results: int = 10) -> list[dict]:
+    disease = re.sub(r"\s+", " ", disease.strip().replace('"', " ")).strip() or "dementia"
+    term = f"({disease}) AND ({JOURNAL_FILTER})"
+    idlist = _pubmed_esearch_ids(term, max_results=max_results)
+    if not idlist:
+        print("PubMed: no results")
+        return []
+    entries = _pubmed_efetch_article_dicts(idlist)
+    print(f"PubMed: {len(entries)} articles (journal filter)")
+    return entries
+
+
+def _pubmed_fetch_by_dois(dois: list[str]) -> list[dict]:
+    all_entries: list[dict] = []
+    seen_pmids: set[str] = set()
+    for raw in dois:
+        doi = _normalize_doi(raw)
+        if not doi.startswith("10."):
+            print(f"Skipping invalid DOI (expected 10....): {raw!r}")
+            continue
+        idlist = _pubmed_esearch_ids(f"{doi}[doi]", max_results=5)
+        if not idlist:
+            print(f"PubMed: no PMID for DOI {doi}")
+            continue
+        batch = _pubmed_efetch_article_dicts(idlist)
+        for e in batch:
+            if e["pmid"] in seen_pmids:
+                continue
+            seen_pmids.add(e["pmid"])
+            all_entries.append(e)
+    print(f"PubMed: {len(all_entries)} article(s) by DOI")
+    return all_entries
 
 
 def _get_pmcid_map(pmids: list[str]) -> dict[str, str]:
@@ -316,16 +366,17 @@ def fetch(
     disease: str,
     use_stub: bool = False,
     existing_doc_ids: set[str] | None = None,
+    dois: list[str] | None = None,
+    local_pdf: str | None = None,
 ) -> tuple[list[PaperRecord], list[AssetRecord]]:
-    """
-    환자 질병명(disease) 기반으로 PubMed에서 literature 검색.
-    existing_doc_ids가 있으면 해당 doc_id는 건너뛰고 새 논문만 반환 (증분 업데이트).
-    """
     if use_stub:
         return _build_stub()
 
     try:
-        entries = _pubmed_fetch(disease, max_results=10)
+        if dois:
+            entries = _pubmed_fetch_by_dois(dois)
+        else:
+            entries = _pubmed_fetch(disease, max_results=10)
     except Exception as e:
         print("PubMed fetch failed:", repr(e))
         return _build_stub()
@@ -351,20 +402,32 @@ def fetch(
         pdf_path = os.path.join(raw_dir, "fulltext.pdf")
         got_pdf = False
 
-        # 1) PMC OA - PMCID 있는 논문 (무료)
         pmcid = e.get("pmcid")
         if pmcid and not got_pdf:
             pdf_url = _get_pmc_pdf_url(pmcid)
             if pdf_url and _download(pdf_url, pdf_path):
                 got_pdf = True
 
-        # 2) Unpaywall - DOI로 OA PDF (무료). NYU VPN 연결 시 publisher URL 접근 가능
         if not got_pdf and e.get("doi"):
             pdf_url = _get_unpaywall_pdf_url(e["doi"])
             if pdf_url and _download(pdf_url, pdf_path):
                 got_pdf = True
 
-        # 풀텍스트 없으면 저장 안 함
+        if (
+            not got_pdf
+            and local_pdf
+            and len(entries) == 1
+            and os.path.isfile(local_pdf)
+        ):
+            try:
+                os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+                shutil.copy2(local_pdf, pdf_path)
+                got_pdf = os.path.isfile(pdf_path) and os.path.getsize(pdf_path) > 0
+                if got_pdf:
+                    print(f"Using local PDF (fallback) -> {pdf_path}")
+            except OSError as ex:
+                print(f"Could not copy local PDF: {ex}")
+
         if not got_pdf:
             continue
 
@@ -385,7 +448,10 @@ def fetch(
     if pdf_count:
         print(f"Downloaded {pdf_count} full-text PDF(s). Use NYU VPN for best access.")
     elif entries:
-        print("No full-text PDFs available. Try with NYU VPN connected.")
+        print(
+            "풀텍스트 PDF 없음: PMC OA / Unpaywall에 공개 링크가 없습니다. "
+            '--local-pdf 로 로컬 PDF 경로를 주세요. 예: python fetch.py "doi-10...." --local-pdf ~/file.pdf'
+        )
     return papers, assets
 
 
@@ -412,7 +478,25 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Fetch papers from PubMed (patient/disease based)")
-    parser.add_argument("disease", nargs="*", help="Disease name (e.g., dementia, Alzheimer)")
+    parser.add_argument(
+        "disease",
+        nargs="*",
+        help="Disease search, OR: doi-10.... / doi:10.... (same as --doi).",
+    )
+    parser.add_argument(
+        "--doi",
+        action="append",
+        default=[],
+        metavar="DOI_OR_URL",
+        help="Fetch this DOI exactly (repeatable).",
+    )
+    parser.add_argument(
+        "--local-pdf",
+        type=str,
+        default="",
+        metavar="PATH",
+        help="With exactly one DOI: copy this file if PMC/Unpaywall has no PDF.",
+    )
     parser.add_argument(
         "--patient-info",
         type=str,
@@ -422,11 +506,42 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    disease = " ".join(args.disease).strip() if args.disease else "dementia"
+    joined_pos = " ".join(args.disease).strip() if args.disease else ""
+    pos_dois = _dois_from_positional_cli(joined_pos)
+    flag_dois = [d.strip() for d in (args.doi or []) if d.strip()]
+    dois_raw = (pos_dois or []) + flag_dois
+    seen_norm: set[str] = set()
+    dois: list[str] = []
+    for d in dois_raw:
+        key = _normalize_doi(d)
+        if key and key not in seen_norm:
+            seen_norm.add(key)
+            dois.append(d)
+
+    if pos_dois:
+        disease = "dementia"
+    elif joined_pos:
+        disease = joined_pos
+    else:
+        disease = "dementia"
+
     patient_info = (args.patient_info or "").strip()
+    local_pdf = (args.local_pdf or "").strip() or None
+    if local_pdf and len(dois) != 1:
+        print("Error: --local-pdf requires exactly one DOI.")
+        raise SystemExit(1)
+    if local_pdf and not os.path.isfile(local_pdf):
+        print(f"Error: --local-pdf file not found: {local_pdf}")
+        raise SystemExit(1)
+
+    if dois and (joined_pos or patient_info):
+        if pos_dois:
+            print("Note: positional doi-... mode; ignoring --patient-info for PubMed.")
+        else:
+            print("Note: --doi set; ignoring positional disease and --patient-info.")
 
     # 1-1: Optimized query generation for literature search
-    if patient_info:
+    if patient_info and not dois:
         try:
             from query_generator import generate_pubmed_search_queries
 
@@ -450,7 +565,13 @@ def main() -> None:
         if existing_doc_ids:
             print(f"Incremental: {len(existing_doc_ids)} existing doc(s) will be kept.")
 
-    papers, assets = fetch(disease, use_stub=use_stub, existing_doc_ids=existing_doc_ids if incremental else None)
+    papers, assets = fetch(
+        disease,
+        use_stub=use_stub,
+        existing_doc_ids=existing_doc_ids if incremental else None,
+        dois=dois if dois else None,
+        local_pdf=local_pdf,
+    )
 
     if incremental and existing_doc_ids:
         existing_papers = _load_jsonl(PAPERS_JSONL)
