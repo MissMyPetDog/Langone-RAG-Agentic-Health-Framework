@@ -23,11 +23,70 @@ import os
 from typing import Dict, Iterable, List, Tuple
 
 import fitz  # PyMuPDF
+import numpy as np
+from PIL import Image
 
 ASSETS_JSONL = "assets.jsonl"
 DATA_ASSETS_JSONL = "data/assets.jsonl"
 BLOCKS_JSONL = "data/blocks.jsonl"
 MAX_BLOCK_CHARS = 1600
+OCR_ON_IMAGES = os.environ.get("OCR_ON_IMAGES", "1").lower() in ("1", "true", "yes")
+OCR_MAX_CHARS = int(os.environ.get("OCR_MAX_CHARS", "4000"))
+OCR_BACKEND = os.environ.get("OCR_BACKEND", "auto").strip().lower()  # auto|rapidocr|tesseract|easyocr
+EASYOCR_LANGS = [
+    s.strip() for s in os.environ.get("EASYOCR_LANGS", "en").split(",") if s.strip()
+]
+# 쉼표 구분 doc_id만 재파싱하고, 기존 blocks.jsonl에서 해당 doc 블록을 제거한 뒤 병합 (전체 OCR 재실행 방지)
+_PARSE_DOC_IDS_RAW = os.environ.get("PARSE_DOC_IDS", "").strip()
+PARSE_DOC_IDS: frozenset[str] | None = (
+    frozenset(s.strip() for s in _PARSE_DOC_IDS_RAW.split(",") if s.strip())
+    if _PARSE_DOC_IDS_RAW
+    else None
+)
+
+try:
+    import pytesseract
+except Exception:
+    pytesseract = None  # type: ignore[assignment]
+try:
+    import easyocr
+except Exception:
+    easyocr = None  # type: ignore[assignment]
+try:
+    from rapidocr_onnxruntime import RapidOCR as _RapidOCRCls
+except Exception:
+    _RapidOCRCls = None  # type: ignore[misc, assignment]
+
+_OCR_WARNED = False
+_EASYOCR_READER = None
+_EASYOCR_DL_PATCHED = False
+_RAPID_OCR_ENGINE = None
+
+
+def _get_rapid_ocr():
+    global _RAPID_OCR_ENGINE
+    if _RapidOCRCls is None:
+        return None
+    if _RAPID_OCR_ENGINE is None:
+        _RAPID_OCR_ENGINE = _RapidOCRCls()
+    return _RAPID_OCR_ENGINE
+
+
+def _ensure_easyocr_dataloader_cpu_safe() -> None:
+    """CPU 환경에서 EasyOCR recognition DataLoader의 pin_memory=True가 멈춤을 유발하는 경우가 있어 끈다."""
+    global _EASYOCR_DL_PATCHED
+    if _EASYOCR_DL_PATCHED or easyocr is None:
+        return
+    import torch.utils.data as tud
+
+    _orig = tud.DataLoader.__init__
+
+    def _init(self, *args, **kwargs):
+        kwargs["pin_memory"] = False
+        return _orig(self, *args, **kwargs)
+
+    tud.DataLoader.__init__ = _init  # type: ignore[method-assign, assignment]
+    _EASYOCR_DL_PATCHED = True
 
 
 def _iter_assets(path: str) -> Iterable[Dict]:
@@ -98,6 +157,104 @@ def _split_text_blocks(page_text: str, doc_id: str, page_num: int) -> List[Dict]
     return blocks
 
 
+def _extract_ocr_text(image_path: str) -> str:
+    """이미지 경로에서 OCR 텍스트 추출. auto 시 RapidOCR → Tesseract → EasyOCR 순."""
+    global _OCR_WARNED, _EASYOCR_READER
+    if not OCR_ON_IMAGES:
+        return ""
+
+    order: List[str]
+    if OCR_BACKEND == "rapidocr":
+        order = ["rapid"]
+    elif OCR_BACKEND == "tesseract":
+        order = ["tesseract"]
+    elif OCR_BACKEND == "easyocr":
+        order = ["easy"]
+    else:
+        order = []
+        if _RapidOCRCls is not None:
+            order.append("rapid")
+        if pytesseract is not None:
+            order.append("tesseract")
+        if easyocr is not None:
+            order.append("easy")
+
+    if not order:
+        if not _OCR_WARNED:
+            print(
+                "OCR disabled: install rapidocr-onnxruntime and/or pytesseract+tessdata and/or easyocr.",
+                flush=True,
+            )
+            _OCR_WARNED = True
+        return ""
+
+    def _clip(s: str) -> str:
+        s = _normalize_whitespace(s).strip()
+        if OCR_MAX_CHARS > 0 and len(s) > OCR_MAX_CHARS:
+            return s[:OCR_MAX_CHARS]
+        return s
+
+    rgb = None
+    ocr_arr = None
+
+    for b in order:
+        text = ""
+        if b == "rapid":
+            eng = _get_rapid_ocr()
+            if eng is None:
+                continue
+            try:
+                result, _ = eng(image_path)
+                if result:
+                    text = "\n".join(str(x[1]) for x in result if len(x) > 1 and x[1])
+            except Exception:
+                text = ""
+            if text.strip():
+                return _clip(text)
+
+        elif b == "tesseract":
+            if pytesseract is None:
+                continue
+            try:
+                if rgb is None:
+                    with Image.open(image_path) as im:
+                        rgb = im.convert("RGB").copy()
+                text = pytesseract.image_to_string(rgb)
+            except Exception:
+                text = ""
+            if text.strip():
+                return _clip(text)
+
+        elif b == "easy":
+            if easyocr is None:
+                continue
+            try:
+                if rgb is None:
+                    with Image.open(image_path) as im:
+                        rgb = im.convert("RGB").copy()
+                if ocr_arr is None:
+                    ocr_arr = np.asarray(rgb)
+                if _EASYOCR_READER is None:
+                    _ensure_easyocr_dataloader_cpu_safe()
+                    _EASYOCR_READER = easyocr.Reader(EASYOCR_LANGS, gpu=False)
+                parts = _EASYOCR_READER.readtext(
+                    ocr_arr,
+                    detail=0,
+                    paragraph=False,
+                    workers=0,
+                    batch_size=1,
+                    canvas_size=1600,
+                    mag_ratio=0.85,
+                )
+                text = "\n".join(parts) if parts else ""
+            except Exception:
+                text = ""
+            if text.strip():
+                return _clip(text)
+
+    return ""
+
+
 def _extract_images(doc: fitz.Document, doc_id: str, out_dir: str) -> List[Dict]:
     """페이지별 figure 이미지를 data/raw/{doc_id}/page_{page}_fig_{k}.ext 로 저장."""
     os.makedirs(out_dir, exist_ok=True)
@@ -120,6 +277,7 @@ def _extract_images(doc: fitz.Document, doc_id: str, out_dir: str) -> List[Dict]
             with open(abs_path, "wb") as out:
                 out.write(img_bytes)
             block_id = f"{doc_id}_p{page_num}_fig_{fig_idx}"
+            ocr_text = _extract_ocr_text(abs_path)
             blocks.append(
                 {
                     "block_id": block_id,
@@ -128,6 +286,7 @@ def _extract_images(doc: fitz.Document, doc_id: str, out_dir: str) -> List[Dict]
                     "page": page_num,
                     "asset_path": rel_path,
                     "caption": None,
+                    "text": ocr_text,
                 }
             )
     return blocks
@@ -169,6 +328,8 @@ def main() -> None:
         path = asset.get("path")
         if not doc_id or not path:
             continue
+        if PARSE_DOC_IDS is not None and doc_id not in PARSE_DOC_IDS:
+            continue
         # 현재는 PDF 위주. TXT 등 다른 형식이 생기면 분기 추가.
         if not os.path.isfile(path):
             # data/raw/{doc_id}/fulltext.pdf 형태로도 시도
@@ -197,6 +358,19 @@ def main() -> None:
                 )
             except Exception:
                 print(f"Skipping unsupported asset for doc_id={doc_id}: {path}")
+
+    if PARSE_DOC_IDS is not None and os.path.isfile(BLOCKS_JSONL):
+        kept: List[Dict] = []
+        with open(BLOCKS_JSONL, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                rec = json.loads(line)
+                if rec.get("doc_id") in PARSE_DOC_IDS:
+                    continue
+                kept.append(rec)
+        all_blocks = kept + all_blocks
 
     os.makedirs(os.path.dirname(BLOCKS_JSONL) or ".", exist_ok=True)
     with open(BLOCKS_JSONL, "w", encoding="utf-8") as out:

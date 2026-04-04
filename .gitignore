@@ -13,3 +13,7 @@ data/
 .cursor/
 .DS_Store
 
+# 멀티모달 CPU 재개 로그
+_nohup_embed.out
+_embed_multimodal_*.log
+

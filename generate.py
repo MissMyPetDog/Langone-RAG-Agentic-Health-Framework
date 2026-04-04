@@ -151,8 +151,11 @@ def _parent_text_for_rerank(cids: List[str], chunk_records: Dict[str, ChunkRecor
                 parts.append(t)
         elif mod == "image":
             ap = rec.get("asset_path") or ""
+            t = rec.get("text") or ""
             if ap:
                 parts.append(f"[image file: {ap}]")
+            if t:
+                parts.append(f"[image OCR]\n{t}")
     return "\n\n".join(parts).strip()
 
 
@@ -165,10 +168,17 @@ def _format_parent_content_for_llm(cids: List[str], chunk_records: Dict[str, Chu
         mod = rec.get("modality") or "text"
         if mod == "image":
             ap = rec.get("asset_path") or ""
+            t = rec.get("text") or ""
             if ap:
-                parts.append(f"[Image chunk {cid}]\nasset_path: {ap}")
+                if t:
+                    parts.append(f"[Image chunk {cid}]\nasset_path: {ap}\nocr_text:\n{t}")
+                else:
+                    parts.append(f"[Image chunk {cid}]\nasset_path: {ap}")
             else:
-                parts.append(f"[Image chunk {cid}] (no asset_path)")
+                if t:
+                    parts.append(f"[Image chunk {cid}] (no asset_path)\nocr_text:\n{t}")
+                else:
+                    parts.append(f"[Image chunk {cid}] (no asset_path)")
         elif mod == "table":
             t = rec.get("text") or ""
             if t:
@@ -219,12 +229,16 @@ def _format_used_source_markdown(
         mod = rec.get("modality") or "text"
         if mod == "image":
             ap = rec.get("asset_path") or ""
+            t = rec.get("text") or ""
             blocks.append(f"**`{cid}`** *(image)*\n")
             if ap:
                 blocks.append(_markdown_image_line(ap, out_md_path))
                 blocks.append("")
             else:
                 blocks.append("*(no asset_path)*\n")
+            if t:
+                blocks.append("**OCR text**\n")
+                blocks.append("```\n" + t + "\n```\n")
         elif mod == "table":
             t = rec.get("text") or ""
             blocks.append(f"**`{cid}`** *(table)*\n")

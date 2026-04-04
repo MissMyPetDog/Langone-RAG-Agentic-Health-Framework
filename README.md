@@ -20,6 +20,19 @@ source .venv/bin/activate
 .venv/bin/python multimodal_embed.py
 ```
 
+**CPU에서 `multimodal_embed.py`가 세션 시간 안에 끝나지 않을 때**: 환경 변수 `MULTIMODAL_IMAGE_LIMIT=1`과 `INCREMENTAL=1`로 한 장씩 저장하며 재실행할 수 있습니다. 편의용 스크립트:
+
+```bash
+# 목표 행 수(현재 코퍼스 기준 table+image 청크 수)까지 α=0으로 채움 (백그라운드 권장)
+nohup ./embed_multimodal_resume.sh 0 >> _nohup_embed.out 2>&1 &
+
+# 위가 끝난 뒤, 이미지 벡터만 제거하고 OCR+CLIP 융합(α=0.35)으로 이미지 재임베딩
+.venv/bin/python prune_multimodal_vectors.py --strip-images
+nohup ./embed_multimodal_resume.sh 35 >> _nohup_embed.out 2>&1 &
+```
+
+이미지 OCR만 `parse.py`와 분리해 채울 때는 `fill_image_ocr.py <doc_id>`를 사용합니다. 오래된 `vectors_multimodal.jsonl` 행을 현재 청크와 맞출 때는 `prune_multimodal_vectors.py`입니다.
+
 ### 파이프라인 순서
 
 | 단계 | 스크립트 | 설명 |
@@ -30,7 +43,10 @@ source .venv/bin/activate
 | 4 | `link.py` | (doc_id, page)로 `parent_block_id` 부여 → `data/linked_chunks.jsonl` |
 | 5a | `embed.py` | hash 기반 임베딩 → `data/vectors.jsonl` |
 | 5b | `real_embed.py` | BGE 텍스트 임베딩 → `data/real_vectors.jsonl` |
-| 5c | `multimodal_embed.py` | CLIP 테이블·이미지 임베딩 → `data/vectors_multimodal.jsonl` |
+| 5c | `multimodal_embed.py` | CLIP 테이블·이미지 임베딩 → `data/vectors_multimodal.jsonl` (`MULTIMODAL_IMAGE_LIMIT`, `OCR_CLIP_FUSION_ALPHA` 지원) |
+| 보조 | `fill_image_ocr.py` | `blocks.jsonl`의 빈 이미지 OCR만 RapidOCR로 채움 |
+| 보조 | `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`에서 무효 chunk 제거 또는 `--strip-images` |
+| 보조 | `embed_multimodal_resume.sh` | CPU에서 멀티모달 임베딩을 끊어서 재개 (`0` 또는 `35`) |
 | 6 | `retrieval.py` | 쿼리 → 텍스트 검색 + parent 확장. `--rerank` 시 cross-encoder 재순위 |
 | 7 | `generate.py` | Kong API로 답변 생성. `--rerank` 옵션 지원. 결과 자동 MD 저장 |
 
@@ -60,7 +76,7 @@ source .venv/bin/activate
 | **chunk** | 기존 `chunks.jsonl`의 doc_id 확인 → **새 doc 블록만** 청킹해 기존 chunks 뒤에 append |
 | **link** | 항상 **전체** `chunks.jsonl` 기준으로 `linked_chunks.jsonl` **전체 재생성** (기존+신규 모두 반영) |
 | **real_embed** | 기존 `real_vectors.jsonl`의 chunk_id 확인 → **새 텍스트 청크만** 임베딩해 기존 벡터 뒤에 append |
-| **multimodal_embed** | 기존 `vectors_multimodal.jsonl`의 chunk_id 확인 → **새 table/image 청크만** 임베딩해 append |
+| **multimodal_embed** | 기존 `vectors_multimodal.jsonl`의 chunk_id 확인 → **새 table/image 청크만** 임베딩해 append (`INCREMENTAL=1`일 때 배치마다 파일 저장). `MULTIMODAL_IMAGE_LIMIT`로 이미지 N장만 처리 후 종료 가능 |
 
 **link만** 증분 없이 전체 재생성. 나머지는 기존 결과를 유지한 채 새 것만 추가.
 

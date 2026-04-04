@@ -3,6 +3,8 @@
 
 텍스트는 real_embed.py (BGE) → real_vectors.jsonl.
 이 스크립트 → data/vectors_multimodal.jsonl (텍스트 DB와 parent_block_id로 연동).
+
+환경 변수: MULTIMODAL_IMAGE_LIMIT (양의 정수) — 이미지를 이 개수만 인코딩한 뒤 종료. CPU 세션 제한 회피용.
 """
 from __future__ import annotations
 
@@ -49,11 +51,22 @@ VECTORS_MULTIMODAL_JSONL = "data/vectors_multimodal.jsonl"
 DEFAULT_MODEL = "clip-ViT-B-32"
 # 이미지/테이블 한 번에 묶어서 인코딩. GPU 메모리 적으면 8, 넉넉하면 16~32.
 DEFAULT_BATCH_SIZE = 16
+# image vec + OCR text vec 결합 비율 (0=이미지만, 1=텍스트만)
+DEFAULT_OCR_FUSION_ALPHA = 0.35
 
 
 def _l2_normalize(vec: List[float]) -> List[float]:
     n = math.sqrt(sum(x * x for x in vec))
     return [float(x) / n for x in vec] if n > 0 else list(vec)
+
+
+def _fuse_vecs(image_vec: List[float], text_vec: List[float], alpha: float) -> List[float]:
+    if alpha <= 0:
+        return _l2_normalize(image_vec)
+    if alpha >= 1:
+        return _l2_normalize(text_vec)
+    out = [(1.0 - alpha) * iv + alpha * tv for iv, tv in zip(image_vec, text_vec)]
+    return _l2_normalize(out)
 
 
 def _load_linked(path: str) -> Dict[str, Dict]:
@@ -80,6 +93,16 @@ def main() -> None:
         batch_size = max(1, int(os.environ.get("BATCH_SIZE", str(DEFAULT_BATCH_SIZE))))
     except ValueError:
         batch_size = DEFAULT_BATCH_SIZE
+    try:
+        ocr_alpha = float(os.environ.get("OCR_CLIP_FUSION_ALPHA", str(DEFAULT_OCR_FUSION_ALPHA)))
+    except ValueError:
+        ocr_alpha = DEFAULT_OCR_FUSION_ALPHA
+    ocr_alpha = max(0.0, min(1.0, ocr_alpha))
+    try:
+        image_limit = max(0, int(os.environ.get("MULTIMODAL_IMAGE_LIMIT", "0")))
+    except ValueError:
+        image_limit = 0
+    # image_limit>0 이면 이미지 인코딩을 이 개수만큼만 하고 종료 (CPU 세션 시간 제한 회피 후 재실행)
 
     import torch
 
@@ -142,7 +165,16 @@ def main() -> None:
     from PIL import Image
 
     print(f"Loading CLIP model '{model_name}' on device={device}...", flush=True)
+    print(f"OCR+CLIP fusion alpha={ocr_alpha:.2f}", flush=True)
     model = SentenceTransformer(model_name, device=device)
+
+    all_rows: List[Dict] = list(existing_vector_rows)
+
+    def _flush_multimodal_jsonl() -> None:
+        os.makedirs(os.path.dirname(VECTORS_MULTIMODAL_JSONL) or ".", exist_ok=True)
+        with open(VECTORS_MULTIMODAL_JSONL, "w", encoding="utf-8") as out:
+            for row in all_rows:
+                out.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     def _batched_encode_text(texts: List[str]) -> List[List[float]]:
         if not texts:
@@ -186,44 +218,82 @@ def main() -> None:
             out[idx] = list(v)
         return out
 
-    vectors_list: List[tuple[Dict, List[float]]] = []
+    n_new = 0
 
     # Table 배치
     if table_chunks:
         texts = [(c.get("text") or "").strip()[:4000] for c in table_chunks]
         table_vecs = _batched_encode_text(texts)
         for chunk, vec in zip(table_chunks, table_vecs):
-            vectors_list.append((chunk, _l2_normalize(vec)))
+            cid = chunk["chunk_id"]
+            meta = linked[cid]
+            all_rows.append(
+                {
+                    "chunk_id": cid,
+                    "doc_id": meta["doc_id"],
+                    "parent_block_id": meta["parent_block_id"],
+                    "modality": meta["modality"],
+                    "vector": _l2_normalize(vec),
+                }
+            )
+            n_new += 1
+        if incremental:
+            _flush_multimodal_jsonl()
 
-    # Image 배치
+    # Image: 배치 단위로 인코딩 후 즉시 저장 (INCREMENTAL 시 장시간 CPU 작업 중단에도 진행분 유지)
     if image_chunks:
-        paths = [c["asset_path"] for c in image_chunks]
-        image_vecs = _batched_encode_images(paths)
-        for chunk, vec in zip(image_chunks, image_vecs):
-            if vec is None:
-                continue
-            vectors_list.append((chunk, _l2_normalize(vec)))
+        image_ocr_texts = [(c.get("text") or "").strip()[:4000] for c in image_chunks]
+        non_empty_idx = [i for i, t in enumerate(image_ocr_texts) if t]
+        ocr_vec_by_idx: Dict[int, List[float]] = {}
+        if non_empty_idx and ocr_alpha > 0:
+            ocr_text_batch = [image_ocr_texts[i] for i in non_empty_idx]
+            ocr_text_vecs = _batched_encode_text(ocr_text_batch)
+            for i, v in zip(non_empty_idx, ocr_text_vecs):
+                ocr_vec_by_idx[i] = _l2_normalize(v)
 
-    os.makedirs(os.path.dirname(VECTORS_MULTIMODAL_JSONL) or ".", exist_ok=True)
-    all_rows: List[Dict] = list(existing_vector_rows)
-    for chunk, vec in vectors_list:
-        cid = chunk["chunk_id"]
-        meta = linked[cid]
-        all_rows.append(
-            {
-                "chunk_id": cid,
-                "doc_id": meta["doc_id"],
-                "parent_block_id": meta["parent_block_id"],
-                "modality": meta["modality"],
-                "vector": vec,
-            }
-        )
+        n_img = len(image_chunks)
+        images_done_this_run = 0
+        for start in range(0, n_img, batch_size):
+            sub = image_chunks[start : start + batch_size]
+            paths = [c["asset_path"] for c in sub]
+            image_vecs = _batched_encode_images(paths)
+            for j, (chunk, vec) in enumerate(zip(sub, image_vecs)):
+                if vec is None:
+                    continue
+                idx = start + j
+                img_vec = _l2_normalize(vec)
+                txt_vec = ocr_vec_by_idx.get(idx)
+                if txt_vec is not None:
+                    out_vec = _fuse_vecs(img_vec, txt_vec, ocr_alpha)
+                else:
+                    out_vec = img_vec
+                cid = chunk["chunk_id"]
+                meta = linked[cid]
+                all_rows.append(
+                    {
+                        "chunk_id": cid,
+                        "doc_id": meta["doc_id"],
+                        "parent_block_id": meta["parent_block_id"],
+                        "modality": meta["modality"],
+                        "vector": out_vec,
+                    }
+                )
+                n_new += 1
+                images_done_this_run += 1
+            if incremental:
+                _flush_multimodal_jsonl()
+            if image_limit > 0 and images_done_this_run >= image_limit:
+                print(
+                    f"Stopped after MULTIMODAL_IMAGE_LIMIT={image_limit} image(s); "
+                    "re-run with same env to continue.",
+                    flush=True,
+                )
+                break
 
-    with open(VECTORS_MULTIMODAL_JSONL, "w", encoding="utf-8") as out:
-        for row in all_rows:
-            out.write(json.dumps(row, ensure_ascii=False) + "\n")
+    if not incremental:
+        _flush_multimodal_jsonl()
 
-    print(f"Multimodal embedded: {len(vectors_list)} new (total: {len(all_rows)}) (table + image)")
+    print(f"Multimodal embedded: {n_new} new (total: {len(all_rows)}) (table + image)")
     print(f"Output: {VECTORS_MULTIMODAL_JSONL}")
 
 
