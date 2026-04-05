@@ -40,7 +40,7 @@ nohup ./embed_multimodal_resume.sh 35 >> _nohup_embed.out 2>&1 &
 
 **`--strip-images` 주의**: 테이블 멀티모달 대상이 없고 **이미지 청크만** 있으면, 이미지 행을 모두 지우므로 `vectors_multimodal.jsonl`이 비게 됩니다. 이 경우 `embed_multimodal_resume.sh 35`가 TARGET까지 **전부 α=0.35로 다시 채우는** 흐름이 됩니다(테이블 벡터를 남겨 두려는 시나리오와 다름).
 
-`parse.py`와 분리해 `blocks.jsonl`의 빈 이미지 OCR만 채울 때는 `fill_image_ocr.py`(doc_id 인자 1개). 예:
+`parse.py`와 분리해 `blocks.jsonl`의 빈 이미지 OCR만 채울 때는 `fill_image_ocr.py`(doc_id 인자 1개). **`chunk.py`보다 먼저** 돌려야 청크의 `text`에 OCR이 들어갑니다.
 
 ```bash
 OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
@@ -48,18 +48,20 @@ OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 
 오래된 `vectors_multimodal.jsonl` 행을 현재 청크 집합에 맞출 때는 인자 없이 `prune_multimodal_vectors.py`, 이미지 행만 지울 때는 `--strip-images`.
 
+**코퍼스·청크를 갈아엎은 뒤** `vectors_multimodal.jsonl`에 예전 `doc_id`가 남아 있으면 파일을 지우거나 비운 다음 `INCREMENTAL=0`으로 `multimodal_embed.py`를 다시 실행하는 편이 안전합니다. 같은 출력 파일을 두고 **`multimodal_embed.py`를 동시에 여러 번** 돌리지 마세요.
+
 ### 파이프라인 순서
 
 | 단계 | 스크립트 | 설명 |
 |------|----------|------|
 | 1 | `fetch.py` | 질병명으로 PubMed 검색, PMC OA → Unpaywall → 풀텍스트 수집 (`papers.jsonl`, `assets.jsonl`) |
 | 2 | `parse.py` | PDF/TXT에서 텍스트·테이블·이미지 블록 추출 → `data/blocks.jsonl` (선택: `PARSE_DOC_IDS`, `OCR_BACKEND` auto/rapidocr/tesseract/easyocr, `OCR_ON_IMAGES`) |
-| 3 | `chunk.py` | 텍스트 슬라이딩 윈도우, 테이블/이미지 1블록=1청크 → `data/chunks.jsonl` |
-| 4 | `link.py` | (doc_id, page)로 `parent_block_id` 부여 → `data/linked_chunks.jsonl` |
+| 2b (선택) | `fill_image_ocr.py` | 이미지 블록 빈 `text`만 RapidOCR로 채움. **반드시 `chunk.py` 전** |
+| 3 | `chunk.py` | `blocks.jsonl` 전체를 읽어 **`chunks.jsonl`을 매번 통째로 다시 씀** (증분 없음) |
+| 4 | `link.py` | (doc_id, page)로 `parent_block_id` 부여 → `linked_chunks.jsonl` **전체 재생성** |
 | 5a | `embed.py` | hash 기반 임베딩 → `data/vectors.jsonl` |
-| 5b | `real_embed.py` | BGE 텍스트 임베딩 → `data/real_vectors.jsonl` |
-| 5c | `multimodal_embed.py` | CLIP 테이블·이미지 임베딩 → `data/vectors_multimodal.jsonl` (`MULTIMODAL_IMAGE_LIMIT`, `OCR_CLIP_FUSION_ALPHA` 지원) |
-| 보조 | `fill_image_ocr.py` | `blocks.jsonl`의 빈 이미지 OCR만 RapidOCR로 채움 |
+| 5b | `real_embed.py` | **`modality == text` 청크만** BGE 임베딩 → `data/real_vectors.jsonl` (이미지/테이블 행 수만큼 줄 수가 `chunks.jsonl`보다 적을 수 있음) |
+| 5c | `multimodal_embed.py` | CLIP 테이블·이미지 임베딩 → `data/vectors_multimodal.jsonl` (`MULTIMODAL_IMAGE_LIMIT`, `OCR_CLIP_FUSION_ALPHA`, `DEVICE`) |
 | 보조 | `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`에서 무효 chunk 제거 또는 `--strip-images` |
 | 보조 | `embed_multimodal_resume.sh` | CPU에서 멀티모달 임베딩을 끊어서 재개 (`0` 또는 `35`) |
 | 6 | `retrieval.py` | 쿼리 → 텍스트 검색 + parent 확장. `--rerank` 시 cross-encoder 재순위 |
@@ -83,23 +85,26 @@ OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 | `retrieval.py` | 쿼리 인자, `data/real_vectors.jsonl`(또는 `vectors.jsonl`), `data/linked_chunks.jsonl`, `data/chunks.jsonl` | 터미널 출력 (검색 결과·확장 청크) |
 | `generate.py` | 질문 인자, 위 벡터·청크·linked_chunks, `papers.jsonl` | 터미널 출력 + `outputs/result_*.md` 자동 저장 |
 | `query_generator.py` | 환자/케이스 서술 문자열, `KONG_API_KEY` | 표준출력에 PubMed용 검색어(여러 개) 또는 RAG용 질문(한 줄) |
-| `fill_image_ocr.py` | `data/blocks.jsonl`, doc_id 인자 | 같은 파일 갱신(해당 doc의 빈 이미지 OCR만) |
+| `fill_image_ocr.py` | `data/blocks.jsonl`, doc_id 인자 | 같은 파일 갱신(해당 doc의 빈 이미지 OCR만). **`chunk.py` 이전**에 실행 |
 | `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`, `chunks`/`linked_chunks` | 정리된 `vectors_multimodal.jsonl` |
 
-### 증분 업데이트 (INCREMENTAL=1)
+### 증분 업데이트 (`INCREMENTAL`)
 
-이미 한 번 파이프라인을 돌린 뒤, **새 논문만 추가**하고 싶을 때 사용. 기존 데이터는 유지하고 신규만 처리해 시간·비용을 줄임.
+환경 변수 **`INCREMENTAL`은 숫자 단계가 아니라 스위치**입니다. 값이 `1` / `true` / `yes`(소문자)일 때만 켜지고, **`0`·미설정·그 외 문자열은 모두 꺼짐**으로 처리됩니다.
 
-| 단계 | INCREMENTAL=1 동작 |
+**`INCREMENTAL=1`이 실제로 적용되는 단계** (`fetch`, `real_embed`, `multimodal_embed`):
+
+| 단계 | `INCREMENTAL=1`일 때 |
 |------|---------------------|
-| **fetch** | 기존 `papers.jsonl`/`assets.jsonl`의 doc_id 확인 → PubMed에서 **새 논문만** 가져와 뒤에 append |
-| **parse** | 기존 `blocks.jsonl`의 doc_id 확인 → **새 doc만** 파싱해 기존 blocks 뒤에 append |
-| **chunk** | 기존 `chunks.jsonl`의 doc_id 확인 → **새 doc 블록만** 청킹해 기존 chunks 뒤에 append |
-| **link** | 항상 **전체** `chunks.jsonl` 기준으로 `linked_chunks.jsonl` **전체 재생성** (기존+신규 모두 반영) |
-| **real_embed** | 기존 `real_vectors.jsonl`의 chunk_id 확인 → **새 텍스트 청크만** 임베딩해 기존 벡터 뒤에 append |
-| **multimodal_embed** | 기존 `vectors_multimodal.jsonl`의 chunk_id 확인 → **새 table/image 청크만** 임베딩해 append (`INCREMENTAL=1`일 때 배치마다 파일 저장). `MULTIMODAL_IMAGE_LIMIT`로 이미지 N장만 처리 후 종료 가능 |
+| **fetch** | 기존 `papers.jsonl`/`assets.jsonl`의 doc_id를 보고 PubMed에서 **새 논문만** 가져와 뒤에 append |
+| **real_embed** | 기존 `real_vectors.jsonl`의 `chunk_id`는 건너뛰고 **새 텍스트 청크만** append |
+| **multimodal_embed** | 기존 `vectors_multimodal.jsonl`의 `chunk_id`는 건너뛰고 **새 table/image만** append. 켜져 있을 때는 배치마다 파일에 flush. `MULTIMODAL_IMAGE_LIMIT`로 이미지 N장만 처리 후 종료 가능 |
 
-**link만** 증분 없이 전체 재생성. 나머지는 기존 결과를 유지한 채 새 것만 추가.
+**`parse.py`**: `INCREMENTAL`을 읽지 않습니다. `assets.jsonl`에 있는 문서를 전부 다시 파싱해 `blocks.jsonl`을 갱신합니다. **일부 doc만 다시 파싱**할 때는 `PARSE_DOC_IDS=doc1,doc2` — 이때만 기존 `blocks.jsonl`에서 해당 doc 행을 빼고 나머지 doc 블록과 합칩니다.
+
+**`chunk.py`**: `INCREMENTAL` 없음. **`blocks.jsonl` 전체 → `chunks.jsonl` 전체 덮어쓰기**이므로, 블록을 바꾼 뒤에는 항상 `chunk` → `link`를 다시 돌립니다.
+
+**`link.py`**: 항상 `chunks.jsonl` 전체를 읽어 `linked_chunks.jsonl`을 **통째로 다시 씀**.
 
 ### 검색 워크플로우
 
@@ -160,7 +165,7 @@ python query_generator.py retrieval "동일한 환자 서술..."
 
 ### 환경 변수
 
-- `INCREMENTAL=1`: 증분 업데이트 (기존 유지 + 새 것만 추가)
+- `INCREMENTAL`: `1` / `true` / `yes`만 증분 ON (`fetch`, `real_embed`, `multimodal_embed`). `0`이나 비우면 OFF(전체 재임베딩 시 기존 벡터 파일을 덮어쓰거나, multimodal은 끝에 한 번 flush)
 - `KONG_API_KEY`: Kong LLM (`generate`, `query_generator`, `fetch --patient-info` 등)
 - `LLM_MODEL`: `query_generator` 등에서 사용할 모델명 (미설정 시 `gpt-4o`)
 - `EMBED_MODEL`, `BATCH_SIZE`: real_embed (기본 BGE)
@@ -189,8 +194,9 @@ srun --partition=gpu4_dev --gres=gpu:1 --cpus-per-task=4 --mem=32G --time=04:00:
 - **GPU 사용**: `DEVICE`를 비우면 CUDA가 있으면 `cuda`, 없으면 `cpu`. CPU만 강제하려면 `DEVICE=cpu`.
 - **real_embed**: 기본 `BATCH_SIZE=1`(OOM 방지). **GPU 있을 때** `BATCH_SIZE=32` 또는 `64`로 올리면 체감 속도 크게 향상.  
   예: `BATCH_SIZE=32 .venv/bin/python real_embed.py`
-- **multimodal_embed**: 테이블/이미지를 배치로 인코딩. 기본 `BATCH_SIZE=16`. GPU 메모리가 부족하면 `8` 등으로 낮추기.  
-  SLURM GPU 노드 예:  
-  `DEVICE=cuda BATCH_SIZE=8 INCREMENTAL=1 OCR_CLIP_FUSION_ALPHA=0.0 .venv/bin/python -u multimodal_embed.py`
+- **multimodal_embed**: 테이블/이미지를 배치로 인코딩. 기본 `BATCH_SIZE=16`. GPU 메모리가 부족하면 `8` 등으로 낮추기. 로그인 노드(CPU)에서는 한 번에 끝까지 쓰려면 `INCREMENTAL=0`이어도 되지만 시간이 오래 걸릴 수 있음.  
+  SLURM GPU 노드에서 처음부터 다시 채우기 예:  
+  `export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH}`  
+  `DEVICE=cuda BATCH_SIZE=8 INCREMENTAL=0 OCR_CLIP_FUSION_ALPHA=0.35 .venv/bin/python -u multimodal_embed.py`
 - **`embed_multimodal_resume.sh`**: 내부적으로 배치 1·이미지 1장 단위로만 돌리므로, 대량 작업은 GPU에서 위처럼 직접 호출하는 편이 빠를 수 있음.
 
