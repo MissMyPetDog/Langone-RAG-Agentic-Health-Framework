@@ -1,13 +1,20 @@
-source .venv/bin/activate 
-
-## Agentic RAG (의학 문헌)
+# Agentic RAG (의학 문헌)
 
 환자 질병명 기반 PubMed·상위 저널(Nature, Lancet, JAMA, BMJ, NEJM) 문헌 수집 → 파싱·청킹·링킹 → 텍스트(BGE) + 멀티모달(테이블·이미지, CLIP) 벡터 DB 구축 → 검색/생성.
+
+### 환경 준비
+
+클러스터 등에서 venv를 새로 만들 때는 `scripts/install_venv.sh`를 쓰면 로그인 노드 OOM을 줄이기 위해 **CPU용 torch를 먼저** 깐 뒤 `requirements.txt`를 설치합니다.
+
+```bash
+bash scripts/install_venv.sh
+source .venv/bin/activate
+```
 
 ### 요구 사항
 
 - **Python**: 3.10+
-- **패키지**: `typing_extensions`, `sentence-transformers`, `torch`, `python-dotenv`, `pymupdf`, `pillow` 등
+- **패키지**: `typing_extensions`, `sentence-transformers`, `torch`, `python-dotenv`, `pymupdf`, `pillow` 등 (`requirements.txt`)
 - **이메일**: PubMed/Unpaywall 사용 시 이메일 설정 권장 (예: `kk5739@nyu.edu`)
 - **Kong API 키**: `KONG_API_KEY` (`query_generator`·`generate`·`fetch --patient-info` 등 LLM 호출 시)
 
@@ -20,25 +27,33 @@ source .venv/bin/activate
 .venv/bin/python multimodal_embed.py
 ```
 
-**CPU에서 `multimodal_embed.py`가 세션 시간 안에 끝나지 않을 때**: 환경 변수 `MULTIMODAL_IMAGE_LIMIT=1`과 `INCREMENTAL=1`로 한 장씩 저장하며 재실행할 수 있습니다. 편의용 스크립트:
+**CPU에서 `multimodal_embed.py`가 세션 시간 안에 끝나지 않을 때**: 환경 변수 `MULTIMODAL_IMAGE_LIMIT=1`과 `INCREMENTAL=1`로 한 장씩 저장하며 재실행할 수 있습니다. 편의용 스크립트 `embed_multimodal_resume.sh`는 루프 안에서 **`BATCH_SIZE=1`**, **`MULTIMODAL_IMAGE_LIMIT=1`** 로 고정해 로그인 노드에서도 끊기지 않게 합니다(직접 `multimodal_embed.py`를 호출할 때는 기본 배치 16 등이 적용됨).
 
 ```bash
-# 목표 행 수(현재 코퍼스 기준 table+image 청크 수)까지 α=0으로 채움 (백그라운드 권장)
+# 목표 행 수(embed_multimodal_resume.sh 내부 Python과 동일: linked_chunks+chunks 기준 유효 table+image 청크 수)까지 α=0으로 채움
 nohup ./embed_multimodal_resume.sh 0 >> _nohup_embed.out 2>&1 &
 
-# 위가 끝난 뒤, 이미지 벡터만 제거하고 OCR+CLIP 융합(α=0.35)으로 이미지 재임베딩
+# 위가 끝난 뒤, 이미지 modality 행만 제거한 뒤 OCR+CLIP 융합(α=0.35)으로 이미지 재임베딩
 .venv/bin/python prune_multimodal_vectors.py --strip-images
 nohup ./embed_multimodal_resume.sh 35 >> _nohup_embed.out 2>&1 &
 ```
 
-이미지 OCR만 `parse.py`와 분리해 채울 때는 `fill_image_ocr.py <doc_id>`를 사용합니다. 오래된 `vectors_multimodal.jsonl` 행을 현재 청크와 맞출 때는 `prune_multimodal_vectors.py`입니다.
+**`--strip-images` 주의**: 테이블 멀티모달 대상이 없고 **이미지 청크만** 있으면, 이미지 행을 모두 지우므로 `vectors_multimodal.jsonl`이 비게 됩니다. 이 경우 `embed_multimodal_resume.sh 35`가 TARGET까지 **전부 α=0.35로 다시 채우는** 흐름이 됩니다(테이블 벡터를 남겨 두려는 시나리오와 다름).
+
+`parse.py`와 분리해 `blocks.jsonl`의 빈 이미지 OCR만 채울 때는 `fill_image_ocr.py`(doc_id 인자 1개). 예:
+
+```bash
+OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
+```
+
+오래된 `vectors_multimodal.jsonl` 행을 현재 청크 집합에 맞출 때는 인자 없이 `prune_multimodal_vectors.py`, 이미지 행만 지울 때는 `--strip-images`.
 
 ### 파이프라인 순서
 
 | 단계 | 스크립트 | 설명 |
 |------|----------|------|
 | 1 | `fetch.py` | 질병명으로 PubMed 검색, PMC OA → Unpaywall → 풀텍스트 수집 (`papers.jsonl`, `assets.jsonl`) |
-| 2 | `parse.py` | PDF/TXT에서 텍스트·테이블·이미지 블록 추출 → `data/blocks.jsonl` |
+| 2 | `parse.py` | PDF/TXT에서 텍스트·테이블·이미지 블록 추출 → `data/blocks.jsonl` (선택: `PARSE_DOC_IDS`, `OCR_BACKEND` auto/rapidocr/tesseract/easyocr, `OCR_ON_IMAGES`) |
 | 3 | `chunk.py` | 텍스트 슬라이딩 윈도우, 테이블/이미지 1블록=1청크 → `data/chunks.jsonl` |
 | 4 | `link.py` | (doc_id, page)로 `parent_block_id` 부여 → `data/linked_chunks.jsonl` |
 | 5a | `embed.py` | hash 기반 임베딩 → `data/vectors.jsonl` |
@@ -49,6 +64,10 @@ nohup ./embed_multimodal_resume.sh 35 >> _nohup_embed.out 2>&1 &
 | 보조 | `embed_multimodal_resume.sh` | CPU에서 멀티모달 임베딩을 끊어서 재개 (`0` 또는 `35`) |
 | 6 | `retrieval.py` | 쿼리 → 텍스트 검색 + parent 확장. `--rerank` 시 cross-encoder 재순위 |
 | 7 | `generate.py` | Kong API로 답변 생성. `--rerank` 옵션 지원. 결과 자동 MD 저장 |
+| (단독) | `rerank.py` | BGE 검색 + cross-encoder 재순위 2단계(실험·디버그용 CLI) |
+| (참고) | `schema.py` | JSONL 레코드 TypedDict 정의 |
+| (참고) | `vectordb.py` | hash 임베딩(`embed.py`와 동일 계열) 데모 검색 |
+| (유틸) | `scripts/list_raw_orphans.py` | `data/raw`에만 있고 `assets.jsonl`에 없는 doc_id 나열 |
 
 ### 스크립트별 입·출력
 
@@ -64,6 +83,8 @@ nohup ./embed_multimodal_resume.sh 35 >> _nohup_embed.out 2>&1 &
 | `retrieval.py` | 쿼리 인자, `data/real_vectors.jsonl`(또는 `vectors.jsonl`), `data/linked_chunks.jsonl`, `data/chunks.jsonl` | 터미널 출력 (검색 결과·확장 청크) |
 | `generate.py` | 질문 인자, 위 벡터·청크·linked_chunks, `papers.jsonl` | 터미널 출력 + `outputs/result_*.md` 자동 저장 |
 | `query_generator.py` | 환자/케이스 서술 문자열, `KONG_API_KEY` | 표준출력에 PubMed용 검색어(여러 개) 또는 RAG용 질문(한 줄) |
+| `fill_image_ocr.py` | `data/blocks.jsonl`, doc_id 인자 | 같은 파일 갱신(해당 doc의 빈 이미지 OCR만) |
+| `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`, `chunks`/`linked_chunks` | 정리된 `vectors_multimodal.jsonl` |
 
 ### 증분 업데이트 (INCREMENTAL=1)
 
@@ -145,6 +166,13 @@ python query_generator.py retrieval "동일한 환자 서술..."
 - `EMBED_MODEL`, `BATCH_SIZE`: real_embed (기본 BGE)
 - `TEXT_WAVE_CHUNKS`: real_embed에서 본문을 몇 개 청크씩만 RAM에 올릴지 (기본 512; OOM 시 256 등). `0`이면 전부 한 번에 로드.
 - `MULTIMODAL_EMBED_MODEL`: multimodal_embed (기본 clip-ViT-B-32)
+- `OCR_CLIP_FUSION_ALPHA`: 이미지 임베딩 시 CLIP vs OCR 텍스트 벡터 가중 (0=이미지만, 1=텍스트만; 기본 0.35)
+- `MULTIMODAL_IMAGE_LIMIT`: 양의 정수면 이미지를 그 개수만 인코딩하고 종료(재실행으로 이어서 처리)
+- `DEVICE`: `cuda` \| `cpu` \| `mps`. 미설정 시 CUDA 가능하면 `cuda`, 아니면 `cpu`
+- **parse**: `PARSE_DOC_IDS`(쉼표 구분 doc_id만 재파싱), `OCR_BACKEND`, `OCR_ON_IMAGES`, `OCR_MAX_CHARS`, `EASYOCR_LANGS`
+- **fill_image_ocr**: `OCR_MAX_CHARS` 등
+- 클러스터에서 `.venv/bin/python`이 `libpython3.10.so`를 못 찾으면(예):  
+  `export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH}`
 
 #### SLURM GPU 대화형 세션 (예시)
 
@@ -158,8 +186,11 @@ srun --partition=gpu4_dev --gres=gpu:1 --cpus-per-task=4 --mem=32G --time=04:00:
 
 #### Embed 속도 올리기
 
-- **GPU 사용**: `DEVICE`를 지정하지 않으면 자동으로 CUDA 사용. CPU만 쓰려면 `DEVICE=cpu`.
+- **GPU 사용**: `DEVICE`를 비우면 CUDA가 있으면 `cuda`, 없으면 `cpu`. CPU만 강제하려면 `DEVICE=cpu`.
 - **real_embed**: 기본 `BATCH_SIZE=1`(OOM 방지). **GPU 있을 때** `BATCH_SIZE=32` 또는 `64`로 올리면 체감 속도 크게 향상.  
   예: `BATCH_SIZE=32 .venv/bin/python real_embed.py`
-- **multimodal_embed**: 테이블/이미지를 배치로 인코딩. 기본 배치 16. 메모리 부족하면 `BATCH_SIZE=8`로 낮추기.
+- **multimodal_embed**: 테이블/이미지를 배치로 인코딩. 기본 `BATCH_SIZE=16`. GPU 메모리가 부족하면 `8` 등으로 낮추기.  
+  SLURM GPU 노드 예:  
+  `DEVICE=cuda BATCH_SIZE=8 INCREMENTAL=1 OCR_CLIP_FUSION_ALPHA=0.0 .venv/bin/python -u multimodal_embed.py`
+- **`embed_multimodal_resume.sh`**: 내부적으로 배치 1·이미지 1장 단위로만 돌리므로, 대량 작업은 GPU에서 위처럼 직접 호출하는 편이 빠를 수 있음.
 
