@@ -3,6 +3,8 @@
 # CUDA + nvidia-* wheels (~multi-GB) and pip can get OOM-killed on small nodes.
 python-dotenv
 openai
+anyio>=3.5,<5
+sniffio
 sentence-transformers
 regex
 pymupdf

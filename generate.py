@@ -2,6 +2,7 @@
 End-to-end QA:
 - Retrieve context from real_vectors (BGE) and chunks/linked_chunks
 - Call an LLM via OpenAI API to answer using ONLY that context.
+- Optional --vision: attach figure PNG/JPEG as image_url (model sees pixels), not CLIP vectors.
 - Saved MD Used Sources include table text and markdown images (Preview-friendly paths).
 """
 from __future__ import annotations
@@ -25,6 +26,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import argparse
+import base64
 import heapq
 import json
 import math
@@ -153,7 +155,7 @@ def _parent_text_for_rerank(cids: List[str], chunk_records: Dict[str, ChunkRecor
             ap = rec.get("asset_path") or ""
             t = rec.get("text") or ""
             if ap:
-                parts.append(f"[image file: {ap}]")
+                parts.append(f"[image file: {_prefer_png_asset_path_if_exists(ap.strip())}]")
             if t:
                 parts.append(f"[image OCR]\n{t}")
     return "\n\n".join(parts).strip()
@@ -169,11 +171,12 @@ def _format_parent_content_for_llm(cids: List[str], chunk_records: Dict[str, Chu
         if mod == "image":
             ap = rec.get("asset_path") or ""
             t = rec.get("text") or ""
-            if ap:
+            ap_show = _prefer_png_asset_path_if_exists(ap.strip()) if ap else ""
+            if ap_show:
                 if t:
-                    parts.append(f"[Image chunk {cid}]\nasset_path: {ap}\nocr_text:\n{t}")
+                    parts.append(f"[Image chunk {cid}]\nasset_path: {ap_show}\nocr_text:\n{t}")
                 else:
-                    parts.append(f"[Image chunk {cid}]\nasset_path: {ap}")
+                    parts.append(f"[Image chunk {cid}]\nasset_path: {ap_show}")
             else:
                 if t:
                     parts.append(f"[Image chunk {cid}] (no asset_path)\nocr_text:\n{t}")
@@ -198,6 +201,25 @@ def _abs_project_path(p: str) -> str:
     return os.path.normpath(os.path.join(_here, p))
 
 
+def _prefer_png_asset_path_if_exists(asset_path: str) -> str:
+    """chunks에 .jpx 등이 남아 있어도 같은 stem의 .png가 있으면 그 경로를 쓴다 (미리보기·LLM 텍스트)."""
+    ap = (asset_path or "").strip()
+    if not ap:
+        return ap
+    ext = os.path.splitext(ap)[1].lower()
+    stem = ap[: -len(ext)] if ext else ap
+    png_rel = stem + ".png"
+    if os.path.isfile(_abs_project_path(png_rel)):
+        return png_rel
+    return ap
+
+
+# VS Code / GitHub 등 일반 MD 미리보기가 잘 여는 확장자 (JPEG2000 .jpx 등은 보통 미지원 → 깨진 이미지로 보임)
+_MARKDOWN_PREVIEW_IMAGE_EXT = frozenset({".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"})
+# Used Sources: JPEG2000는 미리보기에 쓰지 않고, 동일 stem의 PNG가 있을 때만 ![...]() 로 넣음
+_JP2_FAMILY_EXT = frozenset({".jpx", ".jp2", ".j2k"})
+
+
 def _markdown_image_line(asset_path: str, out_md_path: str) -> str:
     abs_img = _abs_project_path(asset_path)
     if not os.path.isfile(abs_img):
@@ -206,7 +228,36 @@ def _markdown_image_line(asset_path: str, out_md_path: str) -> str:
     rel = os.path.relpath(abs_img, start=out_dir)
     rel = rel.replace(os.sep, "/")
     base = os.path.basename(asset_path)
-    return f"![{base}]({rel})"
+    ext = os.path.splitext(base)[1].lower()
+    proj_rel = asset_path.replace(os.sep, "/")
+    if ext in _MARKDOWN_PREVIEW_IMAGE_EXT:
+        return f"![{base}]({rel})"
+    return (
+        f"*(Figure `{base}` — many Markdown previews cannot render `{ext}`; open the path below in an image/PDF viewer.)*\n\n"
+        f"- Relative to this report: `{rel}`\n"
+        f"- Under project root: `{proj_rel}`\n"
+    )
+
+
+def _used_sources_image_markdown(asset_path: str, out_md_path: str) -> str:
+    """Used Sources: 디스크에 stem.png가 있으면 항상 그걸로 ![...]() (chunk가 .jpx를 가리켜도 동일)."""
+    ap0 = (asset_path or "").strip()
+    if not ap0:
+        return "*(no asset_path)*"
+    ap_png = _prefer_png_asset_path_if_exists(ap0)
+    if ap_png.lower().endswith(".png") and os.path.isfile(_abs_project_path(ap_png)):
+        return _markdown_image_line(ap_png, out_md_path)
+    ext0 = os.path.splitext(ap0)[1].lower()
+    if ext0 in _JP2_FAMILY_EXT:
+        stem = ap0[: -len(ext0)] if ext0 else ap0
+        png_proj = (stem + ".png").replace(os.sep, "/")
+        proj = ap0.replace(os.sep, "/")
+        return (
+            f"*(JPEG2000 `{proj}` — Used Sources에는 PNG만 미리보기로 붙입니다; "
+            f"`{png_proj}` 가 없어 embed 생략.)*\n\n"
+            f"- 원본(외부 뷰어): `{proj}`\n"
+        )
+    return _markdown_image_line(ap0, out_md_path)
 
 
 def _format_used_source_markdown(
@@ -232,7 +283,7 @@ def _format_used_source_markdown(
             t = rec.get("text") or ""
             blocks.append(f"**`{cid}`** *(image)*\n")
             if ap:
-                blocks.append(_markdown_image_line(ap, out_md_path))
+                blocks.append(_used_sources_image_markdown(ap, out_md_path))
                 blocks.append("")
             else:
                 blocks.append("*(no asset_path)*\n")
@@ -448,12 +499,115 @@ def _build_context(
     return "\n\n".join(blocks)
 
 
-def _call_llm(question: str, context: str) -> str:
+def _guess_image_mime(path: str) -> str:
+    ext = os.path.splitext(path)[1].lower()
+    return {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+        ".gif": "image/gif",
+    }.get(ext, "application/octet-stream")
+
+
+def _file_to_vision_data_url(path: str, max_edge: int) -> str | None:
+    """Read image from disk; optionally downscale long edge for token/cost. Returns data URL or None."""
+    try:
+        with open(path, "rb") as f:
+            raw = f.read()
+    except OSError:
+        return None
+    if not raw:
+        return None
+
+    if max_edge > 0:
+        try:
+            from io import BytesIO
+
+            from PIL import Image
+
+            im = Image.open(BytesIO(raw))
+            if im.mode in ("RGBA", "P"):
+                im = im.convert("RGB")
+            elif im.mode != "RGB":
+                im = im.convert("RGB")
+            w, h = im.size
+            long_edge = max(w, h)
+            if long_edge > max_edge:
+                scale = max_edge / float(long_edge)
+                nw = max(1, int(w * scale))
+                nh = max(1, int(h * scale))
+                im = im.resize((nw, nh), Image.Resampling.LANCZOS)
+            buf = BytesIO()
+            im.save(buf, format="JPEG", quality=88, optimize=True)
+            b64 = base64.standard_b64encode(buf.getvalue()).decode("ascii")
+            return f"data:image/jpeg;base64,{b64}"
+        except Exception:
+            pass
+
+    mime = _guess_image_mime(path)
+    if mime == "application/octet-stream":
+        return None
+    b64 = base64.standard_b64encode(raw).decode("ascii")
+    return f"data:{mime};base64,{b64}"
+
+
+def _collect_vision_images(
+    parent_meta: Dict[str, Dict],
+    by_parent: Dict[str, List[str]],
+    chunk_records: Dict[str, ChunkRecord],
+    max_images: int,
+) -> List[Tuple[str, str]]:
+    """(chunk_id, absolute_path) in retrieval score order; dedupe by resolved path."""
+    ordered = sorted(parent_meta.items(), key=lambda kv: -kv[1]["score"])
+    seen: Set[str] = set()
+    out: List[Tuple[str, str]] = []
+    for _pid, _meta in ordered:
+        for cid in by_parent.get(_pid, []):
+            if len(out) >= max_images:
+                return out
+            rec = chunk_records.get(cid) or {}
+            if (rec.get("modality") or "text") != "image":
+                continue
+            ap = (rec.get("asset_path") or "").strip()
+            if not ap:
+                continue
+            ap_use = _prefer_png_asset_path_if_exists(ap)
+            abs_p = _abs_project_path(ap_use)
+            if not os.path.isfile(abs_p):
+                continue
+            key = os.path.normcase(os.path.normpath(abs_p))
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append((cid, abs_p))
+    return out
+
+
+def _sanitize_figure_paths_in_prose(text: str) -> str:
+    """LLM이 옛날 맥락처럼 .jpx 등을 쓴 경우 답변/References에서 .png로 통일."""
+    if not text:
+        return text
+    return re.sub(
+        r"((?:data/)?raw/pmid_\d+/page_\d+_fig_\d+)\.(?:jpx|jp2|j2k)\b",
+        r"\1.png",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+
+def _call_llm(
+    question: str,
+    context: str,
+    vision_items: List[Tuple[str, str]] | None = None,
+) -> str:
     if not openai_api_key:
         print("KONG_API_KEY is not set in the environment.")
         raise SystemExit(1)
 
     model = os.environ.get("LLM_MODEL", "gpt-4o")
+
+    max_edge = max(0, int(os.environ.get("VISION_MAX_EDGE", "1536")))
 
     system_msg = (
         "You are a medical literature research assistant. Your role is to synthesize evidence "
@@ -472,19 +626,56 @@ def _call_llm(question: str, context: str) -> str:
         "- If the context does not contain enough information to answer, clearly state: "
         "\"The provided literature does not contain sufficient information to answer this question.\"\n"
         "- Do not give direct medical advice. Frame answers as evidence summaries; recommend consulting a healthcare provider for clinical decisions.\n"
-        "- Prefer structured responses: summarize findings, then present the three numbered treatment options with citations, and end with a brief 'References' section listing the cited parent_block_id values and their roles (e.g., first-line therapy evidence, safety/interaction data)."
+        "- Prefer structured responses: summarize findings, then present the three numbered treatment options with citations, and end with a brief 'References' section listing the cited parent_block_id values and their roles (e.g., first-line therapy evidence, safety/interaction data).\n"
+        "- Figure assets in this project are PNG paths. If you mention a figure filename or path, use `.png` only; do not write `.jpx`, `.jp2`, or `.j2k`."
     )
-    user_msg = (
+    if vision_items:
+        system_msg += (
+            "\n\nFigure images may be attached after the text. Use them as evidence for structure and "
+            "values shown in the figure (axes, flowcharts, plots). OCR in the text context can be "
+            "noisy; prefer the image when they disagree. Still cite with [Paper Title (parent_block_id)]."
+        )
+
+    vision_note = ""
+    if vision_items:
+        vision_note = (
+            "\n\nThe following figure image(s) are attached below in order. Each block is labeled "
+            "with its chunk_id (match to image lines in context). "
+            "Ground visual claims in these images.\n"
+        )
+
+    user_text = (
         f"Question:\n{question}\n\n"
-        f"Context (from retrieved medical literature):\n{context}\n\n"
-        f"Based only on the context above, provide an evidence-based answer with citations."
+        f"Context (from retrieved medical literature):\n{context}"
+        f"{vision_note}\n"
+        f"Based only on the context above"
+        f"{' and the attached images' if vision_items else ''}, "
+        f"provide an evidence-based answer with citations."
     )
+
+    if vision_items:
+        user_content: List[Dict[str, Any]] = [{"type": "text", "text": user_text}]
+        for cid, abs_path in vision_items:
+            url = _file_to_vision_data_url(abs_path, max_edge)
+            if not url:
+                user_content.append(
+                    {
+                        "type": "text",
+                        "text": f"*(chunk `{cid}`: could not load image from disk)*\n",
+                    }
+                )
+                continue
+            user_content.append({"type": "text", "text": f"--- Figure chunk `{cid}` ---"})
+            user_content.append({"type": "image_url", "image_url": {"url": url}})
+        user_payload: str | List[Dict[str, Any]] = user_content
+    else:
+        user_payload = user_text
 
     resp = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": system_msg},
-            {"role": "user", "content": user_msg},
+            {"role": "user", "content": user_payload},
         ],
     )
 
@@ -508,6 +699,13 @@ def main() -> None:
         help="Only run retrieval and print assembled context; do not call the LLM.",
     )
     parser.add_argument(
+        "--vision",
+        action="store_true",
+        help="Attach figure images (PNG/JPEG/WebP/GIF on disk) to the LLM as image_url; model sees "
+        "pixels, not embedding vectors. Cap: VISION_MAX_IMAGES (default 6). Resize: VISION_MAX_EDGE "
+        "(default 1536 long edge, JPEG). Also set GENERATE_VISION=1 to enable without the flag.",
+    )
+    parser.add_argument(
         "--case-id",
         type=str,
         default="",
@@ -520,10 +718,29 @@ def main() -> None:
         help="Raw patient data for optimized retrieval query. When provided, LLM generates best-fit "
         "question for treatment/diagnosis considering all conditions.",
     )
+    parser.add_argument(
+        "--patient-data-file",
+        type=str,
+        default="",
+        metavar="PATH",
+        help="UTF-8 text file read as patient data (same as --patient-data). Mutually exclusive with "
+        "--patient-data. If --case-id is omitted, defaults to the file basename without extension.",
+    )
     args = parser.parse_args()
 
     question = " ".join(args.question).strip()
     patient_data = (args.patient_data or "").strip()
+    pdata_file = (args.patient_data_file or "").strip()
+
+    if pdata_file and patient_data:
+        print("Use only one of --patient-data and --patient-data-file.", file=sys.stderr)
+        raise SystemExit(2)
+    if pdata_file:
+        if not os.path.isfile(pdata_file):
+            print(f"Not a file: {pdata_file}", file=sys.stderr)
+            raise SystemExit(2)
+        with open(pdata_file, encoding="utf-8") as _pf:
+            patient_data = _pf.read().strip()
 
     # 1-2: Optimized query generation for retrieval/treatment-diagnosis
     if patient_data:
@@ -537,9 +754,10 @@ def main() -> None:
             question = patient_data
 
     if not question:
-        print("Please provide a question or --patient-data, e.g.:")
+        print("Please provide a question, --patient-data, or --patient-data-file, e.g.:")
         print("  python generate.py \"hippocampal MRI dementia\" --topk 5")
         print("  python generate.py --patient-data \"65yo male, dementia, hypertension, on ACE inhibitor\"")
+        print("  python generate.py --patient-data-file /path/to/CASE_01.txt")
         raise SystemExit(1)
 
     topk = max(1, args.topk)
@@ -561,6 +779,8 @@ def main() -> None:
     out_dir = os.path.join(_here, "outputs")
     os.makedirs(out_dir, exist_ok=True)
     case_id = (args.case_id or "").strip()
+    if not case_id and pdata_file:
+        case_id = os.path.splitext(os.path.basename(pdata_file))[0]
     if case_id:
         out_path = os.path.join(out_dir, f"{case_id}.md")
     else:
@@ -582,9 +802,23 @@ def main() -> None:
         print("  → Re-run: python chunk.py && python link.py && python real_embed.py")
         raise SystemExit(1)
 
+    use_vision = bool(args.vision) or os.environ.get("GENERATE_VISION", "").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    max_vision = max(0, int(os.environ.get("VISION_MAX_IMAGES", "6")))
+
     if args.dry_run:
         print("\nAssembled context:\n")
         print(context)
+        if use_vision and max_vision > 0:
+            v_items = _collect_vision_images(parent_meta, by_parent, chunk_records, max_vision)
+            print(f"\n--vision: would attach {len(v_items)} image(s) (max {max_vision}):")
+            for cid, ap in v_items:
+                print(f"  {cid}  {ap}")
+        elif use_vision:
+            print("\n--vision: VISION_MAX_IMAGES is 0; no images would be attached.")
         print("\nUsed sources (markdown preview; paths relative to output file):\n")
         for pid in sorted(parent_meta.keys()):
             doc_id = parent_meta[pid]["doc_id"]
@@ -597,12 +831,34 @@ def main() -> None:
             print(f"- {pid}")
         raise SystemExit(0)
 
-    answer = _call_llm(question, context)
+    vision_items: List[Tuple[str, str]] | None = None
+    if use_vision and max_vision > 0:
+        vision_items = _collect_vision_images(parent_meta, by_parent, chunk_records, max_vision)
+        if vision_items:
+            print(
+                f"\nVision: attaching {len(vision_items)} figure(s) to LLM (VISION_MAX_EDGE="
+                f"{os.environ.get('VISION_MAX_EDGE', '1536')}).",
+                flush=True,
+            )
+        else:
+            print("\nVision: no on-disk figure chunks in retrieved parents; LLM call is text-only.", flush=True)
+            vision_items = None
+
+    answer = _sanitize_figure_paths_in_prose(_call_llm(question, context, vision_items) or "")
 
     # 터미널 출력 + MD 파일 자동 저장
     lines: list[str] = []
     lines.append(f"# Question\n\n{question}\n\n")
-    lines.append(f"**Vectors:** `{vectors_path}` | topk={topk}, rerank={args.rerank}, topn={topn}\n\n")
+    vision_note_md = ""
+    if vision_items:
+        vision_note_md = (
+            f"**Vision:** {len(vision_items)} figure(s) sent as `image_url` (pixels). "
+            f"max={max_vision} | VISION_MAX_EDGE={os.environ.get('VISION_MAX_EDGE', '1536')}\n\n"
+        )
+    lines.append(
+        f"**Vectors:** `{vectors_path}` | topk={topk}, rerank={args.rerank}, topn={topn}\n\n"
+        f"{vision_note_md}"
+    )
     lines.append("---\n\n## Answer\n\n")
     lines.append(answer or "")
     lines.append("\n\n---\n\n## Used Sources (with context)\n\n")

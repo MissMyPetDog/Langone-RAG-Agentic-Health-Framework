@@ -3,6 +3,9 @@ Parse PDFs/TXT into page-level text and image blocks.
 
 Inputs: assets.jsonl (또는 data/assets.jsonl)
 Output: data/blocks.jsonl
+
+Figure 저장: PyMuPDF가 주는 확장자 그대로 쓰되, 기본으로 JPEG2000(.jpx/.jp2/.j2k)은
+PIL로 PNG로 재인코딩(PARSE_NORMALIZE_JP2_IMAGES=0 으로 끌 수 있음).
 """
 from __future__ import annotations
 
@@ -18,6 +21,7 @@ if _os.path.isdir(_venv_site):
     _sys_site = _os.path.join(_os.path.sep + "gpfs", "share", "apps", "python")
     sys.path = [p for p in sys.path if _sys_site not in p] + [p for p in sys.path if _sys_site in p]
 
+import io
 import json
 import os
 from typing import Dict, Iterable, List, Tuple
@@ -43,6 +47,9 @@ PARSE_DOC_IDS: frozenset[str] | None = (
     if _PARSE_DOC_IDS_RAW
     else None
 )
+# PDF에서 뽑은 JPEG2000(.jpx/.jp2/.j2k)을 PNG로 저장 — Cursor/브라우저 미리보기·CLIP/PIL 호환. 끄려면 PARSE_NORMALIZE_JP2_IMAGES=0
+_PARSE_NORMALIZE_JP2 = os.environ.get("PARSE_NORMALIZE_JP2_IMAGES", "1").lower() in ("1", "true", "yes")
+_JP2_LIKE_EXT = frozenset({"jpx", "jp2", "j2k"})
 
 try:
     import pytesseract
@@ -255,6 +262,26 @@ def _extract_ocr_text(image_path: str) -> str:
     return ""
 
 
+def _maybe_reencode_jp2_to_png(img_bytes: bytes, raw_ext: str) -> tuple[bytes, str]:
+    """JP2 계열은 PNG로 바꿔 저장. 실패 시 원본 유지."""
+    ext = (raw_ext or "png").lower().lstrip(".")
+    if not _PARSE_NORMALIZE_JP2 or ext not in _JP2_LIKE_EXT:
+        return img_bytes, ext
+    try:
+        with Image.open(io.BytesIO(img_bytes)) as im:
+            im.load()
+            if im.mode == "P":
+                im = im.convert("RGBA")
+            elif im.mode not in ("RGB", "RGBA", "L", "LA"):
+                im = im.convert("RGB")
+            buf = io.BytesIO()
+            im.save(buf, format="PNG", optimize=True)
+            return buf.getvalue(), "png"
+    except Exception as e:
+        print(f"Warning: could not convert .{ext} to PNG, keeping raw bytes: {e}", flush=True)
+        return img_bytes, ext
+
+
 def _extract_images(doc: fitz.Document, doc_id: str, out_dir: str) -> List[Dict]:
     """페이지별 figure 이미지를 data/raw/{doc_id}/page_{page}_fig_{k}.ext 로 저장."""
     os.makedirs(out_dir, exist_ok=True)
@@ -271,6 +298,7 @@ def _extract_images(doc: fitz.Document, doc_id: str, out_dir: str) -> List[Dict]
                 continue
             img_bytes = base["image"]
             ext = base.get("ext", "png")
+            img_bytes, ext = _maybe_reencode_jp2_to_png(img_bytes, ext)
             rel_path = os.path.join("data", "raw", doc_id, f"page_{page_num}_fig_{fig_idx}.{ext}")
             abs_path = os.path.join(_here, rel_path)
             os.makedirs(os.path.dirname(abs_path), exist_ok=True)

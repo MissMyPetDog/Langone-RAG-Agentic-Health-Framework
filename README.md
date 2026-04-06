@@ -14,7 +14,7 @@ source .venv/bin/activate
 ### 요구 사항
 
 - **Python**: 3.10+
-- **패키지**: `typing_extensions`, `sentence-transformers`, `torch`, `python-dotenv`, `pymupdf`, `pillow` 등 (`requirements.txt`)
+- **패키지**: `typing_extensions`, `sentence-transformers`, `torch`, `python-dotenv`, `openai`, `pymupdf`, `pillow` 등 (`requirements.txt`)
 - **이메일**: PubMed/Unpaywall 사용 시 이메일 설정 권장 (예: `kk5739@nyu.edu`)
 - **Kong API 키**: `KONG_API_KEY` (`query_generator`·`generate`·`fetch --patient-info` 등 LLM 호출 시)
 
@@ -55,7 +55,7 @@ OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 | 단계 | 스크립트 | 설명 |
 |------|----------|------|
 | 1 | `fetch.py` | 질병명으로 PubMed 검색, PMC OA → Unpaywall → 풀텍스트 수집 (`papers.jsonl`, `assets.jsonl`) |
-| 2 | `parse.py` | PDF/TXT에서 텍스트·테이블·이미지 블록 추출 → `data/blocks.jsonl` (선택: `PARSE_DOC_IDS`, `OCR_BACKEND` auto/rapidocr/tesseract/easyocr, `OCR_ON_IMAGES`) |
+| 2 | `parse.py` | PDF/TXT에서 텍스트·테이블·이미지 블록 추출 → `data/blocks.jsonl` (선택: `PARSE_DOC_IDS`, `OCR_BACKEND`, `OCR_ON_IMAGES`, `PARSE_NORMALIZE_JP2_IMAGES` 기본 1=`.jpx`/`.jp2`/`.j2k`→PNG) |
 | 2b (선택) | `fill_image_ocr.py` | 이미지 블록 빈 `text`만 RapidOCR로 채움. **반드시 `chunk.py` 전** |
 | 3 | `chunk.py` | `blocks.jsonl` 전체를 읽어 **`chunks.jsonl`을 매번 통째로 다시 씀** (증분 없음) |
 | 4 | `link.py` | (doc_id, page)로 `parent_block_id` 부여 → `linked_chunks.jsonl` **전체 재생성** |
@@ -65,11 +65,12 @@ OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 | 보조 | `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`에서 무효 chunk 제거 또는 `--strip-images` |
 | 보조 | `embed_multimodal_resume.sh` | CPU에서 멀티모달 임베딩을 끊어서 재개 (`0` 또는 `35`) |
 | 6 | `retrieval.py` | 쿼리 → 텍스트 검색 + parent 확장. `--rerank` 시 cross-encoder 재순위 |
-| 7 | `generate.py` | Kong API로 답변 생성. `--rerank` 옵션 지원. 결과 자동 MD 저장 |
+| 7 | `generate.py` | Kong API로 답변 생성. `--rerank`, `--dry-run`, `--patient-data` / `--patient-data-file`, **`--vision`**(figure를 `image_url`로 전달). 결과 자동 MD 저장 |
 | (단독) | `rerank.py` | BGE 검색 + cross-encoder 재순위 2단계(실험·디버그용 CLI) |
 | (참고) | `schema.py` | JSONL 레코드 TypedDict 정의 |
 | (참고) | `vectordb.py` | hash 임베딩(`embed.py`와 동일 계열) 데모 검색 |
 | (유틸) | `scripts/list_raw_orphans.py` | `data/raw`에만 있고 `assets.jsonl`에 없는 doc_id 나열 |
+| (유틸) | `scripts/run_cases_vision.sh` | `CASE_01`~`CASE_N`에 대해 `generate.py --vision` 일괄 실행 (인자: 시작·끝 번호, 선택 `CASE_TEXT_DIR`) |
 
 ### 스크립트별 입·출력
 
@@ -83,7 +84,7 @@ OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 | `real_embed.py` | `data/chunks.jsonl`, `data/linked_chunks.jsonl` | `data/real_vectors.jsonl` |
 | `multimodal_embed.py` | `data/chunks.jsonl`, `data/linked_chunks.jsonl` | `data/vectors_multimodal.jsonl` |
 | `retrieval.py` | 쿼리 인자, `data/real_vectors.jsonl`(또는 `vectors.jsonl`), `data/linked_chunks.jsonl`, `data/chunks.jsonl` | 터미널 출력 (검색 결과·확장 청크) |
-| `generate.py` | 질문 인자, 위 벡터·청크·linked_chunks, `papers.jsonl` | 터미널 출력 + `outputs/result_*.md` 자동 저장 |
+| `generate.py` | 질문 인자 또는 `--patient-data` / `--patient-data-file`, 위 벡터·청크·linked_chunks, `papers.jsonl` | 터미널 출력 + `outputs/{case_id}.md` 또는 `outputs/result_*.md` 자동 저장 (`--case-id` 생략 시 patient 파일 basename 사용) |
 | `query_generator.py` | 환자/케이스 서술 문자열, `KONG_API_KEY` | 표준출력에 PubMed용 검색어(여러 개) 또는 RAG용 질문(한 줄) |
 | `fill_image_ocr.py` | `data/blocks.jsonl`, doc_id 인자 | 같은 파일 갱신(해당 doc의 빈 이미지 OCR만). **`chunk.py` 이전**에 실행 |
 | `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`, `chunks`/`linked_chunks` | 정리된 `vectors_multimodal.jsonl` |
@@ -135,10 +136,10 @@ OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 export KONG_API_KEY=...
 
 # 1-1 → 생성된 쿼리로 PubMed fetch까지 이어짐
-python fetch.py --patient-info "65yo male, dementia, hypertension, on ACE inhibitor"
+.venv/bin/python fetch.py --patient-info "65yo male, dementia, hypertension, on ACE inhibitor"
 
 # 1-2 → 생성된 질문으로 retrieval 후 Kong으로 답변 생성
-python generate.py --patient-data "hospitalized COVID-19, diabetes, renal impairment, dexamethasone consideration"
+.venv/bin/python generate.py --patient-data "hospitalized COVID-19, diabetes, renal impairment, dexamethasone consideration"
 ```
 
 **`query_generator.py`만 단독 실행** (쿼리만 보고 싶을 때)
@@ -147,34 +148,55 @@ python generate.py --patient-data "hospitalized COVID-19, diabetes, renal impair
 export KONG_API_KEY=...
 
 # PubMed용 검색어 여러 줄 출력
-python query_generator.py pubmed "65yo male, dementia, hypertension"
+.venv/bin/python query_generator.py pubmed "65yo male, dementia, hypertension"
 # 선택: -n 5 로 최대 개수 조정
 
 # RAG retrieval / generate에 넣을 질문 한 줄 출력
-python query_generator.py retrieval "동일한 환자 서술..."
+.venv/bin/python query_generator.py retrieval "동일한 환자 서술..."
 ```
 
-`retrieval.py`는 질문 문자열만 인자로 받으므로, `query_generator.py retrieval ...` 출력을 복사해 `python retrieval.py "복사한 질문"` 에 넣어도 됩니다.
+`retrieval.py`는 질문 문자열만 인자로 받으므로, `query_generator.py retrieval ...` 출력을 복사해 `.venv/bin/python retrieval.py "복사한 질문"` 에 넣어도 됩니다.
 
-### generate.py 결과 자동 저장 (2)
+### generate.py 결과 자동 저장·비전·케이스 배치
 
 `generate.py` 실행 후 결과가 **항상** `outputs/` 폴더에 MD 파일로 저장됩니다.
 
 - `--case-id` 지정 시: `outputs/{case_id}.md`
-- 미지정 시: `outputs/result_YYYY-MM-DD_HH-MM-SS.md`
+- `--patient-data-file`만 쓰고 `--case-id` 생략 시: 파일 basename(예: `CASE_01.txt` → `outputs/CASE_01.md`)
+- 위 둘 다 없고 질문만 있을 때: `outputs/result_YYYY-MM-DD_HH-MM-SS.md`
+
+**`--vision`**: 검색에 걸린 figure를 디스크에서 읽어 API에 `image_url`(base64 data URL)로 붙입니다. RAG용 CLIP 벡터와는 별개이며, **비전 가능 모델**(기본 `gpt-4o`)이어야 합니다. 환경 변수 `GENERATE_VISION=1`로 플래그와 동일하게 켤 수 있음. `VISION_MAX_IMAGES`(기본 6), `VISION_MAX_EDGE`(기본 1536, 긴 변 기준 리사이즈 후 JPEG).
+
+**Used Sources / 답변 텍스트**: 디스크에 `stem.png`가 있으면 chunk의 `asset_path`가 `.jpx` 등이어도 **미리보기·컨텍스트에는 PNG 경로를 우선**합니다. LLM 본문에 잘못된 `.jpx` 경로가 나오면 저장 전에 figure 경로만 `.png`로 치환하는 후처리가 들어갑니다.
+
+**케이스 여러 개 (`CASE_01`~`CASE_20` 등)**:
+
+```bash
+cd /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739
+export LD_LIBRARY_PATH="/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}"
+D=/gpfs/data/razavianlab/capstone/2025_agentic/tester_for_momo/case_texts
+for n in $(seq 1 20); do
+
+  i=$(printf 'CASE_%02d' "$n")
+  ./.venv/bin/python generate.py --patient-data-file "$D/${i}.txt" --vision
+done
+```
+
+또는 `./scripts/run_cases_vision.sh 3 20` (기본 `CASE_TEXT_DIR`는 위와 동일 경로).
 
 ### 환경 변수
 
 - `INCREMENTAL`: `1` / `true` / `yes`만 증분 ON (`fetch`, `real_embed`, `multimodal_embed`). `0`이나 비우면 OFF(전체 재임베딩 시 기존 벡터 파일을 덮어쓰거나, multimodal은 끝에 한 번 flush)
 - `KONG_API_KEY`: Kong LLM (`generate`, `query_generator`, `fetch --patient-info` 등)
-- `LLM_MODEL`: `query_generator` 등에서 사용할 모델명 (미설정 시 `gpt-4o`)
+- `LLM_MODEL`: `query_generator`·`generate` 등에서 사용할 모델명 (미설정 시 `gpt-4o`)
+- **`generate` + 비전**: `GENERATE_VISION=1`(또는 CLI `--vision`), `VISION_MAX_IMAGES`, `VISION_MAX_EDGE`
 - `EMBED_MODEL`, `BATCH_SIZE`: real_embed (기본 BGE)
 - `TEXT_WAVE_CHUNKS`: real_embed에서 본문을 몇 개 청크씩만 RAM에 올릴지 (기본 512; OOM 시 256 등). `0`이면 전부 한 번에 로드.
 - `MULTIMODAL_EMBED_MODEL`: multimodal_embed (기본 clip-ViT-B-32)
 - `OCR_CLIP_FUSION_ALPHA`: 이미지 임베딩 시 CLIP vs OCR 텍스트 벡터 가중 (0=이미지만, 1=텍스트만; 기본 0.35)
 - `MULTIMODAL_IMAGE_LIMIT`: 양의 정수면 이미지를 그 개수만 인코딩하고 종료(재실행으로 이어서 처리)
 - `DEVICE`: `cuda` \| `cpu` \| `mps`. 미설정 시 CUDA 가능하면 `cuda`, 아니면 `cpu`
-- **parse**: `PARSE_DOC_IDS`(쉼표 구분 doc_id만 재파싱), `OCR_BACKEND`, `OCR_ON_IMAGES`, `OCR_MAX_CHARS`, `EASYOCR_LANGS`
+- **parse**: `PARSE_DOC_IDS`, `OCR_BACKEND`, `OCR_ON_IMAGES`, `OCR_MAX_CHARS`, `EASYOCR_LANGS`, `PARSE_NORMALIZE_JP2_IMAGES`(기본 1: JPEG2000 figure를 PNG로 저장; 미리보기·호환용, `0`이면 PDF 내장 바이트 그대로)
 - **fill_image_ocr**: `OCR_MAX_CHARS` 등
 - 클러스터에서 `.venv/bin/python`이 `libpython3.10.so`를 못 찾으면(예):  
   `export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH}`
