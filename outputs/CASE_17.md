@@ -1,52 +1,101 @@
-# Question
+## Questions
 
-In a 54-year-old male with acute kidney injury (AKI) onset in the ICU, characterized by a 4-fold increase in serum creatinine, severe fluid overload, and metabolic acidosis, how can treatment be optimized considering comorbidities of severe liver disease, COPD, and peripheral vascular disease, along with current use of nephrotoxic agents and vasopressors?
+In a 54-year-old male with acute kidney injury secondary to sepsis, with comorbidities including severe liver disease, COPD, peripheral vascular disease, and malignancy, and current medications involving a nephrotoxic agent, vasopressor, and anticoagulant, what evidence-based strategies or modifications in treatment can optimize renal function recovery, considering fluid overload and high Charlson comorbidity index?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
 
 ---
 
-## Answer
+## Summary
 
-### Optimization of Treatment for Acute Kidney Injury in a 54-Year-Old Male with Comorbidities
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-**Problem Summary**:  
-The patient is experiencing a significant acute kidney injury (AKI) characterized by a four-fold increase in serum creatinine, severe fluid overload, and metabolic acidosis. He has comorbid severe liver disease, COPD, and peripheral vascular disease and is currently on nephrotoxic agents and vasopressors, further complicating treatment options.
+```
+CASE ID: CASE_17
+STAY ID: 35977583
+============================================================
+PATIENT CLINICAL PROFILE:
 
-**Evidence and Considerations**:  
-The KDIGO clinical practice guidelines for AKI highlight several strategies and considerations:
-- **Discontinuation of nephrotoxic agents** is critical to prevent further kidney damage.
-- **Renal replacement therapy (RRT)** can be vital in managing severe fluid overload and metabolic acidosis.
-- **Avoidance of certain treatments** like diuretics (except for volume overload), low-dose dopamine, fenoldopam, and atrial natriuretic peptide to prevent further AKI development [KDOQI US commentary (pmid_23499048_p12)].
+PATIENT DEMOGRAPHICS:
+  Age: 54 | Sex: Male | Race: UNKNOWN
+  Insurance: Medicare | Admission type: EW EMER.
 
-**Treatment Options**:
+AKI ONSET:
+  Baseline creatinine: 0.70 mg/dL
+  Hours from ICU admission to AKI onset: 7.4h
 
-1. **Renal Replacement Therapy (RRT)**:
-   - **Appropriate When**: In cases of severe fluid overload and metabolic acidosis where conservative management is ineffective.
-   - **Avoid When**: Hemodynamic instability without the ability to manage fluid shifts; consider CRRT if unstable.
-   - **Supporting Evidence**: RRT is a recognized option when conservative measures fail, particularly in ICU settings with severe overload [KDOQI US commentary (pmid_23499048_p12)].
+CREATININE (ICU window, intime → onset), n=2 creatinine measurements in this window:
+  First     : 2.70 mg/dL
+  Min       : 2.70 mg/dL
+  Max       : 2.80 mg/dL
+  At onset  : 2.80 mg/dL
+  Delta      : +2.10 mg/dL
+  Ratio      : 4.00x baseline
+  Slope      : +0.0168 mg/dL/h
 
-2. **Discontinue Nephrotoxic Agents**:
-   - **Appropriate When**: The patient is taking nephrotoxic medications that can be replaced or temporarily held to assess improvement.
-   - **Avoid When**: No suitable alternative treatments for critical medications (e.g., essential life-saving drugs without substitutes).
-   - **Supporting Evidence**: Discontinuation can halt further kidney damage progression, mentioned as a priority action [KDOQI US commentary (pmid_23499048_p12)].
+LAB VALUES (last value before onset):
+  BUN            : last=24.0 mg/dL  [min=23.0, max=24.0]  (n=2)
+  POTASSIUM      : last=4.4 mEq/L  [min=3.7, max=4.4]  (n=2)
+  BICARBONATE    : last=11.0 mEq/L  [min=11.0, max=11.0]  (n=2)
+  HEMOGLOBIN     : last=12.0 g/dL  [min=12.0, max=12.8]  (n=2)
 
-3. **Manage Volume Status and Perfusion Pressure**:
-   - **Appropriate When**: Optimizing hemodynamics is critical for preserving kidney function and preventing further injury.
-   - **Avoid When**: If optimizing volume status leads to worsened hemodynamic instability.
-   - **Supporting Evidence**: Maintaining volume and perfusion is crucial, particularly in critically ill patients at high risk [KDOQI US commentary (pmid_23499048_p12)].
+VITAL SIGNS (ICU window):
+  MAP   : mean=66.7 mmHg  [min=56.0, max=75.0]  last=65.0  last6h=71.7  (n=11)
+  HR    : mean=112.7 bpm  [min=110.0, max=116.0]  last=111.0  last6h=113.6  (n=10) ⚠ TACHYCARDIA
+  SPO2  : mean=81.6 %  [min=66.0, max=94.0]  last=92.0  last6h=80.3  (n=10) ⚠ LOW
+  RR    : mean=22.0 /min  [min=8.0, max=30.0]  last=30.0  last6h=27.2  (n=7) ⚠ ELEVATED
+  TEMP  : mean=36.3 °C  [min=35.7, max=37.0]  last=37.0  last6h=36.3  (n=4)
 
-**Fallback Logic**:
-- **If RRT is not feasible** due to hemodynamic instability, prioritize discontinuation of nephrotoxic agents and see if kidney function improves.
-- **If alteration in medication is not viable**, or issue persists, careful management of volume status and perfusion should be attempted, albeit cautiously to avoid fluid mismanagement.
+URINE OUTPUT, n=2 urine-output entries:
+  Total UO   : 1200 mL
+  Rate       : 162.2 mL/h
+  Last 6h    : 1200 mL
+  Last 12h   : 1200 mL
+  Last 24h   : 1200 mL
 
-**References**:
-- KDOQI US commentary on the 2012 KDIGO guideline for AKI (pmid_23499048_p12): Discusses stage-based management and specific intervention needs for AKI.
-- KDOQI US commentary on the 2012 KDIGO guideline for AKI (pmid_23499048_p2): Provides recommendations on drug discontinuation and treatment strategies.
+FLUID BALANCE:
+  Total input  : 14060 mL
+  Net balance  : +12860 mL ⚠ SEVERE OVERLOAD
 
-**Note**: Consultation with a healthcare provider is essential for ongoing assessment and management adjustments based on real-time clinical findings.
+COMORBIDITIES (Charlson score: 9):
+  + Peripheral vascular disease
+  + Cerebrovascular disease
+  + COPD
+  + Mild liver disease
+  + Malignancy
+  + Severe liver disease
+  Additional flags: Sepsis, Liver disease, Malignancy, Coagulopathy
+
+PRIOR MEDICATIONS (before current admission):
+  Diuretic, NSAID, Vancomycin
+
+CURRENT MEDICATIONS (active at AKI onset):
+  Nephrotoxic agent, Vasopressor, Antibiotic, Anticoagulant
+
+OTHER:
+  BMI            : 30.1
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+Managing acute kidney injury (AKI) in a 54-year-old male with complicating comorbidities such as severe liver disease, COPD, peripheral vascular disease, malignancy, fluid overload, and the use of nephrotoxic agents presents significant challenges. The patient's high Charlson comorbidity index, medications, and fluid status necessitate a carefully tailored approach to support renal function recovery and avoid exacerbation of his condition.
+
+1. **Continuous Renal Replacement Therapy (CRRT):** CRRT is often favored in critically ill patients with AKI, particularly those demonstrating fluid overload and associated comorbidities like severe liver disease or COPD. CRRT offers gradual solute and fluid removal, thereby minimizing hemodynamic instability compared to intermittent hemodialysis. This modality is advantageous in managing fluid balances without acute volume shifts [KDOQI US commentary (pmid_23499048_p3)]. CRRT should be considered, especially if the patient continues to exhibit signs of volume overload despite medical management.
+
+2. **Avoidance of Nephrotoxins:** Given the patient's current use of nephrotoxic agents, which can contribute to AKI and prevent recovery, it’s essential to review his medication regimen and initiate alternative therapies if possible. This is critical when safe options are available that do not compromise his overall therapeutic regimen for malignancy or other conditions [KDOQI US commentary (pmid_23499048_p130)]. The avoidance of known renal stressing agents, such as those not crucial for immediate survival, can help improve renal recovery prospects.
+
+3. **Nutritional Support and Metabolic Management:** Adequate nutrition is vital in patients with AKI to modulate metabolic demands and support recovery. Ensuring adequate caloric and protein intake, either through enteral or parenteral nutrition, can help maintain nitrogen balance and reduce catabolism without exacerbating metabolic issues related to severe liver disease. Nutritional strategies should be adjusted to avoid excessive protein intake, which might increase nitrogen load and worsen hepatic encephalopathy [KDOQI US commentary (pmid_23499048_p130)].
+
+These suggested interventions are grounded in the context of the patient's condition and should be adapted collaboratively with the healthcare team to address this complex clinical scenario effectively.
+
+### References
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p3):** Supports CRRT as a preference for patients with fluid overload and AKI.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p130):** Provides guidance on avoiding nephrotoxins and emphasizes nutritional support in AKI management.
 
 ---
 
@@ -54,103 +103,129 @@ The KDIGO clinical practice guidelines for AKI highlight several strategies and 
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
 VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOURNAL OF THE INTERNATIONAL SOCIETY OF NEPHROLOGY KDIGO Clinical Practice Guideline for Acute Kidney Injury
 
-### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p12 ===
+### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p130 ===
 
-**`pmid_23499048_p12_fig_0_c0`** *(image)*
+**`pmid_23499048_p130_t0_c0`** *(text)*
 
-![page_12_fig_0.png](../data/raw/pmid_23499048/page_12_fig_0.png)
+160. Cianciaruso B, Bellizzi V, Napoli R, et al. Hepatic uptake and release of glucose, lactate, and amino acids in acutely uremic dogs. Metabolism 1991; 40: 261–269. 161. Druml W, Mitch WE. Metabolic abnormalities in acute renal failure. Semin Dial 1996; 9: 484–490. 162. Schneeweiss B, Graninger W, Stockenhuber F, et al. Energy metabolism in acute and chronic renal failure. Am J Clin Nutr 1990; 52: 596–601. 163. Macias WL, Alaka KJ, Murphy MH, et al. Impact of the nutritional regimen on protein catabolism and nitrogen balance in patients with acute renal failure. JPEN J Parenter Enteral Nutr 1996; 20: 56–62. 164. Fiaccadori E, Maggiore U, Rotelli C, et al. Effects of different energy intakes on nitrogen balance in patients with acute renal failure: a pilot study. Nephrol Dial Transplant 2005; 20: 1976–1980. 165. Fiaccadori E, Cremaschi E. Nutritional assessment and support in acute kidney injury. Curr Opin Crit Care 2009; 15: 474–480. 166. Powell-Tuck J. Nutritional interventions in critical illness. Proc Nutr Soc 2007; 66: 16–24. 167. Scheinkestel CD, Adams F, Mahony L, et al. Impact of increasing parenteral protein loads on amino acid levels and balance in critically ill anuric patients on continuous renal replacement therapy.
 
-**OCR text**
+**`pmid_23499048_p130_t1_c0`** *(text)*
 
-```
-AKIStage HighRisk 2 3 Discontinue all nephrotoxic agents when possible Ensurevolumestatus and perfusionpressure Consider functional hemodynamicmonitoring Monitor Serum creatinine and urine output Avoid hyperglycemia Consideralternativestoradiocontrastprocedures Non-invasivediagnosticworkup Considerinvasive diagnosticworkup Checkforchanges in drug dosing Consider Renal Replacement Therapy ConsiderICuadmission Avoid subclavian catheters ifpossible
-```
+Chima CS, Meyer L, Hummell AC, et al. Protein catabolic rate in patients with acute renal failure on continuous arteriovenous hemoﬁltration and total parenteral nutrition. J Am Soc Nephrol 1993; 3: 1516–1521. 171. Leblanc M, Garred LJ, Cardinal J, et al. Catabolism in critical illness: estimation from urea nitrogen appearance and creatinine production during continuous renal replacement therapy. Am J Kidney Dis 1998; 32: 444–453. 172. Marshall MR, Golper TA, Shaver MJ, et al. Urea kinetics during sustained low-efﬁciency dialysis in critically ill patients requiring renal replacement therapy. Am J Kidney Dis 2002; 39: 556–570. 173. Salahudeen AK, Kumar V, Madan N, et al. Sustained low efﬁciency dialysis in the continuous mode (C-SLED): dialysis efﬁcacy, clinical outcomes, and survival predictors in critically ill cancer patients. Clin J Am Soc Nephrol 2009; 4: 1338–1346. 174. Barnert J, Dumitrascu D, Neeser G, et al. Gastric emptying of a liquid meal in intensive care unit patients (abstr). Gastroenterology 1998; 114: A865. 175. Fiaccadori E, Maggiore U, Clima B, et al. Incidence, risk factors, and prognosis of gastrointestinal hemorrhage complicating acute renal failure. Kidney Int 2001; 59: 1510–1519.
 
-**`pmid_23499048_p12_t0_c0`** *(text)*
+**`pmid_23499048_p130_t2_c0`** *(text)*
 
-3.1.3: We suggest using protocol-based management of hemodynamic and oxygenation parameters to prevent development or worsening of AKI in high-risk patients in the perioperative setting (2C) or in patients with septic shock (2C). 3.3.1: In critically ill patients, we suggest insulin therapy targeting plasma glucose 110–149 mg/dl (6.1–8.3mmol/l). (2C) 3.3.2: We suggest achieving a total energy intake of 20–30 kcal/kg/d in patients with any stage of AKI. (2C) 3.3.3: We suggest to avoid restriction of protein intake with the aim of preventing or delaying initiation of RRT. (2D) 3.3.4: We suggest administering 0.8–1.0 g/kg/d of protein in noncatabolic AKI patients without need for dialysis (2D), 1.0–1.5 g/kg/d in patients with AKI on RRT (2D), and up to a maximum of 1.7 g/kg/d in patients on continuous renal replacement therapy (CRRT) and in hypercatabolic patients. (2D) 3.3.5: We suggest providing nutrition preferentially via the enteral route in patients with AKI. (2C) 3.4.1: We recommend not using diuretics to prevent AKI. (1B) 3.4.2: We suggest not using diuretics to treat AKI, except in the management of volume overload. (2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI.
+Prospective randomized trial to assess caloric and protein needs of critically Ill, anuric, ventilated patients requiring continuous renal replacement therapy. Nutrition 2003; 19: 909–916. 178. Fiaccadori E, Maggiore U, Giacosa R, et al. Enteral nutrition in patients with acute renal failure. Kidney Int 2004; 65: 999–1008. 179. Caldwell MD, Kennedy-Caldwell C. Normal nutritional requirements. Surg Clin North Am 1981; 61: 489–507. 180. Zappitelli M, Goldstein SL, Symons JM, et al. Protein and calorie prescription for children and young adults receiving continuous renal replacement therapy: a report from the Prospective Pediatric Continuous Renal Replacement Therapy Registry Group. Crit Care Med 2008; 36: 3239–3245. 181. Mehta RL, Pascual MT, Soroko S, et al. Diuretics, mortality, and nonrecovery of renal function in acute renal failure. JAMA 2002; 288: 2547–2553. 182. Uchino S, Doig GS, Bellomo R, et al. Diuretics and mortality in acute renal failure. Crit Care Med 2004; 32: 1669–1677. 183. Karajala V, Mansour W, Kellum JA. Diuretics in acute kidney injury. Minerva Anestesiol 2009; 75: 251–257. 184. Ponto LL, Schoenwald RD. Furosemide (frusemide). A pharmacokinetic/ pharmacodynamic review (Part II).
 
-**`pmid_23499048_p12_t1_c0`** *(text)*
+**`pmid_23499048_p130_t3_c0`** *(text)*
 
-1: We suggest that a single dose of theophylline may be given in neonates with severe perinatal asphyxia, who are at high risk of AKI. (2B) 3.8.1: We suggest not using aminoglycosides for the treatment of infections unless no suitable, less nephrotoxic, therapeutic alternatives are available. (2A) 3.8.2: We suggest that, in patients with normal kidney function in steady state, aminoglycosides are administered as a single dose daily rather than multiple-dose daily treatment regimens. (2B) 3.8.3: We recommend monitoring aminoglycoside drug levels when treatment with multiple daily dosing is used for more than 24 hours. (1A) 3.8.4: We suggest monitoring aminoglycoside drug levels when treatment with single-daily dosing is used for more than 48 hours. (2C) 3.8.5: We suggest using topical or local applications of aminoglycosides (e.g., respiratory aerosols, instilled antibiotic beads), rather than i.v. application, when feasible and suitable. (2B) 3.8.6: We suggest using lipid formulations of amphotericin B rather than conventional formulations of amphotericin B. (2A) 3.8.7: In the treatment of systemic mycoses or parasitic infections, we recommend using azole antifungal agents and/or the echinocandins rather than conventional amphotericin B, if equal therapeutic efﬁcacy can be assumed.
+Effect of furosemide on renal blood ﬂow in the conscious dog. Proc Soc Exp Biol Med 1970; 133: 513–515. 188. Cantarovich F, Rangoonwala B, Lorenz H, et al. High-dose furosemide for established ARF: a prospective, randomized, double-blind, placebo- controlled, multicenter trial. Am J Kidney Dis 2004; 44: 402–409. 189. Lassnigg A, Donner E, Grubhofer G, et al. Lack of renoprotective effects of dopamine and furosemide during cardiac surgery. J Am Soc Nephrol 2000; 11: 97–104. 190. Lombardi R, Ferreiro A, Servetto C. Renal function after cardiac surgery: adverse effect of furosemide. Ren Fail 2003; 25: 775–786. 191. Solomon R, Werner C, Mann D, et al. Effects of saline, mannitol, and furosemide to prevent acute decreases in renal function induced by radiocontrast agents. N Engl J Med 1994; 331: 1416–1420. 192. Ho KM, Sheridan DJ. Meta-analysis of frusemide to prevent or treat acute renal failure. BMJ 2006; 333: 420. 193. Ho KM, Power BM. Beneﬁts and risks of furosemide in acute kidney injury. Anaesthesia 2010; 65: 283–293. 194. Hager B, Betschart M, Krapf R. Effect of postoperative intravenous loop diuretic on renal function after major surgery. Schweiz Med Wochenschr 1996; 126: 666–673.
 
-**`pmid_23499048_p12_t2_c0`** *(text)*
+**`pmid_23499048_p130_t4_c0`** *(text)*
 
-Kidney International Supplements (2012) 2, 8–12 9 summary of recommendation statements
+Discontinuation of continuous renal replacement therapy: a post hoc analysis of a prospective multicenter observational study. Crit Care Med 2009; 37: 2576–2582. 197. Weisberg LS, Kurnik PB, Kurnik BR. Risk of radiocontrast nephropathy in patients with and without diabetes mellitus. Kidney Int 1994; 45: 259–265. 198. Schetz M. Should we use diuretics in acute renal failure? Best Pract Res Clin Anaesthesiol 2004; 18: 75–89. 199. Yallop KG, Sheppard SV, Smith DC. The effect of mannitol on renal function following cardio-pulmonary bypass in patients with normal pre-operative creatinine. Anaesthesia 2008; 63: 576–582. 200. Smith MN, Best D, Sheppard SV, et al. The effect of mannitol on renal function after cardiopulmonary bypass in patients with established renal dysfunction. Anaesthesia 2008; 63: 701–704. 201. Schnuelle P, Johannes van der Woude F. Perioperative ﬂuid management in renal transplantation: a narrative review of the literature. Transpl Int 2006; 19: 947–959. 202. van Valenberg PL, Hoitsma AJ, Tiggeler RG, et al. Mannitol as an indispensable constituent of an intraoperative hydration protocol for the prevention of acute renal failure after renal cadaveric transplantation.
 
-**`pmid_23499048_p12_t0_c1`** *(text)*
+**`pmid_23499048_p130_t5_c0`** *(text)*
 
-(2D) 3.3.5: We suggest providing nutrition preferentially via the enteral route in patients with AKI. (2C) 3.4.1: We recommend not using diuretics to prevent AKI. (1B) 3.4.2: We suggest not using diuretics to treat AKI, except in the management of volume overload. (2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI. (1A) 3.5.2: We suggest not using fenoldopam to prevent or treat AKI. (2C) 3.5.3: We suggest not using atrial natriuretic peptide (ANP) to prevent (2C) or treat (2B) AKI. 3.6.1: We recommend not using recombinant human (rh)IGF-1 to prevent or treat AKI. (1B) 3.7.
+Management of crush-related injuries after disasters. N Engl J Med 2006; 354: 1052–1063. 206. Vanholder R, Sever MS, Erek E, et al. Rhabdomyolysis. J Am Soc Nephrol 2000; 11: 1553–1561. 207. Bellomo R, Chapman M, Finfer S, et al. Low-dose dopamine in patients with early renal dysfunction: a placebo-controlled randomised trial. Australian and New Zealand Intensive Care Society (ANZICS) Clinical Trials Group. Lancet 2000; 356: 2139–2143. 208. Murray PT. Use of dopaminergic agents for renoprotection in the ICU. Yearbook of Intensive Care and Emergency Medicine. Springer-Verlag: Berlin, Germany, 2003: 637–648. 209. Lauschke A, Teichgraber UK, Frei U, et al. ‘Low-dose’ dopamine worsens renal perfusion in patients with acute renal failure. Kidney Int 2006; 69: 1669–1674. 210. Kellum JA, M Decker J. Use of dopamine in acute renal failure: a meta- analysis. Crit Care Med 2001; 29: 1526–1531. 211. Marik PE. Low-dose dopamine: a systematic review. Intensive Care Med 2002; 28: 877–883. 212. Friedrich JO, Adhikari N, Herridge MS, et al. Meta-analysis: low-dose dopamine increases urine output but does not prevent renal dysfunction or death. Ann Intern Med 2005; 142: 510–524. 213. Murray PT. Fenoldopam: renal-dose dopamine redux?
 
-**`pmid_23499048_p12_t1_c1`** *(text)*
+**`pmid_23499048_p130_t6_c0`** *(text)*
 
-(2B) 3.8.6: We suggest using lipid formulations of amphotericin B rather than conventional formulations of amphotericin B. (2A) 3.8.7: In the treatment of systemic mycoses or parasitic infections, we recommend using azole antifungal agents and/or the echinocandins rather than conventional amphotericin B, if equal therapeutic efﬁcacy can be assumed. (1A) Figure 4 | Stage-based management of AKI. Shading of boxes indicates priority of action—solid shading indicates actions that are equally appropriate at all stages whereas graded shading indicates increasing priority as intensity increases. AKI, acute kidney injury; ICU, intensive- care unit.
+Fenoldopam reduces the need for renal replacement therapy and in-hospital death in cardiovascular surgery: a meta-analysis. J Cardiothorac Vasc Anesth 2008; 22: 27–33. Kidney International Supplements (2012) 2, 124–138 127 references
 
-**`pmid_23499048_p12_t0_c2`** *(text)*
+**`pmid_23499048_p130_t0_c1`** *(text)*
 
-(2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI. (1A) 3.5.2: We suggest not using fenoldopam to prevent or treat AKI. (2C) 3.5.3: We suggest not using atrial natriuretic peptide (ANP) to prevent (2C) or treat (2B) AKI. 3.6.1: We recommend not using recombinant human (rh)IGF-1 to prevent or treat AKI. (1B) 3.7.
+Proc Nutr Soc 2007; 66: 16–24. 167. Scheinkestel CD, Adams F, Mahony L, et al. Impact of increasing parenteral protein loads on amino acid levels and balance in critically ill anuric patients on continuous renal replacement therapy. Nutrition 2003; 19: 733–740. 168. Bellomo R, Tan HK, Bhonagiri S, et al. High protein intake during continuous hemodiaﬁltration: impact on amino acids and nitrogen balance. Int J Artif Organs 2002; 25: 261–268. 169. Druml W. Metabolic aspects of continuous renal replacement therapies. Kidney Int Suppl 1999: S56–61. 170.
 
-**`pmid_23499048_p12_t1_c2`** *(text)*
+**`pmid_23499048_p130_t1_c1`** *(text)*
 
-(1A) Figure 4 | Stage-based management of AKI. Shading of boxes indicates priority of action—solid shading indicates actions that are equally appropriate at all stages whereas graded shading indicates increasing priority as intensity increases. AKI, acute kidney injury; ICU, intensive- care unit.
+Gastric emptying of a liquid meal in intensive care unit patients (abstr). Gastroenterology 1998; 114: A865. 175. Fiaccadori E, Maggiore U, Clima B, et al. Incidence, risk factors, and prognosis of gastrointestinal hemorrhage complicating acute renal failure. Kidney Int 2001; 59: 1510–1519. 176. Metnitz PG, Krenn CG, Steltzer H, et al. Effect of acute renal failure requiring renal replacement therapy on outcome in critically ill patients. Crit Care Med 2002; 30: 2051–2058. 177. Scheinkestel CD, Kar L, Marshall K, et al.
+
+**`pmid_23499048_p130_t2_c1`** *(text)*
+
+183. Karajala V, Mansour W, Kellum JA. Diuretics in acute kidney injury. Minerva Anestesiol 2009; 75: 251–257. 184. Ponto LL, Schoenwald RD. Furosemide (frusemide). A pharmacokinetic/ pharmacodynamic review (Part II). Clin Pharmacokinet 1990; 18: 460–471. 185. Ponto LL, Schoenwald RD. Furosemide (frusemide). A pharmacokinetic/ pharmacodynamic review (Part I). Clin Pharmacokinet 1990; 18: 381–408. 186. Ludens JH, Hook JB, Brody MJ, et al. Enhancement of renal blood ﬂow by furosemide. J Pharmacol Exp Ther 1968; 163: 456–460. 187. Ludens JH, Williamson HE.
+
+**`pmid_23499048_p130_t3_c1`** *(text)*
+
+Ho KM, Power BM. Beneﬁts and risks of furosemide in acute kidney injury. Anaesthesia 2010; 65: 283–293. 194. Hager B, Betschart M, Krapf R. Effect of postoperative intravenous loop diuretic on renal function after major surgery. Schweiz Med Wochenschr 1996; 126: 666–673. 195. van der Voort PH, Boerma EC, Koopmans M, et al. Furosemide does not improve renal recovery after hemoﬁltration for acute renal failure in critically ill patients: a double blind randomized controlled trial. Crit Care Med 2009; 37: 533–538. 196. Uchino S, Bellomo R, Morimatsu H, et al.
+
+**`pmid_23499048_p130_t4_c1`** *(text)*
+
+202. van Valenberg PL, Hoitsma AJ, Tiggeler RG, et al. Mannitol as an indispensable constituent of an intraoperative hydration protocol for the prevention of acute renal failure after renal cadaveric transplantation. Transplantation 1987; 44: 784–788. 203. Weimar W, Geerlings W, Bijnen AB, et al. A controlled study on the effect of mannitol on immediate renal function after cadaver donor kidney transplantation. Transplantation 1983; 35: 99–101. 204. Better OS, Rubinstein I, Winaver JM, et al. Mannitol therapy revisited (1940–1997). Kidney Int 1997; 52: 886–894. 205. Sever MS, Vanholder R, Lameire N.
+
+**`pmid_23499048_p130_t5_c1`** *(text)*
+
+212. Friedrich JO, Adhikari N, Herridge MS, et al. Meta-analysis: low-dose dopamine increases urine output but does not prevent renal dysfunction or death. Ann Intern Med 2005; 142: 510–524. 213. Murray PT. Fenoldopam: renal-dose dopamine redux? Crit Care Med 2006; 34: 910–911. 214. Cogliati AA, Vellutini R, Nardini A, et al. Fenoldopam infusion for renal protection in high-risk cardiac surgery patients: a randomized clinical study. J Cardiothorac Vasc Anesth 2007; 21: 847–850. 215. Landoni G, Biondi-Zoccai GG, Marino G, et al.
+
+**`pmid_23499048_p130_t0_c2`** *(text)*
+
+Bellomo R, Tan HK, Bhonagiri S, et al. High protein intake during continuous hemodiaﬁltration: impact on amino acids and nitrogen balance. Int J Artif Organs 2002; 25: 261–268. 169. Druml W. Metabolic aspects of continuous renal replacement therapies. Kidney Int Suppl 1999: S56–61. 170.
+
+**`pmid_23499048_p130_t1_c2`** *(text)*
+
+176. Metnitz PG, Krenn CG, Steltzer H, et al. Effect of acute renal failure requiring renal replacement therapy on outcome in critically ill patients. Crit Care Med 2002; 30: 2051–2058. 177. Scheinkestel CD, Kar L, Marshall K, et al.
+
+**`pmid_23499048_p130_t2_c2`** *(text)*
+
+Furosemide (frusemide). A pharmacokinetic/ pharmacodynamic review (Part I). Clin Pharmacokinet 1990; 18: 381–408. 186. Ludens JH, Hook JB, Brody MJ, et al. Enhancement of renal blood ﬂow by furosemide. J Pharmacol Exp Ther 1968; 163: 456–460. 187. Ludens JH, Williamson HE.
+
+**`pmid_23499048_p130_t3_c2`** *(text)*
+
+van der Voort PH, Boerma EC, Koopmans M, et al. Furosemide does not improve renal recovery after hemoﬁltration for acute renal failure in critically ill patients: a double blind randomized controlled trial. Crit Care Med 2009; 37: 533–538. 196. Uchino S, Bellomo R, Morimatsu H, et al.
+
+**`pmid_23499048_p130_t4_c2`** *(text)*
+
+Weimar W, Geerlings W, Bijnen AB, et al. A controlled study on the effect of mannitol on immediate renal function after cadaver donor kidney transplantation. Transplantation 1983; 35: 99–101. 204. Better OS, Rubinstein I, Winaver JM, et al. Mannitol therapy revisited (1940–1997). Kidney Int 1997; 52: 886–894. 205. Sever MS, Vanholder R, Lameire N.
+
+**`pmid_23499048_p130_t5_c2`** *(text)*
+
+Cogliati AA, Vellutini R, Nardini A, et al. Fenoldopam infusion for renal protection in high-risk cardiac surgery patients: a randomized clinical study. J Cardiothorac Vasc Anesth 2007; 21: 847–850. 215. Landoni G, Biondi-Zoccai GG, Marino G, et al.
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 

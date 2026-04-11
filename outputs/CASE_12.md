@@ -1,43 +1,101 @@
-# Question
+## Questions
 
-In a 72-year-old male with acute kidney injury onset post-surgery, how should we manage treatment considering his comorbidities of myocardial infarction, congestive heart failure, peripheral vascular disease, cerebrovascular disease, and moderate-to-severe renal disease, especially in relation to his current use of vasopressors, diuretics, and ACEI/ARB, given his elevated hemoglobin and net fluid balance?
+Given the development of acute kidney injury (AKI) in a 72-year-old white male patient with comorbidities including myocardial infarction, congestive heart failure, peripheral vascular disease, cerebrovascular disease, moderate/severe renal disease, hypertension, chronic kidney disease, and coagulopathy, and currently on vasopressor, diuretic, and ACEI/ARB medications, what evidence-based strategies are recommended for managing AKI while addressing potential contraindications and drug interactions related to his cardiac and renal comorbidities?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
 
 ---
 
-## Answer
+## Summary
 
-**Management of Acute Kidney Injury (AKI) in a 72-Year-Old Post-Surgery Patient with Comorbidities**
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-**Summary:**
-A 72-year-old male with AKI, following a surgical procedure, presents with multiple comorbidities: myocardial infarction, congestive heart failure, peripheral vascular disease, cerebrovascular disease, and moderate-to-severe renal disease. The patient is currently on vasopressors, diuretics, and ACEI/ARB, with elevated hemoglobin and net fluid imbalance. Management should focus on maintaining hemodynamic stability, mitigating further kidney damage, and addressing comorbidities.
+```
+CASE ID: CASE_12
+STAY ID: 32139180
+============================================================
+PATIENT CLINICAL PROFILE:
 
-**Management Options:**
+PATIENT DEMOGRAPHICS:
+  Age: 72 | Sex: Male | Race: WHITE
+  Insurance: Medicare | Admission type: SURGICAL SAME DAY ADMISSION
 
-1. **Discontinue Nephrotoxic Agents and Adjust Current Medications:**
-   - It is crucial to discontinue or adjust doses of nephrotoxic medications, including ACEIs/ARBs if they exacerbate renal impairment. Evaluating vasopressor use is also vital, given their potential impact on renal perfusion. Careful adjustment is needed due to underlying cardiovascular conditions.
-   - **Contraindications:** Rapid withdrawal, especially of ACEI/ARB, may destabilize heart failure management. Adjust carefully.
-   - **Supporting Evidence:** The KDIGO guidelines recommend discontinuing nephrotoxic agents when feasible, monitoring creatinine and urine output, and adjusting drug dosing [pmid_23499048_p12].
+AKI ONSET:
+  Baseline creatinine: 1.30 mg/dL
+  Hours from ICU admission to AKI onset: 41.0h
 
-2. **Volume and Perfusion Pressure Management:**
-   - Ensure optimal volume status and perfusion pressure. Adjust diuretics solely for managing volume overload but not as a means to enhance kidney function.
-   - **Contraindications:** Excessive volume loading or aggressive diuresis can worsen heart failure or cause fluid imbalance.
-   - **Supporting Evidence:** KDIGO advises against routine use of diuretics for AKI except for volume overload [pmid_23499048_p12].
+CREATININE (ICU window, intime → onset), n=4 creatinine measurements in this window:
+  First     : 1.10 mg/dL
+  Min       : 1.10 mg/dL
+  Max       : 1.60 mg/dL
+  At onset  : 1.60 mg/dL
+  Delta      : +0.30 mg/dL
+  Ratio      : 1.23x baseline
+  Slope      : +0.0137 mg/dL/h
 
-3. **Renal Replacement Therapy (RRT) Consideration:**
-   - Consider RRT if no improvement is observed with conservative measures and if there’s severe fluid imbalance or electrolyte disturbances; crucial if life-threatening complications arise.
-   - **Contraindications:** Early initiation if not clinically indicated can lead to complications without benefit.
-   - **Supporting Evidence:** RRT is recommended based on severity and stage of AKI [pmid_23499048_p12].
+LAB VALUES (last value before onset):
+  BUN            : last=27.0 mg/dL  [min=20.0, max=27.0]  (n=4)
+  POTASSIUM      : last=3.9 mEq/L  [min=3.8, max=4.4]  (n=3)
+  BICARBONATE    : last=22.0 mEq/L  [min=20.0, max=22.0]  (n=4)
+  HEMOGLOBIN     : last=7.8 g/dL  [min=7.8, max=11.5]  (n=4)
 
-**Conclusion:**
-Management of AKI in this patient should prioritize careful medication review and dose adjustments to mitigate nephrotoxicity, alongside ensuring adequate volume and perfusion management. RRT should be reserved for cases where conservative management fails or if immediate threats to life are identified. Consulting with a nephrologist and cardiologist would be beneficial to align treatments with the patient’s complex comorbid profile.
+VITAL SIGNS (ICU window):
+  MAP   : mean=71.7 mmHg  [min=47.0, max=91.0]  last=57.0  last6h=64.0  (n=44)
+  HR    : mean=80.1 bpm  [min=65.0, max=98.0]  last=89.0  last6h=87.6  (n=44)
+  SPO2  : mean=94.4 %  [min=91.0, max=100.0]  last=94.0  last6h=92.4  (n=44)
+  RR    : mean=21.8 /min  [min=11.0, max=35.0]  last=23.0  last6h=23.6  (n=44) ⚠ ELEVATED
+  TEMP  : mean=37.1 °C  [min=36.5, max=37.8]  last=37.8  last6h=37.8  (n=9)
 
-**References:**
+URINE OUTPUT, n=53 urine-output entries:
+  Total UO   : 2887 mL
+  Rate       : 70.4 mL/h
+  Last 6h    : 205 mL
+  Last 12h   : 560 mL
+  Last 24h   : 1640 mL
 
-- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. [pmid_23499048_p12]
+FLUID BALANCE:
+  Total input  : 7701 mL
+  Net balance  : +4814 mL
+
+COMORBIDITIES (Charlson score: 6):
+  + Myocardial infarction
+  + Congestive heart failure
+  + Peripheral vascular disease
+  + Cerebrovascular disease
+  + Moderate/severe renal disease
+  Additional flags: Hypertension, Chronic kidney disease, Coagulopathy
+
+PRIOR MEDICATIONS (before current admission):
+  None recorded
+
+CURRENT MEDICATIONS (active at AKI onset):
+  Vasopressor, Diuretic, ACEI/ARB
+
+OTHER:
+  BMI            : 33.1
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+The patient presents with acute kidney injury (AKI) compounded by multiple cardiovascular and renal comorbidities, including myocardial infarction, congestive heart failure, and chronic kidney disease, alongside current medications such as vasopressors, diuretics, and ACEI/ARBs. These factors necessitate careful consideration of management strategies to avoid exacerbating renal damage or inducing adverse interactions. The available evidence outlines key interventions for managing AKI in such complex clinical settings.
+
+1. **Renal Replacement Therapy (RRT):** For this patient, initiating renal replacement therapy should be considered in cases of life-threatening changes in fluid, electrolyte, and acid-base balance. It is crucial to evaluate the broader clinical context and laboratory trends rather than relying solely on blood urea nitrogen and creatinine thresholds before starting RRT [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)]. Given his chronic kidney disease and coagulopathy, careful monitoring for bleeding before initiating RRT is essential, and anticoagulation decisions during RRT must account for his increased bleeding risk. Regional citrate anticoagulation is preferred unless contraindicated, such as in patients with severe liver impairment or high lactate levels [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)].
+
+2. **Intravenous Volume Expansion:** Administering intravenous isotonic crystalloids, such as sodium chloride or sodium bicarbonate, is endorsed to support kidney function and manage acute kidney injury, particularly in patients at risk for or currently experiencing a decline in renal function [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p2)]. This approach should be applied with caution due to the patient's congestive heart failure, where fluid overload could worsen the condition, necessitating balanced volume management.
+
+3. **Careful Assessment and Adjustment of Medications:** This patient is on ACEI/ARBs, which should be reviewed in the context of acute kidney injury. These agents can potentially exacerbate AKI by reducing renal perfusion—an important consideration given his other conditions [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p3)]. The use of diuretics to enhance kidney function recovery is not recommended, emphasizing the importance of evaluating and potentially adjusting these treatments in light of his AKI [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)].
+
+If the first option of RRT is unsuitable due to a lack of immediate life-threatening electrolyte and fluid imbalances or contraindications to anticoagulation, volume expansion should be the next step, keeping in mind the patient's cardiac status. If fluid management is complex due to heart failure risks, reevaluation of current medications, such as withholding or adjusting ACEI/ARBs temporarily, could be considered under close medical supervision.
+
+### References
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13):** Discusses RRT initiation criteria, importance of evaluating clinical trends, and anticoagulation management in AKI.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p2):** Recommends volume expansion for AKI management.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p3):** Notes considerations for medication adjustments in AKI, especially concerning ACEI/ARBs and diuretics.
 
 ---
 
@@ -45,103 +103,89 @@ Management of AKI in this patient should prioritize careful medication review an
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
 VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOURNAL OF THE INTERNATIONAL SOCIETY OF NEPHROLOGY KDIGO Clinical Practice Guideline for Acute Kidney Injury
 
-### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p12 ===
+### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p13 ===
 
-**`pmid_23499048_p12_fig_0_c0`** *(image)*
+**`pmid_23499048_p13_t0_c0`** *(text)*
 
-![page_12_fig_0.png](../data/raw/pmid_23499048/page_12_fig_0.png)
+3.9.1: We suggest that off-pump coronary artery bypass graft surgery not be selected solely for the purpose of reducing perioperative AKI or need for RRT. (2C) 3.9.2: We suggest not using NAC to prevent AKI in critically ill patients with hypotension. (2D) 3.9.3: We recommend not using oral or i.v. NAC for prevention of postsurgical AKI. (1A) Section 4: Contrast-induced AKI 4.1: Deﬁne and stage AKI after administration of intravascular contrast media as per Recommendations 2.1.1–2.1.2. (Not Graded) 4.1.1: In individuals who develop changes in kidney function after administration of intravascular contrast media, evaluate for CI-AKI as well as for other possible causes of AKI. (Not Graded) 4.2.1: Assess the risk for CI-AKI and, in particular, screen for pre-existing impairment of kidney function in all patients who are considered for a procedure that requires intravascular (i.v. or i.a.) administration of iodinated contrast medium. (Not Graded) 4.2.2: Consider alternative imaging methods in patients at increased risk for CI-AKI. (Not Graded) 4.3.1: Use the lowest possible dose of contrast medium in patients at risk for CI-AKI. (Not Graded) 4.3.2: We recommend using either iso-osmolar or low-osmolar iodinated contrast media, rather than high-osmolar iodinated contrast media in patients at increased risk of CI-AKI.
 
-**OCR text**
+**`pmid_23499048_p13_t1_c0`** *(text)*
 
-```
-AKIStage HighRisk 2 3 Discontinue all nephrotoxic agents when possible Ensurevolumestatus and perfusionpressure Consider functional hemodynamicmonitoring Monitor Serum creatinine and urine output Avoid hyperglycemia Consideralternativestoradiocontrastprocedures Non-invasivediagnosticworkup Considerinvasive diagnosticworkup Checkforchanges in drug dosing Consider Renal Replacement Therapy ConsiderICuadmission Avoid subclavian catheters ifpossible
-```
+2: We recommend not using oral ﬂuids alone in patients at increased risk of CI-AKI. (1C) 4.4.3: We suggest using oral NAC, together with i.v. isotonic crystalloids, in patients at increased risk of CI-AKI. (2D) 4.4.4: We suggest not using theophylline to prevent CI-AKI. (2C) 4.4.5: We recommend not using fenoldopam to prevent CI-AKI. (1B) 4.5.1: We suggest not using prophylactic intermittent hemodialysis (IHD) or hemoﬁltration (HF) for contrast-media removal in patients at increased risk for CI-AKI. (2C) Section 5: Dialysis Interventions for Treatment of AKI 5.1.1: Initiate RRT emergently when life-threatening changes in ﬂuid, electrolyte, and acid-base balance exist. (Not Graded) 5.1.2: Consider the broader clinical context, the presence of conditions that can be modiﬁed with RRT, and trends of laboratory tests—rather than single BUN and creatinine thresholds alone—when making the decision to start RRT. (Not Graded) 5.2.1: Discontinue RRTwhen it is no longer required, either because intrinsic kidney function has recovered to the point that it is adequate to meet patient needs, or because RRT is no longer consistent with the goals of care. (Not Graded) 5.2.2: We suggest not using diuretics to enhance kidney function recovery, or to reduce the duration or frequency of RRT.
 
-**`pmid_23499048_p12_t0_c0`** *(text)*
+**`pmid_23499048_p13_t2_c0`** *(text)*
 
-3.1.3: We suggest using protocol-based management of hemodynamic and oxygenation parameters to prevent development or worsening of AKI in high-risk patients in the perioperative setting (2C) or in patients with septic shock (2C). 3.3.1: In critically ill patients, we suggest insulin therapy targeting plasma glucose 110–149 mg/dl (6.1–8.3mmol/l). (2C) 3.3.2: We suggest achieving a total energy intake of 20–30 kcal/kg/d in patients with any stage of AKI. (2C) 3.3.3: We suggest to avoid restriction of protein intake with the aim of preventing or delaying initiation of RRT. (2D) 3.3.4: We suggest administering 0.8–1.0 g/kg/d of protein in noncatabolic AKI patients without need for dialysis (2D), 1.0–1.5 g/kg/d in patients with AKI on RRT (2D), and up to a maximum of 1.7 g/kg/d in patients on continuous renal replacement therapy (CRRT) and in hypercatabolic patients. (2D) 3.3.5: We suggest providing nutrition preferentially via the enteral route in patients with AKI. (2C) 3.4.1: We recommend not using diuretics to prevent AKI. (1B) 3.4.2: We suggest not using diuretics to treat AKI, except in the management of volume overload. (2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI.
+1: We recommend using anticoagulation during RRT in AKI if a patient does not have an increased bleeding risk or impaired coagulation and is not already receiving systemic anticoagulation. (1B) 5.3.2: For patients without an increased bleeding risk or impaired coagulation and not already receiving effective systemic anticoagulation, we suggest the following: 5.3.2.1: For anticoagulation in intermittent RRT, we recommend using either unfractionated or low-molecular- weight heparin, rather than other anticoagulants. (1C) 5.3.2.2: For anticoagulation in CRRT, we suggest using regional citrate anticoagulation rather than heparin in patients who do not have contraindications for citrate. (2B) 5.3.2.3: For anticoagulation during CRRT in patients who have contraindications for citrate, we suggest using either unfractionated or low-molecular-weight heparin, rather than other anticoagulants.
 
-**`pmid_23499048_p12_t1_c0`** *(text)*
+**`pmid_23499048_p13_t3_c0`** *(text)*
 
-1: We suggest that a single dose of theophylline may be given in neonates with severe perinatal asphyxia, who are at high risk of AKI. (2B) 3.8.1: We suggest not using aminoglycosides for the treatment of infections unless no suitable, less nephrotoxic, therapeutic alternatives are available. (2A) 3.8.2: We suggest that, in patients with normal kidney function in steady state, aminoglycosides are administered as a single dose daily rather than multiple-dose daily treatment regimens. (2B) 3.8.3: We recommend monitoring aminoglycoside drug levels when treatment with multiple daily dosing is used for more than 24 hours. (1A) 3.8.4: We suggest monitoring aminoglycoside drug levels when treatment with single-daily dosing is used for more than 48 hours. (2C) 3.8.5: We suggest using topical or local applications of aminoglycosides (e.g., respiratory aerosols, instilled antibiotic beads), rather than i.v. application, when feasible and suitable. (2B) 3.8.6: We suggest using lipid formulations of amphotericin B rather than conventional formulations of amphotericin B. (2A) 3.8.7: In the treatment of systemic mycoses or parasitic infections, we recommend using azole antifungal agents and/or the echinocandins rather than conventional amphotericin B, if equal therapeutic efﬁcacy can be assumed.
+(2C) 10 Kidney International Supplements (2012) 2, 8–12 summary of recommendation statements
 
-**`pmid_23499048_p12_t2_c0`** *(text)*
+**`pmid_23499048_p13_t0_c1`** *(text)*
 
-Kidney International Supplements (2012) 2, 8–12 9 summary of recommendation statements
+(Not Graded) 4.2.2: Consider alternative imaging methods in patients at increased risk for CI-AKI. (Not Graded) 4.3.1: Use the lowest possible dose of contrast medium in patients at risk for CI-AKI. (Not Graded) 4.3.2: We recommend using either iso-osmolar or low-osmolar iodinated contrast media, rather than high-osmolar iodinated contrast media in patients at increased risk of CI-AKI. (1B) 4.4.1: We recommend i.v. volume expansion with either isotonic sodium chloride or sodium bicarbonate solutions, rather than no i.v. volume expansion, in patients at increased risk for CI-AKI. (1A) 4.4.
 
-**`pmid_23499048_p12_t0_c1`** *(text)*
+**`pmid_23499048_p13_t1_c1`** *(text)*
 
-(2D) 3.3.5: We suggest providing nutrition preferentially via the enteral route in patients with AKI. (2C) 3.4.1: We recommend not using diuretics to prevent AKI. (1B) 3.4.2: We suggest not using diuretics to treat AKI, except in the management of volume overload. (2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI. (1A) 3.5.2: We suggest not using fenoldopam to prevent or treat AKI. (2C) 3.5.3: We suggest not using atrial natriuretic peptide (ANP) to prevent (2C) or treat (2B) AKI. 3.6.1: We recommend not using recombinant human (rh)IGF-1 to prevent or treat AKI. (1B) 3.7.
+(Not Graded) 5.1.2: Consider the broader clinical context, the presence of conditions that can be modiﬁed with RRT, and trends of laboratory tests—rather than single BUN and creatinine thresholds alone—when making the decision to start RRT. (Not Graded) 5.2.1: Discontinue RRTwhen it is no longer required, either because intrinsic kidney function has recovered to the point that it is adequate to meet patient needs, or because RRT is no longer consistent with the goals of care. (Not Graded) 5.2.2: We suggest not using diuretics to enhance kidney function recovery, or to reduce the duration or frequency of RRT. (2B) 5.3.1: In a patient with AKI requiring RRT, base the decision to use anticoagulation for RRT on assessment of the patient’s potential risks and beneﬁts from anticoagulation (see Figure 17). (Not Graded) 5.3.1.
 
-**`pmid_23499048_p12_t1_c1`** *(text)*
+**`pmid_23499048_p13_t2_c1`** *(text)*
 
-(2B) 3.8.6: We suggest using lipid formulations of amphotericin B rather than conventional formulations of amphotericin B. (2A) 3.8.7: In the treatment of systemic mycoses or parasitic infections, we recommend using azole antifungal agents and/or the echinocandins rather than conventional amphotericin B, if equal therapeutic efﬁcacy can be assumed. (1A) Figure 4 | Stage-based management of AKI. Shading of boxes indicates priority of action—solid shading indicates actions that are equally appropriate at all stages whereas graded shading indicates increasing priority as intensity increases. AKI, acute kidney injury; ICU, intensive- care unit.
+(1C) 5.3.2.2: For anticoagulation in CRRT, we suggest using regional citrate anticoagulation rather than heparin in patients who do not have contraindications for citrate. (2B) 5.3.2.3: For anticoagulation during CRRT in patients who have contraindications for citrate, we suggest using either unfractionated or low-molecular-weight heparin, rather than other anticoagulants.
 
-**`pmid_23499048_p12_t0_c2`** *(text)*
+**`pmid_23499048_p13_t0_c2`** *(text)*
 
-(2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI. (1A) 3.5.2: We suggest not using fenoldopam to prevent or treat AKI. (2C) 3.5.3: We suggest not using atrial natriuretic peptide (ANP) to prevent (2C) or treat (2B) AKI. 3.6.1: We recommend not using recombinant human (rh)IGF-1 to prevent or treat AKI. (1B) 3.7.
+(Not Graded) 4.3.2: We recommend using either iso-osmolar or low-osmolar iodinated contrast media, rather than high-osmolar iodinated contrast media in patients at increased risk of CI-AKI. (1B) 4.4.1: We recommend i.v. volume expansion with either isotonic sodium chloride or sodium bicarbonate solutions, rather than no i.v. volume expansion, in patients at increased risk for CI-AKI. (1A) 4.4.
 
-**`pmid_23499048_p12_t1_c2`** *(text)*
+**`pmid_23499048_p13_t1_c2`** *(text)*
 
-(1A) Figure 4 | Stage-based management of AKI. Shading of boxes indicates priority of action—solid shading indicates actions that are equally appropriate at all stages whereas graded shading indicates increasing priority as intensity increases. AKI, acute kidney injury; ICU, intensive- care unit.
+(Not Graded) 5.2.2: We suggest not using diuretics to enhance kidney function recovery, or to reduce the duration or frequency of RRT. (2B) 5.3.1: In a patient with AKI requiring RRT, base the decision to use anticoagulation for RRT on assessment of the patient’s potential risks and beneﬁts from anticoagulation (see Figure 17). (Not Graded) 5.3.1.
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 

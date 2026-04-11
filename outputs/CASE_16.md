@@ -1,45 +1,103 @@
-# Question
+## Questions
 
-For a 64-year-old male with acute kidney injury (AKI) onset shortly after ICU admission, how should treatment be optimized considering comorbidities including congestive heart failure, COPD, and malignancy, alongside current use of an ACEI/ARB, diuretic, and antibiotic, with historical NSAID use potentially impacting renal function and fluid balance, all within the context of elevated BMI and hypertension?
+In a 64-year-old male with acute kidney injury (AKI) onset within 27.3 hours of ICU admission and pre-existing conditions of myocardial infarction, congestive heart failure, peripheral vascular disease, cerebrovascular disease, COPD, rheumatic disease, and malignancy, how should his current treatment regimen, including ACEI/ARB, diuretics, and antibiotics, be modified considering contraindications and potential nephrotoxicity, given his elevated BUN (41 mg/dL), low SPO2, and fluid overload status?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+- **Vision:** 1 figure(s) as `image_url` (pixels), max=6 | VISION_MAX_EDGE=1536
 
 ---
 
-## Answer
+## Summary
 
-### Summary
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-For a 64-year-old male with acute kidney injury (AKI), comorbidities, and current medication use, optimizing treatment involves addressing nephrotoxicity, fluid balance, and monitoring kidney function. The patient’s acute setting further complicates management due to preexisting congestive heart failure (CHF), chronic obstructive pulmonary disease (COPD), and malignancy, combined with a history of NSAID use, hypertension, and elevated BMI.
+```
+CASE ID: CASE_16
+STAY ID: 32170688
+============================================================
+PATIENT CLINICAL PROFILE:
 
-### Options for Optimization
+PATIENT DEMOGRAPHICS:
+  Age: 64 | Sex: Male | Race: WHITE
+  Insurance: Medicare | Admission type: EW EMER.
 
-1. **Discontinue Nephrotoxic Agents**
-   - **Appropriate**: Immediately stop any nephrotoxic medications to prevent worsening renal function. For this patient, consider discontinuing NSAIDs and reviewing ACEI/ARB usage in the context of hypotension or worsening renal function [Figure 4, pmid_23499048_p12].
-   - **Avoid**: If discontinuation leads to uncontrolled hypertension or cardiac decompensation, continue with cautious monitoring.
-   - **Support**: Recommendations emphasize halting nephrotoxic agents as a universal priority across all AKI stages [Figure 4, pmid_23499048_p12].
+AKI ONSET:
+  Baseline creatinine: 0.70 mg/dL
+  Hours from ICU admission to AKI onset: 27.3h
 
-2. **Volume Status and Perfusion Pressure**
-   - **Appropriate**: Ensure adequate intravascular volume and perfusion pressure, crucial for those with CHF. Avoid excessive fluid administration that may exacerbate heart failure; use diuretics only for volume overload [3.4.2, pmid_23499048_p12].
-   - **Avoid**: Overusing diuretics in the absence of volume overload, as this might further impair renal perfusion.
-   - **Support**: KDIGO guidelines emphasize volume management and avoiding diuretics outside volume overload cases [3.4.2, pmid_23499048_p12].
+CREATININE (ICU window, intime → onset), n=4 creatinine measurements in this window:
+  First     : 0.60 mg/dL
+  Min       : 0.60 mg/dL
+  Max       : 1.00 mg/dL
+  At onset  : 1.00 mg/dL
+  Delta      : +0.30 mg/dL
+  Ratio      : 1.43x baseline
+  Slope      : +0.0166 mg/dL/h
 
-3. **Functional Hemodynamic Monitoring**
-   - **Appropriate**: Utilize functional hemodynamic monitoring to optimize resuscitation efforts, particularly important for managing CHF and potential septic shock, which align with this patient’s ICU setting [3.1.3, pmid_23499048_p12].
-   - **Avoid**: Minimizing monitoring in rapidly changing settings, which could lead to mismanagement of fluid status or perfusion goals.
-   - **Support**: Protocol-based management to prevent AKI progression in critical conditions like CHF [3.1.3, pmid_23499048_p12].
+LAB VALUES (last value before onset):
+  BUN            : last=41.0 mg/dL  [min=20.0, max=41.0]  (n=4)
+  POTASSIUM      : last=4.3 mEq/L  [min=3.8, max=4.3]  (n=4)
+  BICARBONATE    : last=25.0 mEq/L  [min=25.0, max=31.0]  (n=4)
+  HEMOGLOBIN     : last=11.0 g/dL  [min=7.5, max=11.0]  (n=5)
 
-### Conclusion
+VITAL SIGNS (ICU window):
+  MAP   : mean=82.9 mmHg  [min=73.0, max=100.0]  last=83.0  last6h=80.2  (n=33)
+  HR    : mean=91.5 bpm  [min=81.0, max=107.0]  last=107.0  last6h=90.0  (n=52)
+  SPO2  : mean=93.8 %  [min=89.0, max=99.0]  last=90.0  last6h=91.5  (n=50) ⚠ LOW
+  RR    : mean=20.2 /min  [min=14.0, max=27.0]  last=23.0  last6h=20.0  (n=50) ⚠ ELEVATED
+  TEMP  : mean=36.3 °C  [min=35.7, max=36.9]  last=35.9  last6h=36.0  (n=24)
 
-Each treatment approach aligns with KDIGO recommendations to prioritize non-nephrotoxic interventions, careful volume management, and comprehensive monitoring in acute settings. Adjustments are required if contraindications such as hypertension control failure or worsening CHF symptoms arise. Continuous monitoring and adjustment are essential given the complex clinical picture.
+URINE OUTPUT, n=8 urine-output entries:
+  Total UO   : 3740 mL
+  Rate       : 137.0 mL/h
+  Last 6h    : 715 mL
+  Last 12h   : 715 mL
+  Last 24h   : 3740 mL
+
+FLUID BALANCE:
+  Total input  : 5503 mL
+  Net balance  : +1763 mL
+
+COMORBIDITIES (Charlson score: 8):
+  + Myocardial infarction
+  + Congestive heart failure
+  + Peripheral vascular disease
+  + Cerebrovascular disease
+  + COPD
+  + Rheumatic disease
+  + Malignancy
+  Additional flags: Hypertension, Heart failure, Malignancy, Coagulopathy
+
+PRIOR MEDICATIONS (before current admission):
+  ACEI/ARB, Diuretic, NSAID, Statin
+
+CURRENT MEDICATIONS (active at AKI onset):
+  Diuretic, ACEI/ARB, Antibiotic
+
+OTHER:
+  BMI            : 39.2
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+In managing this 64-year-old male with acute kidney injury (AKI) and complex comorbidities, optimizing his treatment regimen involves carefully balancing therapeutic effectiveness with avoidance of nephrotoxic risks.
+
+1. **Discontinue Nephrotoxic Agents**: Given the presence of AKI, stopping or replacing nephrotoxic medications such as ACEIs/ARBs should be considered if feasible, as they can contribute to renal dysfunction. However, discontinuation should be balanced against their role in heart failure management. For antibiotics, avoid nephrotoxic options like aminoglycosides unless absolutely necessary [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)]. 
+
+2. **Manage Fluid Overload with Caution**: Diuretics should not be used to treat AKI except for managing volume overload, which is present in this patient. Careful use of diuretics, such as loop diuretics, can help alleviate fluid overload, keeping in mind renal function should be closely monitored [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+
+3. **Optimize Current Medications and Monitor Dosing**: It's essential to adjust dosing of all medications to the current level of renal function and to avoid worsening kidney injury. Consider the patient’s hemodynamic status and oxygen saturation, prioritize maintaining perfusion pressure, and monitor serum creatinine and urine output closely [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+
+These recommendations align with guidelines that emphasize avoiding further nephrotoxic exposure and managing fluid status, while also ensuring safe use of necessary medications in the setting of AKI. Care should be coordinated with a healthcare provider to tailor treatment to the patient’s evolving clinical status.
 
 ### References
 
-- KDIGO guidelines for volume and perfusion management [3.1.3, 3.4.2, pmid_23499048].
-- KDIGO recommendations on nephrotoxic agent discontinuation [Figure 4, pmid_23499048_p12].
-- Supportive care recommendations in AKI [3.1.3, 3.4.2, pmid_23499048_p12].
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)**: Provides directives on avoiding nephrotoxic agents and managing volume overload in the context of AKI.
 
 ---
 
@@ -47,47 +105,41 @@ Each treatment approach aligns with KDIGO recommendations to prioritize non-neph
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
@@ -135,15 +187,9 @@ Kidney International Supplements (2012) 2, 8–12 9 summary of recommendation st
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 

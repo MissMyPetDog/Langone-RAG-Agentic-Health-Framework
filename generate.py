@@ -3,7 +3,9 @@ End-to-end QA:
 - Retrieve context from real_vectors (BGE) and chunks/linked_chunks
 - Call an LLM via OpenAI API to answer using ONLY that context.
 - Optional --vision: attach figure PNG/JPEG as image_url (model sees pixels), not CLIP vectors.
-- Saved MD Used Sources include table text and markdown images (Preview-friendly paths).
+- Used Sources embeds only helpful figures: cited in sibling text/table for that parent, or substantive OCR
+  (not every image on the same page). Set ALL_RETRIEVED_IMAGES=1 to embed all again. Optional:
+  USED_SOURCES_IMAGE_MIN_OCR (default 90).
 """
 from __future__ import annotations
 
@@ -214,6 +216,87 @@ def _prefer_png_asset_path_if_exists(asset_path: str) -> str:
     return ap
 
 
+def _include_all_retrieved_images() -> bool:
+    return os.environ.get("ALL_RETRIEVED_IMAGES", "").lower() in ("1", "true", "yes")
+
+
+def _sibling_text_table_corpus(
+    cids: List[str], chunk_records: Dict[str, ChunkRecord], skip_cid: str | None = None
+) -> str:
+    """Same-parent text + table chunks (no image OCR) for figure-citation matching."""
+    parts: List[str] = []
+    for xid in cids:
+        if skip_cid is not None and xid == skip_cid:
+            continue
+        rec = chunk_records.get(xid) or {}
+        mod = (rec.get("modality") or "text").strip()
+        if mod == "image":
+            continue
+        t = (rec.get("text") or "").strip()
+        if t:
+            parts.append(t)
+    return "\n".join(parts)
+
+
+def _fig_number_from_image_chunk(cid: str, asset_path: str) -> int | None:
+    for s in (cid or "", asset_path or ""):
+        m = re.search(r"(?i)fig_(\d+)", s)
+        if m:
+            return int(m.group(1))
+    return None
+
+
+def _corpus_mentions_figure(fig_idx: int, corpus: str) -> bool:
+    """True if sibling text likely refers to this figure index (tries N and N+1 for 0-based filenames)."""
+    if fig_idx < 0 or not corpus:
+        return False
+    c = corpus.lower()
+    candidates = {fig_idx, fig_idx + 1}
+    for n in sorted(candidates):
+        if n < 1:
+            continue
+        if re.search(rf"\bfigure\s*{n}\b", c):
+            return True
+        if re.search(rf"\bfig\.?\s*{n}\b", c):
+            return True
+        if re.search(rf"\bfigures?\s*{n}\b", c):
+            return True
+    return False
+
+
+def _ocr_is_substantive_for_embed(ocr: str, min_len: int) -> bool:
+    """Filter masthead/logo OCR and very short captions; keep text-heavy figures."""
+    t = (ocr or "").strip()
+    if len(t) < min_len:
+        return False
+    lower_ratio = sum(1 for ch in t if ch.islower()) / max(len(t), 1)
+    if len(t) < 220 and lower_ratio < 0.04:
+        return False
+    if len(t) < 160 and not re.search(r"\d", t):
+        return bool(re.search(r"\b(vs|patient|mg|ml|day|week|risk|use|recommend|therapy|treatment)\b", t, re.I))
+    return True
+
+
+def _image_worth_embedding_in_report(
+    cid: str,
+    rec: ChunkRecord,
+    sibling_corpus: str,
+) -> bool:
+    """Used Sources / vision: not 'same page therefore include' — cite or substantive OCR."""
+    if _include_all_retrieved_images():
+        return True
+    ocr = (rec.get("text") or "").strip()
+    ap = (rec.get("asset_path") or "").strip()
+    fig_n = _fig_number_from_image_chunk(cid, ap)
+    if fig_n is not None and _corpus_mentions_figure(fig_n, sibling_corpus):
+        return True
+    try:
+        min_ocr = max(20, int(os.environ.get("USED_SOURCES_IMAGE_MIN_OCR", "90")))
+    except ValueError:
+        min_ocr = 90
+    return _ocr_is_substantive_for_embed(ocr, min_ocr)
+
+
 # VS Code / GitHub 등 일반 MD 미리보기가 잘 여는 확장자 (JPEG2000 .jpx 등은 보통 미지원 → 깨진 이미지로 보임)
 _MARKDOWN_PREVIEW_IMAGE_EXT = frozenset({".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"})
 # Used Sources: JPEG2000는 미리보기에 쓰지 않고, 동일 stem의 PNG가 있을 때만 ![...]() 로 넣음
@@ -273,6 +356,7 @@ def _format_used_source_markdown(
     else:
         header = f"=== DOC {doc_id} / {pid} ==="
     blocks: List[str] = [f"### {header}\n"]
+    sibling_corpus = _sibling_text_table_corpus(cids, chunk_records)
     for cid in cids:
         rec = chunk_records.get(cid)
         if not rec:
@@ -281,6 +365,13 @@ def _format_used_source_markdown(
         if mod == "image":
             ap = rec.get("asset_path") or ""
             t = rec.get("text") or ""
+            if not _image_worth_embedding_in_report(cid, rec, sibling_corpus):
+                blocks.append(
+                    f"**`{cid}`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*\n"
+                )
+                if ap:
+                    blocks.append(f"- Path: `{ap}`\n")
+                continue
             blocks.append(f"**`{cid}`** *(image)*\n")
             if ap:
                 blocks.append(_used_sources_image_markdown(ap, out_md_path))
@@ -563,11 +654,14 @@ def _collect_vision_images(
     seen: Set[str] = set()
     out: List[Tuple[str, str]] = []
     for _pid, _meta in ordered:
+        sib = _sibling_text_table_corpus(by_parent.get(_pid, []), chunk_records)
         for cid in by_parent.get(_pid, []):
             if len(out) >= max_images:
                 return out
             rec = chunk_records.get(cid) or {}
             if (rec.get("modality") or "text") != "image":
+                continue
+            if not _image_worth_embedding_in_report(cid, rec, sib):
                 continue
             ap = (rec.get("asset_path") or "").strip()
             if not ap:
@@ -596,6 +690,111 @@ def _sanitize_figure_paths_in_prose(text: str) -> str:
     )
 
 
+_READINGS_LINE_RE = re.compile(r"^\s*#\s*readings\s*:\s*(.+?)\s*$", re.IGNORECASE)
+
+
+def _find_section_header_line_index(lines: List[str], readings_idx: int) -> int | None:
+    """Walk upward from a '# readings : N' line to the nearest section title (unindented header)."""
+    j = readings_idx - 1
+    while j >= 0 and not lines[j].strip():
+        j -= 1
+    while j >= 0:
+        ln = lines[j]
+        if not ln.strip():
+            j -= 1
+            continue
+        if re.match(r"^\s{2,}\S", ln):
+            j -= 1
+            continue
+        st = ln.strip()
+        if st.endswith(":") and re.match(r"^[A-Za-z]", st):
+            return j
+        j -= 1
+    return None
+
+
+def _inject_readings_into_header_line(header_line: str, count: str) -> str:
+    """Append ', n=<count> <specific label>' before the trailing colon (styles 2 + 3)."""
+    raw = header_line.rstrip("\n")
+    lead = raw[: len(raw) - len(raw.lstrip())]
+    stripped = raw.strip()
+    if not stripped.endswith(":"):
+        return header_line
+    inner = stripped[:-1].rstrip()
+    if re.search(r",\s*n\s*=", inner, flags=re.IGNORECASE):
+        return header_line
+    u = inner.upper()
+    if u.startswith("CREATININE"):
+        label = "creatinine measurements in this window"
+    elif u.startswith("URINE OUTPUT"):
+        label = "urine-output entries"
+    else:
+        label = "measurements in this section"
+    count_st = count.strip()
+    return f"{lead}{inner}, n={count_st} {label}:"
+
+
+def _rewrite_readings_lines_in_case_text(text: str) -> str:
+    """Replace '# readings : N' with an explicit count on the section header; drop the old line."""
+    if not text or "# readings" not in text.lower():
+        return text
+    lines = text.splitlines()
+    hits: List[Tuple[int, int, str]] = []
+    for i, line in enumerate(lines):
+        m = _READINGS_LINE_RE.match(line)
+        if not m:
+            continue
+        hidx = _find_section_header_line_index(lines, i)
+        if hidx is None:
+            continue
+        hits.append((i, hidx, m.group(1).strip()))
+
+    if not hits:
+        return text
+
+    for readings_idx, header_idx, count in sorted(hits, key=lambda t: -t[0]):
+        lines[header_idx] = _inject_readings_into_header_line(lines[header_idx], count)
+        del lines[readings_idx]
+
+    return "\n".join(lines)
+
+
+def _fenced_plaintext_block(text: str) -> str:
+    """Case narrative for Summary: fenced block reads cleaner in MD previews than line-by-line '> ' quotes."""
+    body = text.replace("\r\n", "\n").rstrip("\n")
+    fence = "```"
+    if "```" in body:
+        fence = "~~~"
+    if not body:
+        return f"{fence}\n{fence}"
+    return f"{fence}\n{body}\n{fence}"
+
+
+def _format_case_summary_markdown(patient_data: str, question: str) -> str:
+    """Unified ## Summary block for saved case markdown."""
+    pd = _rewrite_readings_lines_in_case_text((patient_data or "").strip())
+    q = (question or "").strip()
+    parts: List[str] = ["## Summary\n\n"]
+    if not pd:
+        parts.append(
+            "_No separate patient narrative was supplied._ The clinical scenario is described in **Questions** above.\n\n"
+        )
+        return "".join(parts)
+    if pd == q:
+        parts.append(
+            "**Patient / treatment context** — same text as the retrieval query in **Questions** (verbatim):\n\n"
+        )
+        parts.append(_fenced_plaintext_block(pd))
+        parts.append("\n\n")
+        return "".join(parts)
+    parts.append(
+        "**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):\n\n"
+    )
+    parts.append(_fenced_plaintext_block(pd))
+    parts.append("\n\n")
+    return "".join(parts)
+
+
 def _call_llm(
     question: str,
     context: str,
@@ -613,12 +812,17 @@ def _call_llm(
         "You are a medical literature research assistant. Your role is to synthesize evidence "
         "from peer-reviewed scientific papers (PubMed, Nature, Lancet, JAMA, BMJ, NEJM) to answer "
         "clinical and research questions.\n\n"
+        "Host document structure: Questions and a patient Summary are already provided outside your reply. "
+        "Your reply is ONLY the literature-based answer body. Do not output top-level headings "
+        "that match the host sections (do not use '#', '## Questions', '## Summary', or '## Answer'). "
+        "You may use '###' subheadings inside your answer (e.g., treatment options, references).\n"
+        "Do not repeat a long patient narrative; briefly bridge to evidence when needed.\n\n"
         "Rules:\n"
         "- Answer using ONLY the provided context. Do not add information from general knowledge.\n"
         "- Always consider potential adverse effects and drug–drug interactions mentioned in the context.\n"
         "- When patient-level data are provided (e.g., prior procedures, comorbidities, current and past medications), explicitly explain how these factors affect treatment choice and safety.\n"
         "- Cite sources using the paper title and parent_block_id together inside square brackets, in the format: [Paper Title (parent_block_id)]. For example: [Intensive blood-pressure lowering and cardiovascular outcomes (pmid_31638686_p2)]. Every factual claim should have at least one such citation.\n"
-        "- Structure your answer like a short paper: briefly summarize the problem, then discuss evidence and trade-offs.\n"
+        "- Open with one short paragraph framing the clinical problem against the evidence (no duplicate case dump).\n"
         "- Provide exactly three treatment suggestions, labeled 1., 2., and 3., in order of preference (1 = most preferred).\n"
         "- For each treatment option, describe when it is appropriate, when it should be avoided (contraindications, adverse effects, interactions), and which cited sources support it.\n"
         "- Explicitly describe fallback logic: if option 1 is not feasible for this patient (e.g., renal impairment, prior intolerance, interactions), then consider option 2; if option 2 is also not feasible, then option 3, always grounding this reasoning in the provided context.\n"
@@ -626,7 +830,7 @@ def _call_llm(
         "- If the context does not contain enough information to answer, clearly state: "
         "\"The provided literature does not contain sufficient information to answer this question.\"\n"
         "- Do not give direct medical advice. Frame answers as evidence summaries; recommend consulting a healthcare provider for clinical decisions.\n"
-        "- Prefer structured responses: summarize findings, then present the three numbered treatment options with citations, and end with a brief 'References' section listing the cited parent_block_id values and their roles (e.g., first-line therapy evidence, safety/interaction data).\n"
+        "- End with a '### References' section listing each cited source as a bullet: paper title and parent_block_id, and one short note on what it supported (e.g., first-line therapy, safety).\n"
         "- Figure assets in this project are PNG paths. If you mention a figure filename or path, use `.png` only; do not write `.jpx`, `.jp2`, or `.j2k`."
     )
     if vision_items:
@@ -650,7 +854,8 @@ def _call_llm(
         f"{vision_note}\n"
         f"Based only on the context above"
         f"{' and the attached images' if vision_items else ''}, "
-        f"provide an evidence-based answer with citations."
+        f"provide an evidence-based answer with citations. "
+        f"Remember: output only the answer body for the 'Answer' section—no '## Questions' or '## Summary'."
     )
 
     if vision_items:
@@ -846,20 +1051,21 @@ def main() -> None:
 
     answer = _sanitize_figure_paths_in_prose(_call_llm(question, context, vision_items) or "")
 
-    # 터미널 출력 + MD 파일 자동 저장
+    # 터미널 출력 + MD 파일 자동 저장 (Questions → Summary → Answer → Used Sources)
     lines: list[str] = []
-    lines.append(f"# Question\n\n{question}\n\n")
-    vision_note_md = ""
-    if vision_items:
-        vision_note_md = (
-            f"**Vision:** {len(vision_items)} figure(s) sent as `image_url` (pixels). "
-            f"max={max_vision} | VISION_MAX_EDGE={os.environ.get('VISION_MAX_EDGE', '1536')}\n\n"
-        )
+    lines.append(f"## Questions\n\n{question}\n\n")
+    lines.append("**Run configuration**\n\n")
     lines.append(
-        f"**Vectors:** `{vectors_path}` | topk={topk}, rerank={args.rerank}, topn={topn}\n\n"
-        f"{vision_note_md}"
+        f"- **Vectors:** `{vectors_path}` | topk={topk}, rerank={args.rerank}, topn={topn}\n"
     )
-    lines.append("---\n\n## Answer\n\n")
+    if vision_items:
+        lines.append(
+            f"- **Vision:** {len(vision_items)} figure(s) as `image_url` (pixels), max={max_vision} | "
+            f"VISION_MAX_EDGE={os.environ.get('VISION_MAX_EDGE', '1536')}\n"
+        )
+    lines.append("\n---\n\n")
+    lines.append(_format_case_summary_markdown(patient_data, question))
+    lines.append("---\n\n### Answer (generated by LLM based on literature)\n\n")
     lines.append(answer or "")
     lines.append("\n\n---\n\n## Used Sources (with context)\n\n")
 

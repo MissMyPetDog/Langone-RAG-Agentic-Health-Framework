@@ -1,40 +1,100 @@
-# Question
+## Questions
 
-What are the evidence-based treatment options for acute kidney injury in a 46-year-old female with hypertension, coagulopathy, both mild and severe liver disease, malignancy, and currently on a diuretic and antibiotic, taking into account her renal function, liver comorbidities, and potential drug interactions?
+In a 46-year-old female patient presenting with acute kidney injury (AKI) and comorbidities including severe liver disease, mild liver disease, malignancy, and hypertension, with current use of diuretics and antibiotics, what evidence-based treatments are recommended to manage AKI considering her impaired renal function, liver dysfunction, coagulopathy risk, and potential drug interactions?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
 
 ---
 
-## Answer
+## Summary
 
-The provided literature outlines considerations for managing acute kidney injury (AKI), especially in the context of the patient's multiple comorbidities and current medication use. Recommendations focus on interventions considering her renal insufficiency, liver disease, malignancy, and coagulopathy.
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-### Treatment Options for Acute Kidney Injury:
+```
+CASE ID: CASE_01
+STAY ID: 36076933
+============================================================
+PATIENT CLINICAL PROFILE:
 
-1. **Renal Replacement Therapy (RRT)**:
-   - **Recommendation**: Initiate RRT if there are life-threatening changes in fluid, electrolyte, and acid-base balance [pmid_23499048_p13].
-   - **Contextual Considerations**: This patient has coagulopathy and liver disease, which could modify the timing and type of RRT. Use the broader clinical context rather than relying solely on creatinine thresholds [pmid_23499048_p13].
-   - **Contraindications and Risks**: Given the coagulopathy, the use of anticoagulation during RRT should be carefully considered [pmid_23499048_p13].
+PATIENT DEMOGRAPHICS:
+  Age: 46 | Sex: Female | Race: WHITE
+  Insurance: Private | Admission type: EW EMER.
 
-2. **IV Volume Expansion**:
-   - **Recommendation**: Use intravenous volume expansion with isotonic sodium chloride or sodium bicarbonate for patients at risk for contrast-induced AKI [pmid_23499048_p13].
-   - **Contextual Considerations**: As the patient is on a diuretic and has liver disease, careful monitoring of fluid status is needed to avoid volume overload.
-   - **Contraindications and Risks**: Close monitoring is required to prevent fluid overload, which is critical in the context of liver disease.
+AKI ONSET:
+  Baseline creatinine: 1.80 mg/dL
+  Hours from ICU admission to AKI onset: 80.1h
 
-3. **Avoiding Diuretics and Certain Medications**:
-   - **Recommendation**: Do not use diuretics to enhance kidney function recovery or reduce the duration/frequency of RRT [pmid_23499048_p13].
-   - **Contextual Considerations**: The ongoing use of diuretics should be reassessed, given the current AKI, and the balance between benefits for hypertension and risks for renal function should be managed carefully.
-   - **Contraindications and Risks**: Other nephrotoxic medications should also be re-evaluated to minimize renal damage further.
+CREATININE (ICU window, intime → onset), n=9 creatinine measurements in this window:
+  First     : 2.00 mg/dL
+  Min       : 1.30 mg/dL
+  Max       : 2.00 mg/dL
+  At onset  : 1.80 mg/dL
+  Delta      : +0.00 mg/dL
+  Ratio      : 1.00x baseline
+  Slope      : -0.0031 mg/dL/h
 
-### Summary
-Given the patient's complex clinical scenario, careful consideration of treatment modalities is crucial. Initiation of RRT should consider the patient's coagulopathy and broader clinical context. IV volume expansion should be employed to prevent contrast-induced AKI but requires cautious monitoring. Continued use of diuretics should be avoided in favor of other management strategies.
+LAB VALUES (last value before onset):
+  BUN            : last=27.0 mg/dL  [min=26.0, max=32.0]  (n=9)
+  POTASSIUM      : last=3.9 mEq/L  [min=3.2, max=8.7]  (n=9)
+  BICARBONATE    : last=26.0 mEq/L  [min=25.0, max=29.0]  (n=9)
+  HEMOGLOBIN     : last=7.9 g/dL  [min=7.9, max=9.1]  (n=6)
+
+VITAL SIGNS (ICU window):
+  MAP   : mean=71.9 mmHg  [min=63.0, max=79.0]  last=77.0  last6h=N/A  (n=16)
+  HR    : mean=87.4 bpm  [min=80.0, max=94.0]  last=89.0  last6h=N/A  (n=28)
+  SPO2  : mean=93.1 %  [min=82.0, max=97.0]  last=92.0  last6h=N/A  (n=28) ⚠ LOW
+  RR    : mean=19.6 /min  [min=12.0, max=28.0]  last=22.0  last6h=N/A  (n=28)
+  TEMP  : mean=37.0 °C  [min=36.8, max=37.1]  last=36.8  last6h=N/A  (n=7)
+
+URINE OUTPUT, n=2 urine-output entries:
+  Total UO   : 700 mL
+  Rate       : 8.7 mL/h
+  Last 6h    : N/A
+  Last 12h   : N/A
+  Last 24h   : N/A
+
+FLUID BALANCE:
+  Total input  : 2382 mL
+  Net balance  : +1682 mL
+
+COMORBIDITIES (Charlson score: 6):
+  + Mild liver disease
+  + Malignancy
+  + Severe liver disease
+  Additional flags: Hypertension, Liver disease, Malignancy, Coagulopathy
+
+PRIOR MEDICATIONS (before current admission):
+  None recorded
+
+CURRENT MEDICATIONS (active at AKI onset):
+  Diuretic, Antibiotic
+
+OTHER:
+  BMI            : 25.5
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+Acute kidney injury (AKI) management in a patient with severe liver disease, malignancy, hypertension, and current diuretic and antibiotic use requires careful consideration of her comorbidities and potential drug interactions. This patient's liver dysfunction increases her risk for coagulopathy, and her existing hypertension and medication regimen can influence management strategies for her renal impairment.
+
+1. **Renal Replacement Therapy (RRT):** If this patient exhibits life-threatening fluid, electrolyte, or acid-base imbalances, initiating RRT emergently is suggested [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)]. If her coagulopathy risk is managed and she does not exhibit contraindications to citrate anticoagulation, continuous renal replacement therapy (CRRT) with regional citrate anticoagulation may be preferred over heparin due to potential bleeding risks associated with her liver disease [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)]. This option is appropriate when the risk of bleeding is high and may be the primary recourse if other treatment adjustments do not stabilize her renal function.
+
+2. **IV Volume Expansion:** Consider administering isotonic sodium chloride or sodium bicarbonate solutions for volume expansion, especially if hypovolemia is a contributing cause of AKI. This has been recommended as an effective strategy to prevent contrast-induced AKI and can also stabilize renal function in general AKI management [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p3)]. This strategy should be applied carefully to avoid exacerbating fluid overload, a common risk in patients with severe liver disease.
+
+3. **Management of Hypertension and Diuretic Use:** As diuretics are not effective for enhancing recovery from AKI and can potentially worsen outcomes, reviewing her current medication regimen is critical. Discontinuing unnecessary diuretics could be beneficial unless they are specifically required for managing symptoms related to her hypertension or fluid status. This aligns with recommendations against using diuretics for promoting kidney recovery [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)].
+
+Should the first option not be feasible due to the patient's coagulopathy or if she does not tolerate anticoagulation protocols, focusing on the second strategy of volume expansion is advisable. If both primary strategies are limited, the third approach of optimizing her medication management should be integrated into overall care to support renal recovery.
 
 ### References
-- [KDIGO US commentary on AKI (pmid_23499048_p13)]
-- [KDIGO US commentary on AKI (pmid_23499048_p3)]
+
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13):** Supported emergent RRT initiation for life-threatening imbalances, recommended avoiding diuretics for recovery.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p3):** Recommended isotonic volume expansion for risk management, suggested against using only oral fluids for CI-AKI.
+
 
 ---
 
@@ -42,47 +102,41 @@ Given the patient's complex clinical scenario, careful consideration of treatmen
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
@@ -128,15 +182,9 @@ VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOU
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 

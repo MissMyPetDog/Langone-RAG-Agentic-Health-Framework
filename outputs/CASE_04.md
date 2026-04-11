@@ -1,55 +1,102 @@
-# Question
+## Questions
 
-For a 48-year-old African American male with acute kidney injury (AKI) onset after ICU admission, complicated by comorbidities such as myocardial infarction, congestive heart failure, peripheral vascular disease, cerebrovascular disease, and diabetes, what are the evidence-based treatment options considering current medications including nephrotoxic agents, diuretics, ACE inhibitors/ARBs, antibiotics, and anticoagulants?
+In a 48-year-old Black male with recent onset acute kidney injury (AKI) marked by slight elevation in creatinine and concurrent elevated respiratory rate and temperature, what evidence-based treatment options are recommended considering comorbidities like myocardial infarction, congestive heart failure, diabetes with complications, peripheral vascular and cerebrovascular diseases, as well as current medications including nephrotoxic agents, diuretics, ACE inhibitors/ARBs, antibiotics, and anticoagulants while ensuring minimal renal compromise and managing potential drug interactions?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
 
 ---
 
-## Answer
+## Summary
 
-### Summary
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-A 48-year-old African American male presents with acute kidney injury (AKI) following ICU admission, compounded by myocardial infarction, congestive heart failure, peripheral vascular disease, cerebrovascular disease, and diabetes. Current medications include nephrotoxic agents, diuretics, ACE inhibitors/ARBs, antibiotics, and anticoagulants. Treatment must consider potential interactions and contraindications related to the patient's complex clinical picture.
+```
+CASE ID: CASE_04
+STAY ID: 38597052
+============================================================
+PATIENT CLINICAL PROFILE:
 
-### Evidence Summary
+PATIENT DEMOGRAPHICS:
+  Age: 48 | Sex: Male | Race: BLACK/AFRICAN AMERICAN
+  Insurance: Medicaid | Admission type: URGENT
 
-1. **Renal Replacement Therapy (RRT)**
-   - Initiate RRT when life-threatening fluid, electrolyte, and acid-base imbalances are present. The decision should be based on the broader clinical context rather than solely on BUN and creatinine levels. Avoid prophylactic intermittent hemodialysis (IHD) or hemofiltration (HF) for contrast-media removal ([KDOQI Commentary, pmid_23499048_p13]).
+AKI ONSET:
+  Baseline creatinine: 1.20 mg/dL
+  Hours from ICU admission to AKI onset: 92.9h
 
-2. **Volume Expansion**
-   - IV volume expansion with isotonic sodium chloride or sodium bicarbonate is recommended over no expansion in patients at risk of contrast-induced AKI ([KDOQI Commentary, pmid_23499048_p13]).
+CREATININE (ICU window, intime → onset), n=9 creatinine measurements in this window:
+  First     : 1.20 mg/dL
+  Min       : 0.90 mg/dL
+  Max       : 1.30 mg/dL
+  At onset  : 1.30 mg/dL
+  Delta      : +0.10 mg/dL
+  Ratio      : 1.08x baseline
+  Slope      : -0.0007 mg/dL/h
 
-3. **Diuretics Avoidance**
-   - Avoid diuretics for enhancing kidney recovery or reducing RRT duration ([KDOQI Commentary, pmid_23499048_p13]).
+LAB VALUES (last value before onset):
+  BUN            : last=18.0 mg/dL  [min=14.0, max=20.0]  (n=9)
+  POTASSIUM      : last=4.0 mEq/L  [min=3.5, max=5.2]  (n=9)
+  BICARBONATE    : last=34.0 mEq/L  [min=22.0, max=34.0]  (n=9)
+  HEMOGLOBIN     : last=11.3 g/dL  [min=11.0, max=12.0]  (n=6)
 
-### Treatment Options
+VITAL SIGNS (ICU window):
+  MAP   : mean=94.8 mmHg  [min=62.0, max=124.0]  last=94.0  last6h=90.3  (n=100)
+  HR    : mean=79.7 bpm  [min=64.0, max=95.0]  last=75.0  last6h=77.7  (n=106)
+  SPO2  : mean=99.5 %  [min=90.0, max=100.0]  last=100.0  last6h=99.7  (n=104)
+  RR    : mean=23.1 /min  [min=9.0, max=36.0]  last=29.0  last6h=23.5  (n=104) ⚠ ELEVATED
+  TEMP  : mean=38.1 °C  [min=37.1, max=39.4]  last=39.0  last6h=39.1  (n=42)
 
-1. **Renal Replacement Therapy (RRT)**
-   - **Indication**: Use if fluid, electrolyte, or acid-base imbalances are life-threatening.
-   - **Avoid**: If not necessary from clinical context; not for preventing contrast-induced AKI.
-   - **Evidence**: Supports clinical decision-making based on broader context beyond lab values [KDOQI Commentary, pmid_23499048_p13].
+URINE OUTPUT, n=78 urine-output entries:
+  Total UO   : 14150 mL
+  Rate       : 152.3 mL/h
+  Last 6h    : 2235 mL
+  Last 12h   : 3285 mL
+  Last 24h   : 5275 mL
 
-2. **IV Volume Expansion with Isotonic Solutions**
-   - **Indication**: To prevent contrast-induced AKI in high-risk patients; consider specifically if nephrotoxic agents are used.
-   - **Avoid**: Alternatives if patient volume overload or heart failure is significant.
-   - **Evidence**: Effective for preventing contrast-induced kidney damage [KDOQI Commentary, pmid_23499048_p13].
+FLUID BALANCE:
+  Total input  : 10488 mL
+  Net balance  : -3662 mL
 
-3. **Adjustment of Current Medications**
-   - **Consider**: Reviewing nephrotoxic medications, possibly holding ACE inhibitors/ARBs to better manage AKI.
-   - **Avoid**: Continuation without review due to potential exacerbation of renal injury.
-   - **Evidence**: General management suggests cautious use of nephrotoxic drugs in AKI [KDOQI Commentary, pmid_23499048_p13].
+COMORBIDITIES (Charlson score: 9):
+  + Myocardial infarction
+  + Congestive heart failure
+  + Peripheral vascular disease
+  + Cerebrovascular disease
+  + Diabetes (mild)
+  + Diabetes (severe/complications)
+  + Hemiplegia/paraplegia
+  Additional flags: Hypertension, Diabetes, Heart failure
 
-### Conclusion
+PRIOR MEDICATIONS (before current admission):
+  None recorded
 
-Treatment should prioritize restoring and maintaining electrolyte balance and managing current medications to minimize additional renal stress. RRT should be considered in severe cases, with careful fluid management to prevent further complications.
+CURRENT MEDICATIONS (active at AKI onset):
+  Nephrotoxic agent, Diuretic, ACEI/ARB, Antibiotic, Anticoagulant
+
+OTHER:
+  BMI            : not recorded
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+Managing acute kidney injury (AKI) in this patient requires careful consideration due to multiple comorbidities and ongoing nephrotoxic medications. The aim is to mitigate renal damage, address potential drug interactions, and manage symptoms without exacerbating AKI.
+
+1. **Intravenous Volume Expansion**: The recommended first-line treatment for AKI, especially in the setting of potential nephrotoxin and diuretic use, is IV volume expansion using isotonic crystalloids such as sodium chloride or sodium bicarbonate solutions. This approach can help mitigate contrast-induced AKI (CI-AKI), a concern given the patient's ongoing use of diagnostic procedures potentially involving contrast media. Volume expansion is crucial when renal perfusion is threatened or in cases where nephrotoxic drugs may accumulate due to dehydration. This intervention is supported by evidence suggesting a significant reduction in the risk of AKI with adequate volume expansion [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)]. However, caution is warranted due to the patient's heart failure; thus, monitoring for signs of fluid overload is essential.
+
+2. **Modification or Suspension of Nephrotoxic Drugs**: Assessing the necessity and dosage of current nephrotoxic drugs is crucial. ACE inhibitors, ARBs, and diuretics should be carefully evaluated and potentially reduced or withheld, at least temporarily, to prevent further deterioration of kidney function. While these medications offer cardiovascular benefits, the risk of worsening renal failure necessitates a nuanced approach backed by evidence that suggests avoiding additional renal insults during AKI [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)]. Decisions about continuing anticoagulants and antibiotics should be individualized based on their nephrotoxic potential and patient hemodynamic status.
+
+3. **Delayed RRT and Monitoring**: In cases where renal function does not adequately recover with the aforementioned interventions, renal replacement therapy (RRT) might be required. Timing should be guided by the presence of life-threatening electrolyte imbalances, acidosis, or fluid overload unresponsive to medical management [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)]. Given the patient's existing coagulopathy risks associated with anticoagulant use, adjustments in RRT anticoagulation, favoring options like regional citrate over heparin where possible, should be considered.
+
+If the first option of IV volume expansion is not feasible due to heart failure-induced fluid overload, then careful medication review and adjustment become paramount. Should these measures still fail to stabilize kidney function, delayed initiation of RRT, contingent on specific clinical triggers, remains a fallback.
 
 ### References
 
-- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13): First-line therapy rationale and contraindications.
-
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p13)**: Supported recommendations on the use of isotonic crystalloids for volume expansion, management of nephrotoxic drugs, and guidance on RRT protocols in AKI settings.
 
 ---
 
@@ -57,47 +104,41 @@ Treatment should prioritize restoring and maintaining electrolyte balance and ma
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
@@ -143,15 +184,9 @@ VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOU
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 

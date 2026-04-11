@@ -1,47 +1,97 @@
-# Question
+## Questions
 
-What are the most effective and safe treatment options for an 84-year-old male patient with acute kidney injury (creatinine increased to 2.10 mg/dL from baseline 1.50 mg/dL) and low bicarbonate levels (9.0 mEq/L), considering his history of myocardial infarction, congestive heart failure, severe liver disease, current use of nephrotoxic agent, antibiotic, and anticoagulant medications, while accounting for potential contraindications and comorbid conditions?
+In an 84-year-old male with acute kidney injury, baseline creatinine of 1.50 mg/dL, and recent onset of a nephrotoxic agent, what are the best evidence-based management strategies considering comorbid congestive heart failure, severe liver disease, and current usage of an antibiotic and anticoagulant, to optimize renal function and overall outcomes?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
 
 ---
 
-## Answer
+## Summary
 
-**Summary:**
-For an 84-year-old male with acute kidney injury (AKI), low bicarbonate levels, previous myocardial infarction, congestive heart failure, severe liver disease, and the use of nephrotoxic agents, careful selection of treatment is necessary to avoid exacerbating his conditions. The context suggests potential interventions and their implications based on available data.
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-**Treatment Options:**
+```
+CASE ID: CASE_08
+STAY ID: 33571695
+============================================================
+PATIENT CLINICAL PROFILE:
 
-1. **Sodium Bicarbonate Infusion:**
-   - **Appropriate:** Sodium bicarbonate may be beneficial in managing metabolic acidosis (evidenced by low bicarbonate levels) and may help prevent contrast-induced acute kidney injury (CI-AKI) [KDOQI US commentary (pmid_23499048_p85)].
-   - **Avoid if:** Preparation errors could result in hypertonic solutions – crucial to ensure correct preparation [KDOQI US commentary (pmid_23499048_p85)].
-   - **Considerations:** Monitor closely for fluid overload due to his congestive heart failure. Control the infusion rate to minimize cardiovascular strain.
+PATIENT DEMOGRAPHICS:
+  Age: 84 | Sex: Male | Race: WHITE
+  Insurance: Medicare | Admission type: EW EMER.
 
-2. **Isotonic Saline Infusion:**
-   - **Appropriate:** Isotonic saline is a standard treatment for fluid and electrolyte balance in AKI prevention. It is less error-prone than sodium bicarbonate [KDOQI US commentary (pmid_23499048_p85)].
-   - **Avoid if:** The patient has severe fluid overload or uncontrolled heart failure, as isotonic saline may exacerbate these conditions.
-   - **Considerations:** Saline may be considered if concerns about bicarbonate administration errors are high or if the patient shows signs of volume depletion.
+AKI ONSET:
+  Baseline creatinine: 1.50 mg/dL
+  Hours from ICU admission to AKI onset: 1.6h
 
-3. **N-acetylcysteine (NAC):**
-   - **Appropriate:** Administer in conjunction with either sodium bicarbonate or isotonic saline for preventing CI-AKI, leveraging its antioxidative properties [KDOQI US commentary (pmid_23499048_p85)].
-   - **Avoid if:** The patient has a known allergy to NAC or if there are severe pulmonary issues, as NAC can sometimes exacerbate these [KDOQI US commentary (pmid_23499048_p85)].
-   - **Considerations:** Ensure appropriate dosing alongside bicarbonate or saline to maximize the protective effect on renal function.
+CREATININE (ICU window, intime → onset), n=1 creatinine measurements in this window:
+  First     : 2.10 mg/dL
+  Min       : 2.10 mg/dL
+  Max       : 2.10 mg/dL
+  At onset  : 2.10 mg/dL
+  Delta      : +0.60 mg/dL
+  Ratio      : 1.40x baseline
+  Slope      : N/A
 
-**Fallback Logic:**
+LAB VALUES (last value before onset):
+  BUN            : last=21.0 mg/dL  [min=21.0, max=21.0]  (n=1)
+  POTASSIUM      : last=3.4 mEq/L  [min=3.4, max=3.4]  (n=1)
+  BICARBONATE    : last=9.0 mEq/L  [min=9.0, max=9.0]  (n=1)
+  HEMOGLOBIN     : last=13.5 g/dL  [min=13.5, max=13.5]  (n=1)
 
-- Begin with sodium bicarbonate if metabolic acidosis is pronounced and conditions allow for meticulous preparation to avoid dilution errors.
-- Move to isotonic saline if bicarbonate preparation risks are prohibitive, ensuring fluid balance is closely monitored.
-- Couple NAC with either option to enhance renal protective effects if no contraindications exist.
+VITAL SIGNS (ICU window):
+  MAP   : mean=82.0 mmHg  [min=82.0, max=82.0]  last=82.0  last6h=82.0  (n=1)
+  HR    : mean=89.0 bpm  [min=89.0, max=89.0]  last=89.0  last6h=89.0  (n=1)
+  SPO2  : mean=90.0 %  [min=90.0, max=90.0]  last=90.0  last6h=90.0  (n=1) ⚠ LOW
+  RR    : mean=22.0 /min  [min=22.0, max=22.0]  last=22.0  last6h=22.0  (n=1) ⚠ ELEVATED
+  TEMP  : not measured
 
-**References:**
+URINE OUTPUT, n=N/A urine-output entries:
+  Total UO   : N/A
+  Rate       : N/A
+  Last 6h    : N/A
+  Last 12h   : N/A
+  Last 24h   : N/A
 
-- **pmid_23499048_p85**: Provides insights into the effectiveness of sodium bicarbonate over normal saline in CI-AKI and discusses potential issues related to bicarbonate administration.
-- **pmid_23499048_p2, pmid_23499048_p3**: Outline guidelines on the treatment and prevention strategies for AKI.
+FLUID BALANCE:
+  Total input  : 1451 mL
+  Net balance  : +1451 mL
 
-Please consult a healthcare provider for personalized medical advice.
+COMORBIDITIES (Charlson score: 5):
+  + Myocardial infarction
+  + Congestive heart failure
+  + Severe liver disease
+  Additional flags: Heart failure, Liver disease
+
+PRIOR MEDICATIONS (before current admission):
+  None recorded
+
+CURRENT MEDICATIONS (active at AKI onset):
+  Nephrotoxic agent, Antibiotic, Anticoagulant
+
+OTHER:
+  BMI            : not recorded
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+Managing acute kidney injury (AKI) in an elderly patient with congestive heart failure, severe liver disease, and exposure to nephrotoxic medications is challenging. The presence of these comorbidities and current prescriptions, such as antibiotics and anticoagulants, necessitates careful selection of management strategies to avoid further renal impairment or complications.
+
+1. **Maintaining Hemodynamic Stability**: Ensuring adequate hemodynamic support is foundational. Fluid management must be judicious to avoid exacerbating congestive heart failure or liver disease. The KDIGO guidelines emphasize the importance of hemodynamic monitoring and support but do not recommend vasodilators like fenoldopam due to potential hypotension, especially in high-risk patients like this one with cardiovascular and liver comorbidities [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p56)].
+
+2. **Minimizing Nephrotoxic Agent Exposure**: One of the most effective strategies is discontinuing or reducing exposure to nephrotoxic agents. Given the recent exposure to a nephrotoxic antibiotic, evaluating and potentially switching to a less nephrotoxic alternative could be beneficial. This is particularly important due to the patient's reduced renal function and elevated baseline creatinine [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p56)].
+
+3. **Avoid Use of Atrial Natriuretic Peptide (ANP)**: Despite some studies suggesting potential benefits in increasing glomerular filtration rate (GFR), ANP is not recommended due to the risk of hypotension, which may worsen AKI. This risk is especially relevant in this patient with pre-existing heart failure and liver disease, conditions that further predispose to hypotensive episodes [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p56)].
+
+If maintaining hemodynamic stability is compromised (e.g., evidence of fluid overload), careful fluid removal using renal replacement therapy (RRT) could be considered, depending on the patient's overall stability and response to conservative measures. The interplay of current heart and liver disease with renal function complicates management decisions, highlighting the need for multidisciplinary collaboration for optimal outcomes.
+
+### References
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p56)**: Provided insights into cautious use of certain therapies like fenoldopam and ANP, emphasizing the need for fluid and nephrotoxin management.
 
 ---
 
@@ -49,47 +99,41 @@ Please consult a healthcare provider for personalized medical advice.
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
@@ -97,15 +141,9 @@ VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOU
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 
@@ -145,57 +183,53 @@ NAC for risk of CI-AKI 85 Figure 17. Flow-chart summary of recommendations 96 Ad
 
 Catheter and patient sizes 104 Table 21. Typical setting of different RRT modalities for AKI (for 70-kg patient) 107 Table 22. Theoretical advantages and disadvantages of CRRT, IHD, SLED, and PD 108 Table 23. Microbiological quality standards of different regulatory agencies 112 FIGURES Figure 1.
 
-### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p85 ===
+### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p56 ===
 
-**`pmid_23499048_p85_t0_c0`** *(text)*
+**`pmid_23499048_p56_t0_c0`** *(text)*
 
-developed in 1.7% in the bicarbonate group, compared to 13.6% in the saline solution group. Ozcan et al.483 included three prophylactic regimens: infusion of sodium bicarbonate, sodium chloride, and sodium chloride plus oral NAC (600 mg b.i.d.). The incidence of CI-AKI, deﬁned as an increase in SCr level 425% or 0.5 mg/dl (44.2 mmol/l) after 48 hours was signiﬁcantly lower in the sodium bicarbonate group (4.5%) compared to sodium chloride alone (13.6%, P ¼ 0.036). After adjusting for the Mehran nephropathy risk score, the risk of CI-AKI signiﬁ- cantly reduced with sodium bicarbonate compared to sodium chloride alone (adjusted risk ratio 0.29; P ¼ 0.043). By contrast, Adolph et al.482 did not ﬁnd differences in CI- AKI between the two ﬂuid regimens on day 1 after angiography; even on day 2, most parameters were similar in both groups. In none of the above-mentioned studies was there need for RRT. Finally, a recent but retrospective study485 deﬁned CI-AKI as an increase in SCr X25% within 48 hours of receiving contrast media, and compared sodium bicarbonate to normal saline in patients exposed to cardiac angiography. One group of patients (n ¼ 89) received prophylactic bicarbonate; a second group, normal saline (n ¼ 98).
+incidence in patients with AKI randomized to fenoldopam (n ¼ 130) vs. placebo (n ¼ 125). In the study by Tumlin et al., no difference in requirement of RRT was found (with fenoldopam, 13 of 80 patients; 16.25%); with placebo (19 of 75 patients; 25.3%; P ¼ 0.163). Requirement of RRT was very rare in the study of Brienza et al., and was prescribed in a total of only ﬁve patients; three in the dopamine group and two in fenoldopam group (P ¼ NS). Overall, no data from adequately powered multicenter trials with clinically sig- niﬁcant end-points and adequate safety are available to recommend fenoldopam to either prevent or treat AKI. The guideline recommendation against using fenoldopam places a high value on avoiding potential hypotension and harm associated with the use of this vasodilator in high-risk perioperative and ICU patients, and a low value on potential beneﬁt, which is currently only suggested by relatively low- quality single-center trials. RESEARCH RECOMMENDATION K While randomized trials of fenoldopam to treat AKI in a variety of settings (critical illness, high-risk surgery— particular cardiac, sepsis) may be considered, the pharmacologic strategy of renal vasodilatation has not been successful to date and different approaches are likely needed.
 
-**`pmid_23499048_p85_t1_c0`** *(text)*
+**`pmid_23499048_p56_t1_c0`** *(text)*
 
-3%) in the normal saline group and no signiﬁcant change in the bicarbonate group. Three patients (3.4%) in the bicarbonate group, as opposed to 14 patients (14.3%) in the normal saline group, developed CI-AKI (P ¼ 0.011). Two patients in the normal saline group and none in the bicarbonate group needed dialysis. This study suggests that the use of i.v. sodium bicarbonate is more effective than normal saline in preventing CI-AKI. Three studies compared bicarbonate and saline solutions associated with the administration of NAC in both study arms.486–488 Recio-Mayoral et al.488 conducted a prospective single-center RCT in 111 consecutive patients with acute coronary syndrome undergoing emergency angioplasty. One group of patients received an infusion of sodium bicarbonate plus NAC started just before contrast-media injection and continued for 12 hours after angioplasty. The second (control) group received the standard ﬂuid protocol consist- ing of i.v. isotonic saline for 12 hours after angioplasty. In both groups, two doses of oral NAC were administered the next day. A SCr concentration 40.5 mg/dl (444.2 mmol/l) from baseline after emergency angioplasty was observed in 1.8% in the bicarbonate group and in 21.8% of the saline group.
+Atrial natriuretic peptide (ANP) is a 28-amino-acid pep- tide with diuretic, natriuretic, and vasodilatory activity.224 ANP is mainly produced in atrial myocytes, and the rate of release from the atrium increases in response to atrial stretch.225 Early animal studies showed that ANP decreases preglomerular vascular resistance and increases postglomer- ular vascular resistance, leading to increased GFR.226 It also inhibits renal tubular sodium reabsorption. Increases in GFR and diuresis have also been conﬁrmed in clinical studies.227 It could thus be expected that ANP might be useful for treatment of AKI, and several RCTs have been conducted to test this hypothesis. 3.5.3: We suggest not using atrial natriuretic peptide (ANP) to prevent (2C) or treat (2B) AKI. RATIONALE There have been several negative studies of prophylactic ANP therapy; for example, ANP failed in two studies to prevent primary renal transplant dysfunction228,229 and ANP pro- phylaxis also failed to prevent CI-AKI.230 Based on the positive results of small clinical studies using ANP to treat AKI, a randomized placebo-controlled trial in 504 critically ill patients with AKI was conducted.231 Patients received 24- hour i.v.
 
-**`pmid_23499048_p85_t2_c0`** *(text)*
+**`pmid_23499048_p56_t2_c0`** *(text)*
 
-9% saline infusion plus NAC (n ¼ 111), sodium bicarbonate infusion plus NAC (n ¼ 108), and 0.9% saline plus ascorbic acid plus NAC (n ¼ 107). CI-AKI was deﬁned as an increase of X25% in the SCr concentration 48 hours after the procedure. CI-AKI occurred in 9.9% of the saline plus NAC group, in 1.9% of the bicarbonate/NAC group (P ¼ 0.019 vs. saline plus NAC group), and in 10.3% of the saline plus ascorbic acid plus NAC group (P ¼ 1.00 vs. saline plus NAC group). There was no difference in mortality nor in need for RRT among the different groups. While these two studies suggest that isotonic bicarbonate may provide greater beneﬁt than isotonic saline, either in association with NAC or not, neither study can be considered conclusive. Maioli et al.487 prospectively compared the efﬁcacy of sodium bicarbonate vs. isotonic saline in addition to NAC in a larger population of 502 patients with an estimated CrCl o60 ml/min, and undergoing coronary angiography or intervention. CI-AKI was deﬁned as an absolute increase of SCr X0.5 mg/dl (X44.2 mmol/l) measured within 5 days. CI- AKI occurred in 10.8%; 10% were treated with sodium bicarbonate and 11.5% with saline. In patients with CI-AKI, the mean increase in creatinine was not signiﬁcantly different in the two study groups.
+0 mg/dl [442 mmol/l]) in this study conﬁrms that intervention in this trial was extremely late in the course of AKI. In subgroup analysis, dialysis-free survival was higher in the treatment group for patients with oliguria (o400 ml/d; ANP 27%, placebo 7%, P ¼ 0.008). A subsequent trial in 222 patients with oliguric renal failure, however, failed to demonstrate any beneﬁt of ANP.232 The dose and duration of ANP treatment and primary outcome were the same as the previous study. The dose of ANP might have been too high (0.2 mg/kg/min) in both studies: hypotension (systolic blood pressure o90 mm Hg) occurred more frequently in the ANP groups of both trials (in the ﬁrst study, 46% vs. 18%, Po0.001; and in the second study, 97% vs. 58%, Po0.001), and this may have negated any potential beneﬁt of renal vasodilation in these patients. In addition to an excessive dose, the failure of these large studies has also been attributed in subsequent analyses to the late initiation of the drug to patients with severe AKI and an inadequate duration of infusion (only 24 hours). A promising, but underpowered, study of ANP to treat AKI immediately following cardiac surgery showed a decreased rate of postoperative RRT compared to placebo- treated patients.233 In this study, Sward et al.
 
-**`pmid_23499048_p85_t3_c0`** *(text)*
+**`pmid_23499048_p56_t3_c0`** *(text)*
 
-sodium bicarbonate was associated with an increased incidence of CI-AKI.489 While one might take the position that, if in doubt, one should choose the regimen that is potentially superior, the Work Group also considered the potential harm. In addition, isotonic bicarbonate solutions are usually composed by adding 154 ml of 8.4% sodium bicarbonate (i.e., 1 mmol/ ml) to 846 ml of 5% glucose solution, resulting in a ﬁnal sodium and bicarbonate concentration of 154 mmol/l each. Since this mixing of the solution is often done at the bedside or in the hospital pharmacy, there is the possibility for errors leading to the infusion of a hypertonic bicarbonate solution. The potential for harm from dosing errors, and the added burden from preparation of the bicarbonate solution, has to be taken into account in clinical practice when making a choice between using bicarbonate rather than standard isotonic saline solutions. Taken together, the Work Group concluded that there is a possible but inconsistent beneﬁt of bicarbonate solutions based on overall moderate-quality evidence (Suppl Table 22). As discussed above, the potential of harm and the additional burden for preparing the bicarbonate solutions led the Work Group not to express a preference for or against one solution (isotonic saline or isotonic bicarbonate).
+Of note, all patients received infusions of furosemide (20–40 mg/h) and oliguria, deﬁned as a urine output p0.5 ml/kg/h for 3 hours, was an exclusion criterion and an automatic dialysis indication. The primary end-point was the rate of dialysis within 21 days of enrollment. CrCl was signiﬁcantly higher on the third study day in ANP-treated subjects (P ¼ 0.04). Using prespeciﬁed dialysis criteria, 21% of patients in the ANP group and 47% in the placebo group were dialyzed within 21 days (hazard ratio [HR] 0.28; 95% CI 0.10–0.73; P ¼ 0.009). The combined secondary end-point of death-or- dialysis was similarly improved in the ANP group (28%) compared to placebo (57%; HR 0.35; 95% CI 0.14–0.82; P ¼ 0.017). The incidence of hypotension during the ﬁrst 24 hours was 59% in the ANP group and 52% in controls (P ¼ NS). It is intriguing to speculate on the potential reasons for the positive outcome of this trial, compared to larger prior studies of ANP for AKI prevention and therapy. Apart from the possibility that this is a false-positive, underpowered study, possible explanations include the use of ANP earlier in the course of AKI (the mean SCr in the prior ANP studies Kidney International Supplements (2012) 2, 37–68 53 chapter 3.
 
-**`pmid_23499048_p85_t4_c0`** *(text)*
+**`pmid_23499048_p56_t4_c0`** *(text)*
 
-4
+5
 
-**`pmid_23499048_p85_t0_c1`** *(text)*
+**`pmid_23499048_p56_t0_c1`** *(text)*
 
-In none of the above-mentioned studies was there need for RRT. Finally, a recent but retrospective study485 deﬁned CI-AKI as an increase in SCr X25% within 48 hours of receiving contrast media, and compared sodium bicarbonate to normal saline in patients exposed to cardiac angiography. One group of patients (n ¼ 89) received prophylactic bicarbonate; a second group, normal saline (n ¼ 98). The patients in the bicarbonate group had more severe renal disease with higher baseline SCr (1.58 ± 0.5 mg/dl; 140 ± 44.2 mmol/l) vs. (1.28 ± 0.3 mg/dl; 113 ± 26.5 mmol/l), P ¼ 0.001 and a lower eGFR, compared to the normal saline group. After contrast-media exposure, there was signiﬁcant drop in eGFR (6.4%) and increase in SCr (11.
+The guideline recommendation against using fenoldopam places a high value on avoiding potential hypotension and harm associated with the use of this vasodilator in high-risk perioperative and ICU patients, and a low value on potential beneﬁt, which is currently only suggested by relatively low- quality single-center trials. RESEARCH RECOMMENDATION K While randomized trials of fenoldopam to treat AKI in a variety of settings (critical illness, high-risk surgery— particular cardiac, sepsis) may be considered, the pharmacologic strategy of renal vasodilatation has not been successful to date and different approaches are likely needed. NATRIURETIC PEPTIDES FOR THE PREVENTION OR TREATMENT OF AKI Several natriuretic peptides are in clinical use or in development for treatment of congestive heart failure (CHF) or renal dysfunction, and could potentially be useful to prevent or treat AKI.
 
-**`pmid_23499048_p85_t1_c1`** *(text)*
+**`pmid_23499048_p56_t1_c1`** *(text)*
 
-isotonic saline for 12 hours after angioplasty. In both groups, two doses of oral NAC were administered the next day. A SCr concentration 40.5 mg/dl (444.2 mmol/l) from baseline after emergency angioplasty was observed in 1.8% in the bicarbonate group and in 21.8% of the saline group. Mortality and need for RRT were not signiﬁcantly different between both groups. Briguori et al.486 randomized 326 CKD patients (SCr X2 mg/dl [X177 mmol/l] and/or eGFR o40 ml/min per 1.73 m2), and referred for coronary and/or peripheral procedures to three different protocols: prophylactic administration of 0.
+3.5.3: We suggest not using atrial natriuretic peptide (ANP) to prevent (2C) or treat (2B) AKI. RATIONALE There have been several negative studies of prophylactic ANP therapy; for example, ANP failed in two studies to prevent primary renal transplant dysfunction228,229 and ANP pro- phylaxis also failed to prevent CI-AKI.230 Based on the positive results of small clinical studies using ANP to treat AKI, a randomized placebo-controlled trial in 504 critically ill patients with AKI was conducted.231 Patients received 24- hour i.v. infusion of either ANP (0.2 mg/kg/min) or placebo. The primary outcome was dialysis-free survival for 21 days after treatment. Despite the large size of the trial, ANP administration had no effect on 21-day dialysis-free survival, mortality, or change in plasma creatinine concentration. Of note, the mean SCr at enrollment (anaritide group: 4.4 mg/dl [389 mmol/l]; placebo group: 5.
 
-**`pmid_23499048_p85_t2_c1`** *(text)*
+**`pmid_23499048_p56_t2_c1`** *(text)*
 
-CI-AKI was deﬁned as an absolute increase of SCr X0.5 mg/dl (X44.2 mmol/l) measured within 5 days. CI- AKI occurred in 10.8%; 10% were treated with sodium bicarbonate and 11.5% with saline. In patients with CI-AKI, the mean increase in creatinine was not signiﬁcantly different in the two study groups. Based on this last prospective study, bicarbonate does not seem to be more efﬁcient than saline. Furthermore, a retrospective cohort study at the Mayo Clinic assessed the risk of CI-AKI associated with the use of sodium bicarbonate, NAC, or the combination. Surprisingly, i.v.
+In addition to an excessive dose, the failure of these large studies has also been attributed in subsequent analyses to the late initiation of the drug to patients with severe AKI and an inadequate duration of infusion (only 24 hours). A promising, but underpowered, study of ANP to treat AKI immediately following cardiac surgery showed a decreased rate of postoperative RRT compared to placebo- treated patients.233 In this study, Sward et al. randomized 61 patients with AKI following cardiac surgery (deﬁned as a SCr increase X50% from a baseline o1.8 mg/dl [o159 mmol/l]) to receive infusion of ANP or placebo until the SCr decreased below the baseline value at enrollment, the patient died, or one of four prespeciﬁed dialysis criteria was reached.
 
-**`pmid_23499048_p85_t3_c1`** *(text)*
+**`pmid_23499048_p56_t3_c1`** *(text)*
 
-Taken together, the Work Group concluded that there is a possible but inconsistent beneﬁt of bicarbonate solutions based on overall moderate-quality evidence (Suppl Table 22). As discussed above, the potential of harm and the additional burden for preparing the bicarbonate solutions led the Work Group not to express a preference for or against one solution (isotonic saline or isotonic bicarbonate). Thus, either can be used for the prevention of CI-AKI. 4.4.2: We recommend not using oral ﬂuids alone in patients at increased risk of CI-AKI. (1C) 82 Kidney International Supplements (2012) 2, 69–88 chapter 4.
+It is intriguing to speculate on the potential reasons for the positive outcome of this trial, compared to larger prior studies of ANP for AKI prevention and therapy. Apart from the possibility that this is a false-positive, underpowered study, possible explanations include the use of ANP earlier in the course of AKI (the mean SCr in the prior ANP studies Kidney International Supplements (2012) 2, 37–68 53 chapter 3.
 
-**`pmid_23499048_p85_t0_c2`** *(text)*
+**`pmid_23499048_p56_t0_c2`** *(text)*
 
-The patients in the bicarbonate group had more severe renal disease with higher baseline SCr (1.58 ± 0.5 mg/dl; 140 ± 44.2 mmol/l) vs. (1.28 ± 0.3 mg/dl; 113 ± 26.5 mmol/l), P ¼ 0.001 and a lower eGFR, compared to the normal saline group. After contrast-media exposure, there was signiﬁcant drop in eGFR (6.4%) and increase in SCr (11.
+RESEARCH RECOMMENDATION K While randomized trials of fenoldopam to treat AKI in a variety of settings (critical illness, high-risk surgery— particular cardiac, sepsis) may be considered, the pharmacologic strategy of renal vasodilatation has not been successful to date and different approaches are likely needed. NATRIURETIC PEPTIDES FOR THE PREVENTION OR TREATMENT OF AKI Several natriuretic peptides are in clinical use or in development for treatment of congestive heart failure (CHF) or renal dysfunction, and could potentially be useful to prevent or treat AKI.
 
-**`pmid_23499048_p85_t1_c2`** *(text)*
+**`pmid_23499048_p56_t1_c2`** *(text)*
 
-Mortality and need for RRT were not signiﬁcantly different between both groups. Briguori et al.486 randomized 326 CKD patients (SCr X2 mg/dl [X177 mmol/l] and/or eGFR o40 ml/min per 1.73 m2), and referred for coronary and/or peripheral procedures to three different protocols: prophylactic administration of 0.
+The primary outcome was dialysis-free survival for 21 days after treatment. Despite the large size of the trial, ANP administration had no effect on 21-day dialysis-free survival, mortality, or change in plasma creatinine concentration. Of note, the mean SCr at enrollment (anaritide group: 4.4 mg/dl [389 mmol/l]; placebo group: 5.
 
-**`pmid_23499048_p85_t2_c2`** *(text)*
+**`pmid_23499048_p56_t2_c2`** *(text)*
 
-In patients with CI-AKI, the mean increase in creatinine was not signiﬁcantly different in the two study groups. Based on this last prospective study, bicarbonate does not seem to be more efﬁcient than saline. Furthermore, a retrospective cohort study at the Mayo Clinic assessed the risk of CI-AKI associated with the use of sodium bicarbonate, NAC, or the combination. Surprisingly, i.v.
-
-**`pmid_23499048_p85_t3_c2`** *(text)*
-
-As discussed above, the potential of harm and the additional burden for preparing the bicarbonate solutions led the Work Group not to express a preference for or against one solution (isotonic saline or isotonic bicarbonate). Thus, either can be used for the prevention of CI-AKI. 4.4.2: We recommend not using oral ﬂuids alone in patients at increased risk of CI-AKI. (1C) 82 Kidney International Supplements (2012) 2, 69–88 chapter 4.
+A promising, but underpowered, study of ANP to treat AKI immediately following cardiac surgery showed a decreased rate of postoperative RRT compared to placebo- treated patients.233 In this study, Sward et al. randomized 61 patients with AKI following cardiac surgery (deﬁned as a SCr increase X50% from a baseline o1.8 mg/dl [o159 mmol/l]) to receive infusion of ANP or placebo until the SCr decreased below the baseline value at enrollment, the patient died, or one of four prespeciﬁed dialysis criteria was reached.
 

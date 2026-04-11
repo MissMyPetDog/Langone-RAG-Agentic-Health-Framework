@@ -1,45 +1,110 @@
-# Question
+## Questions
 
-What is the evidence-based treatment for an 80-year-old female with acute kidney injury (AKI) onset in the context of sepsis, moderate/severe renal disease, chronic kidney disease, congestive heart failure, and mild liver disease, who is currently on a nephrotoxic agent and antibiotic, with a history of using ACEI/ARB, diuretics, and NSAIDs?
+In an 80-year-old female with acute kidney injury (AKI) characterized by a creatinine rise from 1.00 to 2.70 mg/dL within 15.6 hours of ICU admission, experiencing low mean arterial pressure (MAP 54.5 mmHg), hypokalemia (potassium 3.1 mEq/L), and anemia (hemoglobin 8.8 g/dL), who has history of myocardial infarction, congestive heart failure, peripheral vascular disease, COPD, chronic kidney disease, and mild liver disease, and is on nephrotoxic agents and antibiotics, what are the best evidence-based treatment strategies considering her hypertension, sepsis, renal and liver function, and previous use of ACEI/ARBs, diuretics, NSAIDs, and statins?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+- **Vision:** 1 figure(s) as `image_url` (pixels), max=6 | VISION_MAX_EDGE=1536
 
 ---
 
-## Answer
+## Summary
 
-Based on the context provided, the treatment for an 80-year-old female with acute kidney injury (AKI) in the context of sepsis, moderate/severe renal disease, chronic kidney disease (CKD), congestive heart failure, and mild liver disease needs to be carefully managed. The patient is on a nephrotoxic agent and antibiotics, with a history of using ACEI/ARB, diuretics, and NSAIDs.
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-### Summary of Recommended Management Strategies
+```
+CASE ID: CASE_10
+STAY ID: 31507319
+============================================================
+PATIENT CLINICAL PROFILE:
 
-1. **Discontinue Nephrotoxic Agents**: If possible, all nephrotoxic agents should be discontinued to prevent further kidney damage. This is critical given the patient’s existing renal disease and AKI [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+PATIENT DEMOGRAPHICS:
+  Age: 80 | Sex: Female | Race: WHITE
+  Insurance: Medicare | Admission type: EW EMER.
 
-2. **Ensure Volume Status and Perfusion Pressure**: It is crucial to maintain adequate fluid balance and ensure sufficient perfusion pressure, particularly in sepsis, where intravascular volume can be depleted rapidly [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+AKI ONSET:
+  Baseline creatinine: 1.00 mg/dL
+  Hours from ICU admission to AKI onset: 15.6h
 
-3. **Renal Replacement Therapy (RRT)**: Consideration of RRT might be needed depending on the stage and severity of AKI, particularly if there is volume overload or significant electrolyte imbalance that cannot be managed with conservative measures [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+CREATININE (ICU window, intime → onset), n=2 creatinine measurements in this window:
+  First     : 2.70 mg/dL
+  Min       : 2.20 mg/dL
+  Max       : 2.70 mg/dL
+  At onset  : 2.20 mg/dL
+  Delta      : +1.20 mg/dL
+  Ratio      : 2.20x baseline
+  Slope      : -0.0426 mg/dL/h
 
-### Detailed Treatment Options
+LAB VALUES (last value before onset):
+  BUN            : last=49.0 mg/dL  [min=49.0, max=53.0]  (n=2)
+  POTASSIUM      : last=3.1 mEq/L  [min=3.1, max=3.2]  (n=2)
+  BICARBONATE    : last=19.0 mEq/L  [min=19.0, max=19.0]  (n=2)
+  HEMOGLOBIN     : last=8.8 g/dL  [min=8.8, max=9.0]  (n=2)
 
-1. **Discontinue Nephrotoxic and Adjust Antibiotics**
-   - **Appropriate When**: This step is critical when nephrotoxic drugs are contributing to kidney injury.
-   - **Avoid When**: If discontinuing the antibiotic compromises sepsis treatment. Consider switching to an antibiotic with a safer renal profile.
-   - **Supporting Evidence**: Recommendations highlight discontinuing nephrotoxic agents where possible to mitigate AKI progression [KDOQI US commentary (pmid_23499048_p12)].
+VITAL SIGNS (ICU window):
+  MAP   : mean=54.5 mmHg  [min=41.0, max=69.0]  last=64.0  last6h=60.2  (n=15) ⚠ BELOW TARGET
+  HR    : mean=57.3 bpm  [min=52.0, max=69.0]  last=60.0  last6h=56.2  (n=18)
+  SPO2  : mean=98.6 %  [min=97.0, max=100.0]  last=99.0  last6h=99.7  (n=17)
+  RR    : mean=18.2 /min  [min=15.0, max=22.0]  last=19.0  last6h=18.8  (n=18)
+  TEMP  : mean=36.3 °C  [min=35.7, max=36.8]  last=35.7  last6h=36.0  (n=4)
 
-2. **Volume Management and Hemodynamic Monitoring**
-   - **Appropriate When**: In cases of suspected hypovolemia or septic shock.
-   - **Avoid When**: In situations of hypoperfusion, avoid aggressive fluid overload, particularly given CHF status.
-   - **Supporting Evidence**: Ensuring volume status and perfusion pressure is essential in preventing further kidney damage [KDOQI US commentary (pmid_23499048_p12)].
+URINE OUTPUT, n=15 urine-output entries:
+  Total UO   : 900 mL
+  Rate       : 57.7 mL/h
+  Last 6h    : 385 mL
+  Last 12h   : 560 mL
+  Last 24h   : 900 mL
 
-3. **Consider Renal Replacement Therapy (RRT)**
-   - **Appropriate When**: Indicated if there is refractory fluid overload, severe electrolyte abnormalities, or worsening metabolic acidosis not manageable with conservative treatment.
-   - **Avoid When**: If the patient’s condition can be managed non-invasively and there are no acute life-threatening indications.
-   - **Supporting Evidence**: RRT is considered in patients where conservative management fails or is unsafe [KDOQI US commentary (pmid_23499048_p12)].
+FLUID BALANCE:
+  Total input  : 3906 mL
+  Net balance  : +3006 mL
+
+COMORBIDITIES (Charlson score: 9):
+  + Myocardial infarction
+  + Congestive heart failure
+  + Peripheral vascular disease
+  + COPD
+  + Mild liver disease
+  + Moderate/severe renal disease
+  + Malignancy
+  Additional flags: Hypertension, Chronic kidney disease, Heart failure, Sepsis, Liver disease, Malignancy
+
+PRIOR MEDICATIONS (before current admission):
+  ACEI/ARB, Diuretic, NSAID, Statin
+
+CURRENT MEDICATIONS (active at AKI onset):
+  Nephrotoxic agent, Antibiotic
+
+OTHER:
+  BMI            : not recorded
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+This patient's acute kidney injury (AKI) is complicated by low blood pressure, anemia, hypokalemia, and a history of multiple comorbidities, including congestive heart failure and chronic kidney disease. Managing AKI in such a high-risk patient requires addressing hemodynamic stability, discontinuing nephrotoxic drugs when possible, and considering renal replacement therapy (RRT) if indicated.
+
+1. **Optimize Hemodynamic Parameters:**
+   - **Appropriate:** Ensuring adequate volume status and perfusion pressure is crucial for preventing further deterioration of kidney function. Use of vasopressor therapy can be considered to maintain MAP above 65 mmHg. Functional hemodynamic monitoring should be employed to guide volume resuscitation through isotonic crystalloid solutions. 
+   - **Contraindications:** Avoiding excessive fluid administration is essential, particularly in patients with heart failure, to prevent volume overload. Invasive hemodynamic monitoring has risks, including infection.
+   - **Support:** The KDOQI guidelines emphasize the importance of hemodynamic support and recommend protocol-based management in septic shock and high-risk scenarios [KDOQI US commentary (pmid_23499048_p12)].
+
+2. **Discontinue Nephrotoxic Medications:**
+   - **Appropriate:** All nephrotoxic agents should be discontinued or substituted if possible. Medications such as NSAIDs and ACE inhibitors/ARBs, known to exacerbate kidney injury, may need to be stopped. Antibiotic choice should avoid nephrotoxic options like aminoglycosides unless no alternatives are available.
+   - **Contraindications:** Careful selection is essential, as abrupt discontinuation might destabilize other conditions, notably congestive heart failure. ACE inhibitors/ARBs may need to be stopped if renal function worsens significantly.
+   - **Support:** Guidelines suggest ceasing nephrotoxic drugs in the presence of AKI [KDOQI US commentary (pmid_23499048_p12)].
+
+3. **Consider Renal Replacement Therapy (RRT):**
+   - **Appropriate:** If the patient experiences refractory AKI, metabolic complications, or fluid overload, initiation of RRT may be required. Continuous modalities (e.g., CRRT) are preferred in hemodynamically unstable patients.
+   - **Contraindications:** RRT should be deferred if renal recovery appears imminent or if risks outweigh expected benefits.
+   - **Support:** The importance of considering RRT for patients with severe AKI is highlighted in the guidelines [KDOQI US commentary (pmid_23499048_p12)].
 
 ### References
 
-- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12): This source provides evidence for the discontinuation of nephrotoxic agents, management of volume status, and consideration for RRT in managing AKI in high-risk patients.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12):** Supported strategies for managing high-risk AKI, including hemodynamic optimization, discontinuation of nephrotoxics, and consideration for RRT.
 
 ---
 
@@ -47,47 +112,41 @@ Based on the context provided, the treatment for an 80-year-old female with acut
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
@@ -135,15 +194,9 @@ Kidney International Supplements (2012) 2, 8–12 9 summary of recommendation st
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 

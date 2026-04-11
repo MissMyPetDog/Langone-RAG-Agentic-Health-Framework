@@ -1,47 +1,102 @@
-# Question
+## Questions
 
-For a 50-year-old Hispanic female with AKI onset, severe obesity (BMI 51.9), chronic kidney disease, diabetes with complications, malignancy, and current anticoagulant use, what are evidence-based strategies to manage acute kidney injury considering potential drug interactions, contraindications due to renal impairment, and the impacts on diabetes and malignancy management?
+What is the most effective and evidence-based treatment strategy for a 50-year-old Hispanic female with acute kidney injury onset following elective admission, who has comorbidities including COPD, severe diabetes, moderate to severe renal disease, and metastatic cancer, currently on anticoagulants and previously on NSAIDs, considering her elevated BMI and significant negative fluid balance?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+- **Vision:** 1 figure(s) as `image_url` (pixels), max=6 | VISION_MAX_EDGE=1536
 
 ---
 
-## Answer
+## Summary
 
-### Management of Acute Kidney Injury in a Complex Patient
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-This case involves a 50-year-old Hispanic female with acute kidney injury (AKI), significant comorbidities—including severe obesity, chronic kidney disease (CKD), diabetes with complications, malignancy, and current anticoagulant use. This complex profile necessitates careful consideration of treatment strategies to manage AKI and mitigate potential drug interactions and contraindications due to renal impairment.
+```
+CASE ID: CASE_02
+STAY ID: 36469053
+============================================================
+PATIENT CLINICAL PROFILE:
 
-#### Summary of Evidence
+PATIENT DEMOGRAPHICS:
+  Age: 50 | Sex: Female | Race: HISPANIC/LATINO - PUERTO RICAN
+  Insurance: Medicaid | Admission type: ELECTIVE
 
-The KDIGO guidelines for acute kidney injury emphasize the identification of risk factors and the management of comorbid conditions to prevent worsening of renal function. Key considerations for this patient include avoiding nephrotoxic medications, optimizing volume status, and managing concurrent conditions [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
+AKI ONSET:
+  Baseline creatinine: 0.80 mg/dL
+  Hours from ICU admission to AKI onset: 76.3h
 
-#### Treatment Strategies
+CREATININE (ICU window, intime → onset), n=6 creatinine measurements in this window:
+  First     : 1.00 mg/dL
+  Min       : 0.90 mg/dL
+  Max       : 1.30 mg/dL
+  At onset  : 1.30 mg/dL
+  Delta      : +0.50 mg/dL
+  Ratio      : 1.62x baseline
+  Slope      : +0.0045 mg/dL/h
 
-1. **Discontinuation of Nephrotoxic Medications**
-   - **Appropriate Use**: The cessation of nephrotoxic drugs such as NSAIDs, certain antibiotics (e.g., aminoglycosides), and high doses of loop diuretics, which can exacerbate renal impairment and risk for AKI [pmid_23499048_p76].
-   - **Contraindications**: If the patient is reliant on these medications for critical non-nephrological conditions, consultation with relevant specialties for alternatives is required.
-   - **Citations**: [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
+LAB VALUES (last value before onset):
+  BUN            : last=16.0 mg/dL  [min=16.0, max=20.0]  (n=6)
+  POTASSIUM      : last=3.6 mEq/L  [min=3.6, max=4.1]  (n=5)
+  BICARBONATE    : last=21.0 mEq/L  [min=20.0, max=25.0]  (n=5)
+  HEMOGLOBIN     : last=8.9 g/dL  [min=8.9, max=10.3]  (n=5)
 
-2. **Volume Management and Hemodynamic Support**
-   - **Appropriate Use**: Maintain euvolemia through careful fluid management, avoiding overhydration, which can worsen cardiac conditions or cause fluid overload, especially critical in patients with concurrent CHF or malignancy that might involve superior vena cava syndrome.
-   - **Contraindications**: Overzealous use of diuretics as a method to prevent or manage AKI is not recommended due to potential electrolyte imbalances and volume instability [pmid_23499048_p76].
-   - **Citations**: [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
+VITAL SIGNS (ICU window):
+  MAP   : mean=90.5 mmHg  [min=62.0, max=135.0]  last=69.0  last6h=N/A  (n=50)
+  HR    : mean=115.1 bpm  [min=91.0, max=135.0]  last=121.0  last6h=N/A  (n=52) ⚠ TACHYCARDIA
+  SPO2  : mean=95.3 %  [min=92.0, max=98.0]  last=92.0  last6h=N/A  (n=50)
+  RR    : mean=23.1 /min  [min=16.0, max=33.0]  last=25.0  last6h=N/A  (n=52) ⚠ ELEVATED
+  TEMP  : mean=36.8 °C  [min=36.4, max=37.0]  last=36.8  last6h=N/A  (n=12)
 
-3. **Glycemic Control and Anticoagulation Management**
-   - **Appropriate Use**: Tight glycemic control is important as diabetes is a risk multiplier for kidney complications. Adjusting antidiabetic medications like metformin is recommended due to contraindications with declining eGFR levels.
-   - **Contraindications**: Care must be taken to avoid metformin and newer antiglycemic agents that are contraindicated in or exacerbate AKI conditions. For patients on anticoagulation, dosing adjustments may be necessary based on renal function.
-   - **Citations**: [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
+URINE OUTPUT, n=36 urine-output entries:
+  Total UO   : 6795 mL
+  Rate       : 89.1 mL/h
+  Last 6h    : N/A
+  Last 12h   : N/A
+  Last 24h   : N/A
 
-#### Conclusion
+FLUID BALANCE:
+  Total input  : 1755 mL
+  Net balance  : -5040 mL
 
-Effective management involves a multidisciplinary approach to adjust or discontinue nephrotoxic drugs, stabilize volume status, and maintain meticulous glycemic control while adjusting anticoagulation therapy based on renal function. Consulting with specialists in nephrology, endocrinology, and oncology may further personalize treatment strategies for optimal management of this complex patient profile.
+COMORBIDITIES (Charlson score: 14):
+  + COPD
+  + Diabetes (mild)
+  + Diabetes (severe/complications)
+  + Moderate/severe renal disease
+  + Malignancy
+  + Metastatic solid tumor
+  Additional flags: Hypertension, Diabetes, Chronic kidney disease, Malignancy
 
-#### References
+PRIOR MEDICATIONS (before current admission):
+  NSAID
 
-- KDIGO US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury [pmid_23499048_p76].
+CURRENT MEDICATIONS (active at AKI onset):
+  Anticoagulant
+
+OTHER:
+  BMI            : 51.9
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+For a patient with acute kidney injury (AKI) exacerbated by multiple comorbidities, including COPD, diabetes, severe renal disease, and metastatic cancer, careful management is crucial. Her elevated BMI and significant negative fluid balance must also be considered alongside other factors like previous NSAID use and current anticoagulant therapy.
+
+1. **Renal Replacement Therapy (RRT)**: Considering the severity of renal disease and the recent AKI onset, RRT may be necessary to manage her fluid balance and uremia, especially if oliguria persists. RRT should be carefully modulated due to her metastatic cancer and prior NSAID use. The current anticoagulant therapy could complicate bleeding risks during RRT, thus requiring careful monitoring and potential adjustment [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+
+2. **Optimize Fluid and Hemodynamic Status**: Ensuring volume status and perfusion pressure is vital given her significant negative fluid balance. Functional hemodynamic monitoring can help tailor fluid resuscitation protocols. This strategy is appropriate as long as heart failure risks are managed, considering her elevated BMI and possibility of fluid overload [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+
+3. **Glycemic Control**: Manage hyperglycemia rigorously due to its role in exacerbating kidney injury and the patient's severe diabetes. Insulin therapy to target plasma glucose between 110–149 mg/dl is suggested, adapting doses to renal impairment needs. This strategy must avoid hypoglycemia, especially in this patient with significant comorbidities and medication interactions [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+
+Fallback logic indicates that if RRT is not feasible (e.g., due to bleeding risks from anticoagulation), optimizing fluid status remains critical. If neither option sufficiently addresses disease management, strict glycemic control becomes increasingly vital to minimize further renal damage.
+
+### References
+
+- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12): Supported RRT, fluid status optimization, and glycemic control as strategies for managing AKI in complex cases with multiple comorbidities.
 
 ---
 
@@ -49,63 +104,91 @@ Effective management involves a multidisciplinary approach to adjust or disconti
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
 VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOURNAL OF THE INTERNATIONAL SOCIETY OF NEPHROLOGY KDIGO Clinical Practice Guideline for Acute Kidney Injury
 
-### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
+### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p12 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p12_fig_0_c0`** *(image)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
+![page_12_fig_0.png](../data/raw/pmid_23499048/page_12_fig_0.png)
 
 **OCR text**
 
 ```
-DISEASE KIDNEY GLOBAL
+AKIStage HighRisk 2 3 Discontinue all nephrotoxic agents when possible Ensurevolumestatus and perfusionpressure Consider functional hemodynamicmonitoring Monitor Serum creatinine and urine output Avoid hyperglycemia Consideralternativestoradiocontrastprocedures Non-invasivediagnosticworkup Considerinvasive diagnosticworkup Checkforchanges in drug dosing Consider Renal Replacement Therapy ConsiderICuadmission Avoid subclavian catheters ifpossible
 ```
+
+**`pmid_23499048_p12_t0_c0`** *(text)*
+
+3.1.3: We suggest using protocol-based management of hemodynamic and oxygenation parameters to prevent development or worsening of AKI in high-risk patients in the perioperative setting (2C) or in patients with septic shock (2C). 3.3.1: In critically ill patients, we suggest insulin therapy targeting plasma glucose 110–149 mg/dl (6.1–8.3mmol/l). (2C) 3.3.2: We suggest achieving a total energy intake of 20–30 kcal/kg/d in patients with any stage of AKI. (2C) 3.3.3: We suggest to avoid restriction of protein intake with the aim of preventing or delaying initiation of RRT. (2D) 3.3.4: We suggest administering 0.8–1.0 g/kg/d of protein in noncatabolic AKI patients without need for dialysis (2D), 1.0–1.5 g/kg/d in patients with AKI on RRT (2D), and up to a maximum of 1.7 g/kg/d in patients on continuous renal replacement therapy (CRRT) and in hypercatabolic patients. (2D) 3.3.5: We suggest providing nutrition preferentially via the enteral route in patients with AKI. (2C) 3.4.1: We recommend not using diuretics to prevent AKI. (1B) 3.4.2: We suggest not using diuretics to treat AKI, except in the management of volume overload. (2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI.
+
+**`pmid_23499048_p12_t1_c0`** *(text)*
+
+1: We suggest that a single dose of theophylline may be given in neonates with severe perinatal asphyxia, who are at high risk of AKI. (2B) 3.8.1: We suggest not using aminoglycosides for the treatment of infections unless no suitable, less nephrotoxic, therapeutic alternatives are available. (2A) 3.8.2: We suggest that, in patients with normal kidney function in steady state, aminoglycosides are administered as a single dose daily rather than multiple-dose daily treatment regimens. (2B) 3.8.3: We recommend monitoring aminoglycoside drug levels when treatment with multiple daily dosing is used for more than 24 hours. (1A) 3.8.4: We suggest monitoring aminoglycoside drug levels when treatment with single-daily dosing is used for more than 48 hours. (2C) 3.8.5: We suggest using topical or local applications of aminoglycosides (e.g., respiratory aerosols, instilled antibiotic beads), rather than i.v. application, when feasible and suitable. (2B) 3.8.6: We suggest using lipid formulations of amphotericin B rather than conventional formulations of amphotericin B. (2A) 3.8.7: In the treatment of systemic mycoses or parasitic infections, we recommend using azole antifungal agents and/or the echinocandins rather than conventional amphotericin B, if equal therapeutic efﬁcacy can be assumed.
+
+**`pmid_23499048_p12_t2_c0`** *(text)*
+
+Kidney International Supplements (2012) 2, 8–12 9 summary of recommendation statements
+
+**`pmid_23499048_p12_t0_c1`** *(text)*
+
+(2D) 3.3.5: We suggest providing nutrition preferentially via the enteral route in patients with AKI. (2C) 3.4.1: We recommend not using diuretics to prevent AKI. (1B) 3.4.2: We suggest not using diuretics to treat AKI, except in the management of volume overload. (2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI. (1A) 3.5.2: We suggest not using fenoldopam to prevent or treat AKI. (2C) 3.5.3: We suggest not using atrial natriuretic peptide (ANP) to prevent (2C) or treat (2B) AKI. 3.6.1: We recommend not using recombinant human (rh)IGF-1 to prevent or treat AKI. (1B) 3.7.
+
+**`pmid_23499048_p12_t1_c1`** *(text)*
+
+(2B) 3.8.6: We suggest using lipid formulations of amphotericin B rather than conventional formulations of amphotericin B. (2A) 3.8.7: In the treatment of systemic mycoses or parasitic infections, we recommend using azole antifungal agents and/or the echinocandins rather than conventional amphotericin B, if equal therapeutic efﬁcacy can be assumed. (1A) Figure 4 | Stage-based management of AKI. Shading of boxes indicates priority of action—solid shading indicates actions that are equally appropriate at all stages whereas graded shading indicates increasing priority as intensity increases. AKI, acute kidney injury; ICU, intensive- care unit.
+
+**`pmid_23499048_p12_t0_c2`** *(text)*
+
+(2C) 3.5.1: We recommend not using low-dose dopamine to prevent or treat AKI. (1A) 3.5.2: We suggest not using fenoldopam to prevent or treat AKI. (2C) 3.5.3: We suggest not using atrial natriuretic peptide (ANP) to prevent (2C) or treat (2B) AKI. 3.6.1: We recommend not using recombinant human (rh)IGF-1 to prevent or treat AKI. (1B) 3.7.
+
+**`pmid_23499048_p12_t1_c2`** *(text)*
+
+(1A) Figure 4 | Stage-based management of AKI. Shading of boxes indicates priority of action—solid shading indicates actions that are equally appropriate at all stages whereas graded shading indicates increasing priority as intensity increases. AKI, acute kidney injury; ICU, intensive- care unit.
+
+### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
+
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
+
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 
@@ -144,38 +227,4 @@ NAC for risk of CI-AKI 85 Figure 17. Flow-chart summary of recommendations 96 Ad
 **`pmid_23499048_p3_t0_c2`** *(text)*
 
 Catheter and patient sizes 104 Table 21. Typical setting of different RRT modalities for AKI (for 70-kg patient) 107 Table 22. Theoretical advantages and disadvantages of CRRT, IHD, SLED, and PD 108 Table 23. Microbiological quality standards of different regulatory agencies 112 FIGURES Figure 1.
-
-### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p76 ===
-
-**`pmid_23499048_p76_t0_c0`** *(text)*
-
-Other risk factors of CI-AKI Besides pre-existing kidney disease with renal function impairment, other risk factors for developing CI-AKI include diabetes, hypertension, CHF, advanced age, volume depletion, hemodynamic instability, use of concurrent nephrotoxic medications, and large volume or high osmol- ality of the contrast agent.408,412 Although there is doubt that diabetes by itself is an independent risk factor, in a patient with CKD it acts as a risk multiplier.398 Metabolic syndrome, prediabetes, and hyperuricemia have been identiﬁed as new risk factors for CI-AKI, while the use of ACE-I and angiotensin-receptor blockers (ARB), renal transplantation, diabetes mellitus with normal renal function, low-osmolar contrast media, multiple myeloma, female gender, and cirrhosis have been classiﬁed as conﬂicting risk factors for CI-AKI.413 There are conﬂicting data on the impact of ACE-I or ARB but, overall, there is currently insufﬁcient evidence to recommend discontinuation of these medications prior to contrast-media administration. When possible, the administration of contrast media should be delayed in patients with circulatory collapse or CHF until their hemodynamic status is corrected.
-
-**`pmid_23499048_p76_t1_c0`** *(text)*
-
-414 Concurrent nephrotoxic medication—including, in particular, NSAIDs, aminoglycosides, amphotericin B, high doses of loop diuretics, and antiviral drugs like acyclovir and foscarnet—should preferably be stopped. A recent study using a so-called forced euvolemic diuresis protocol including mannitol and furosemide led to a signi- ﬁcantly increased risk of CI-AKI.415 It can be advised that such strategy should be abandoned, and that furose- mide therapy should preferably be stopped before angio- graphy. In the past 3 months have you been told there may have been a change in your kidney function? Y/N In the past 3 months have you been on any medications? Please list: Have you used any over-the-counter pain relievers within the last 10 days? Y/N  Please list: In the past 3 months have you had any surgery? Y/N Describe: Do you feel dry or thirsty? Y/N Circle one *Have you ever been told you have kidney disease of any type? Please describe: Y N *Have you had kidney surgery? Y N *Do you have diabetes? Do you use insulin? Do you use metformin or glucophage? Y Y Y N N N *Do you have hypertension, heart disease, or vascular disease? Y N *Do you have gout? Y N Do you have multiple myleoma? Y N Have you ever had x-ray contrast media (dye) for CT, angiography, or IVP?
-
-**`pmid_23499048_p76_t2_c0`** *(text)*
-
-Asterisks denote questions with the highest association with abnormal renal function. Adapted from Choyke PL, Cady J, DePollar SL et al. Determination of serum creatinine prior to iodinated contrast media: is it necessary in all patients? Tech Urol 1998; 4: 65–69 with permission.411 Table 15 | CI-AKI risk-scoring model for percutaneous coronary intervention Risk factors Integer score (calculate) Hypotension 5 IABP 5 CHF 5 Age 475 years 4 Anemia 3 Diabetes 3 Contrast-media volume 1 per 100 ml SCr 41.5 mg/dl (4132.6 mmol/l) 4 or eGFR o60 ml/min per 1.73 m2 2 for 40–60 4 for 20–39 6 for o20 Note: Low risk: cumulative score o5; high risk: cumulative score 416. CHF, congestive heart failure; eGFR, estimated glomerular filtration rate; IABP, intra- aortic balloon pump; SCr, serum creatinine. Reprinted from Mehran R, Aymong ED, Nikolsky E et al. A simple risk score for prediction of contrast-induced nephropathy after percutaneous coronary intervention: development and initial validation. J Am Coll Cardiol 2004; 44: 1393–1399 et al.,418 copyright 2004, with permission from American College of Cardiology Foundation; accessed http://content.onlinejacc.org/ cgi/content/full/44/7/1393 Kidney International Supplements (2012) 2, 69–88 73 chapter 4.
-
-**`pmid_23499048_p76_t3_c0`** *(text)*
-
-2
-
-**`pmid_23499048_p76_t0_c1`** *(text)*
-
-Repeated exposure should be delayed for 48 hours in patients without risk factors for CI-AKI, and for 72 hours in those with diabetes mellitus or pre-existing chronic renal dysfunc- tion. If acute renal dysfunction develops after contrast-media administration, repeated exposure should preferably be delayed until the SCr level has returned to baseline levels.
-
-**`pmid_23499048_p76_t1_c1`** *(text)*
-
-Do you use metformin or glucophage? Y Y Y N N N *Do you have hypertension, heart disease, or vascular disease? Y N *Do you have gout? Y N Do you have multiple myleoma? Y N Have you ever had x-ray contrast media (dye) for CT, angiography, or IVP? Have you had contrast media within the last 3 days? Do you have any allergies to x-ray contrast media (dye)? Please describe: Y Y Y N N N Have you received pretreatment with medication for this study? Y N Do you have any allergies or asthma? Please describe: Y N Figure 13 | Sample questionnaire.
-
-**`pmid_23499048_p76_t2_c1`** *(text)*
-
-A simple risk score for prediction of contrast-induced nephropathy after percutaneous coronary intervention: development and initial validation. J Am Coll Cardiol 2004; 44: 1393–1399 et al.,418 copyright 2004, with permission from American College of Cardiology Foundation; accessed http://content.onlinejacc.org/ cgi/content/full/44/7/1393 Kidney International Supplements (2012) 2, 69–88 73 chapter 4.
-
-**`pmid_23499048_p76_t1_c2`** *(text)*
-
-Have you had contrast media within the last 3 days? Do you have any allergies to x-ray contrast media (dye)? Please describe: Y Y Y N N N Have you received pretreatment with medication for this study? Y N Do you have any allergies or asthma? Please describe: Y N Figure 13 | Sample questionnaire.
 

@@ -1,44 +1,102 @@
-# Question
+## Questions
 
-In an 82-year-old male with acute kidney injury (AKI) onset (creatinine rise to 2.40 mg/dL) in the ICU, a background of congestive heart failure, moderate/severe chronic kidney disease, sepsis, and a history of NSAID and vancomycin use, what are the evidence-based management strategies considering current use of nephrotoxic agents, vasopressor, antibiotic, and anticoagulant therapy?
+Considering the 82-year-old male patient with acute kidney injury onset in the ICU, severe renal disease, multiple cardiovascular comorbidities (myocardial infarction, congestive heart failure, peripheral vascular disease), diabetes with complications, and history of sepsis, which evidence-based treatment options optimize renal recovery and manage fluid balance while minimizing risk given his current use of nephrotoxic agents, vasopressors, antibiotics, and anticoagulants?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
 
 ---
 
-## Answer
+## Summary
 
-### Management Strategies for AKI in an 82-year-old Male in ICU
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-**Summary**: 
-An 82-year-old male with AKI, congestive heart failure, moderate-to-severe chronic kidney disease (CKD), sepsis, and recent NSAID and vancomycin use presents a complex clinical scenario. The patient is currently receiving vasopressor, antibiotic, and anticoagulant therapy. This scenario requires careful consideration of evidence-based management strategies to address AKI while minimizing further kidney damage, especially from nephrotoxic agents.
+```
+CASE ID: CASE_15
+STAY ID: 37451901
+============================================================
+PATIENT CLINICAL PROFILE:
 
-**Treatment Options**:
+PATIENT DEMOGRAPHICS:
+  Age: 82 | Sex: Male | Race: WHITE
+  Insurance: Medicare | Admission type: EW EMER.
 
-1. **Evaluation and Withdrawal of Nephrotoxic Agents**:
-   - **Appropriate**: Immediate cessation or substitution of nephrotoxic agents like NSAIDs and potentially vancomycin, given the patient's history and risk of worsening AKI.
-   - **Avoid**: In case of absolute necessity for any nephrotoxic medication, consider dose adjustment and close monitoring.
-   - **Evidence**: Evaluation of the cause of AKI with focus on reversible factors like nephrotoxic drugs is emphasized [KDIGO Guidelines (pmid_23499048_p11)].
+AKI ONSET:
+  Baseline creatinine: 0.70 mg/dL
+  Hours from ICU admission to AKI onset: 5.4h
 
-2. **Use of Vasopressors and Isotonic Crystalloids**:
-   - **Appropriate**: In circumstances of vasomotor shock or risk, use vasopressors in conjunction with isotonic crystalloids to manage blood pressure and ensure adequate renal perfusion.
-   - **Avoid**: Monitor for signs of fluid overload, especially due to congestive heart failure.
-   - **Evidence**: Combination of vasopressors and fluids is recommended to manage vasomotor shock in AKI [KDIGO Guidelines (pmid_23499048_p11)].
+CREATININE (ICU window, intime → onset), n=2 creatinine measurements in this window:
+  First     : 2.80 mg/dL
+  Min       : 2.40 mg/dL
+  Max       : 2.80 mg/dL
+  At onset  : 2.40 mg/dL
+  Delta      : +1.70 mg/dL
+  Ratio      : 3.43x baseline
+  Slope      : -0.0816 mg/dL/h
 
-3. **Renal Replacement Therapy (RRT)**:
-   - **Appropriate**: Consider RRT if there is significant fluid overload, electrolyte imbalance, or if the patient progresses to stage 3 AKI.
-   - **Avoid**: Initiate only if conservative therapies fail and close monitoring is necessary when anticoagulants are involved to prevent bleeding complications.
-   - **Evidence**: Early RRT might be indicated for severe AKI or failure to conservative management [KDIGO Guidelines (pmid_23499048_p3)].
+LAB VALUES (last value before onset):
+  BUN            : last=52.0 mg/dL  [min=52.0, max=56.0]  (n=2)
+  POTASSIUM      : last=4.2 mEq/L  [min=4.2, max=4.6]  (n=2)
+  BICARBONATE    : last=22.0 mEq/L  [min=22.0, max=22.0]  (n=2)
+  HEMOGLOBIN     : last=8.1 g/dL  [min=8.1, max=8.1]  (n=1)
 
-**Considerations**:
-Given the patient's multiple comorbidities, careful titration of fluids and medications is crucial. Additional issues like maintaining electrolyte balance, monitoring urine output, and serial assessment of kidney function are mandatory parts of the management.
+VITAL SIGNS (ICU window):
+  MAP   : mean=78.7 mmHg  [min=64.0, max=91.0]  last=64.0  last6h=78.7  (n=6)
+  HR    : mean=78.7 bpm  [min=63.0, max=93.0]  last=76.0  last6h=78.7  (n=6)
+  SPO2  : mean=100.0 %  [min=100.0, max=100.0]  last=100.0  last6h=100.0  (n=6)
+  RR    : mean=17.3 /min  [min=14.0, max=25.0]  last=14.0  last6h=17.3  (n=6)
+  TEMP  : mean=35.7 °C  [min=35.2, max=36.1]  last=36.1  last6h=35.7  (n=5)
 
-**References**:
-- KDIGO Guidelines for AKI Evaluation and Management [pmid_23499048_p11].
-- Recommendations on the Use of Vasopressors and Fluid Management [pmid_23499048_p11].
-- Considerations for Renal Replacement Therapy Initiation [pmid_23499048_p3].
+URINE OUTPUT, n=4 urine-output entries:
+  Total UO   : 925 mL
+  Rate       : 171.3 mL/h
+  Last 6h    : 925 mL
+  Last 12h   : 925 mL
+  Last 24h   : 925 mL
+
+FLUID BALANCE:
+  Total input  : 2805 mL
+  Net balance  : +1880 mL
+
+COMORBIDITIES (Charlson score: 11):
+  + Myocardial infarction
+  + Congestive heart failure
+  + Peripheral vascular disease
+  + Cerebrovascular disease
+  + Diabetes (mild)
+  + Diabetes (severe/complications)
+  + Moderate/severe renal disease
+  + Malignancy
+  Additional flags: Hypertension, Diabetes, Chronic kidney disease, Sepsis, Malignancy
+
+PRIOR MEDICATIONS (before current admission):
+  NSAID, Vancomycin, Statin
+
+CURRENT MEDICATIONS (active at AKI onset):
+  Nephrotoxic agent, Vasopressor, Antibiotic, Anticoagulant
+
+OTHER:
+  BMI            : 23.4
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+In this patient with acute kidney injury (AKI) and multiple comorbidities, optimizing renal recovery involves careful fluid management and hemodynamic stabilization while mitigating potential risks from his current medications. Given his advanced age, cardiovascular diseases, and severe renal impairment, treatment should prioritize non-aggressive but effective interventions to maintain adequate renal perfusion and minimize fluid overload.
+
+1. **Isotonic Crystalloids for Volume Expansion**: The initial management of volume depletion and maintaining hemodynamic stability should be with isotonic crystalloids, such as normal saline, rather than colloids. This strategy is safe for intravascular volume expansion without the risks associated with colloids, like starches, which may increase mortality and renal complications [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p40)]. Given that he is already on vasopressors and nephrotoxic agents, careful fluid balance is critical to prevent fluid overload, which is a known risk factor for increased mortality in AKI [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p40)].
+
+2. **Vasopressors with Hemodynamic Monitoring**: If hypotension persists despite fluid resuscitation, vasopressors like norepinephrine can be considered to maintain mean arterial pressure and ensure adequate renal perfusion. Given the potential for vasopressors to reduce tissue perfusion if there's insufficient blood volume, concurrent fluid management and hemodynamic monitoring are crucial [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p40)]. This combination should be carefully controlled to avoid exacerbating the patient's kidney injury and cardiovascular condition.
+
+3. **Close Monitoring and Adjustment of Nephrotoxic and Anticoagulant Medications**: Due to the potential adverse effects of nephrotoxic drugs and the delicate balance in managing anticoagulation in the presence of renal impairment, review and adjustment of these medications might be necessary as part of the treatment plan. Monitor renal function regularly and adjust doses accordingly to prevent further kidney damage [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p40)].
+
+Fallback Logic: If isotonic crystalloids do not achieve the desired hemodynamic stability and vasopressors are not effective or exacerbate conditions like peripheral vascular disease, continuous renal replacement therapy (CRRT) may be considered to manage severe fluid overload and electrolyte imbalances, though this may not be explicitly covered in the referenced literature.
+
+### References
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p40)**: Supported the use of isotonic crystalloids over colloids for initial volume expansion and discussed the risks of fluid overload and vasopressor use in AKI management.
 
 ---
 
@@ -46,89 +104,51 @@ Given the patient's multiple comorbidities, careful titration of fluids and medi
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
 VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOURNAL OF THE INTERNATIONAL SOCIETY OF NEPHROLOGY KDIGO Clinical Practice Guideline for Acute Kidney Injury
 
-### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p11 ===
-
-**`pmid_23499048_p11_t0_c0`** *(text)*
-
-Summary of Recommendation Statements Kidney International Supplements (2012) 2, 8–12; doi:10.1038/kisup.2012.7 http://www.kidney-international.org & 2012 KDIGO Section 2: AKI Definition 2.1.1: AKI is deﬁned as any of the following (Not Graded): K Increase in SCr by X0.3 mg/dl (X26.5 lmol/l) within 48 hours; or K Increase in SCr to X1.5 times baseline, which is known or presumed to have occurred within the prior 7 days; or K Urine volume o0.5 ml/kg/h for 6 hours. 2.1.2: AKI is staged for severity according to the following criteria (Table 2). (Not Graded) 2.1.3: The cause of AKI should be determined whenever possible. (Not Graded) 2.2.1: We recommend that patients be stratiﬁed for risk of AKI according to their susceptibilities and exposures. (1B) 2.2.2: Manage patients according to their susceptibilities and exposures to reduce the risk of AKI (see relevant guideline sections). (Not Graded) 2.2.3: Test patients at increased risk for AKI with measurements of SCr and urine output to detect AKI. (Not Graded) Individualize frequency and duration of monitoring based on patient risk and clinical course. (Not Graded) 2.3.1: Evaluate patients with AKI promptly to determine the cause, with special attention to reversible causes.
-
-**`pmid_23499048_p11_t1_c0`** *(text)*
-
-(Not Graded) K If patients have CKD, manage these patients as detailed in the KDOQI CKD Guideline (Guidelines 7–15). (Not Graded) K If patients do not have CKD, consider them to be at increased risk for CKD and care for them as detailed in the KDOQI CKD Guideline 3 for patients at increased risk for CKD. (Not Graded) Section 3: Prevention and Treatment of AKI 3.1.1: In the absence of hemorrhagic shock, we suggest using isotonic crystalloids rather than colloids (albumin or starches) as initial management for expansion of intravascular volume in patients at risk for AKI or with AKI. (2B) 3.1.2: We recommend the use of vasopressors in conjunction with ﬂuids in patients with vasomotor shock with, or at risk for, AKI. (1C) Table 2 | Staging of AKI Stage Serum creatinine Urine output 1 1.5–1.9 times baseline OR X0.3 mg/dl (X26.5 mmol/l) increase o0.5 ml/kg/h for 6–12 hours 2 2.0–2.9 times baseline o0.5 ml/kg/h for X12 hours 3 3.0 times baseline OR Increase in serum creatinine to X4.0 mg/dl (X353.6 mmol/l) OR Initiation of renal replacement therapy OR, In patients o18 years, decrease in eGFR to o35 ml/min per 1.73 m2 o0.
-
-**`pmid_23499048_p11_t2_c0`** *(text)*
-
-3 ml/kg/h for X24 hours OR Anuria for X12 hours 8 Kidney International Supplements (2012) 2, 8–12
-
-**`pmid_23499048_p11_t0_c1`** *(text)*
-
-(Not Graded) 2.2.3: Test patients at increased risk for AKI with measurements of SCr and urine output to detect AKI. (Not Graded) Individualize frequency and duration of monitoring based on patient risk and clinical course. (Not Graded) 2.3.1: Evaluate patients with AKI promptly to determine the cause, with special attention to reversible causes. (Not Graded) 2.3.2: Monitor patients with AKI with measurements of SCr and urine output to stage the severity, according to Recommendation 2.1.2. (Not Graded) 2.3.3: Manage patients with AKI according to the stage (see Figure 4) and cause. (Not Graded) 2.3.4: Evaluate patients 3 months after AKI for resolution, new onset, or worsening of pre-existing CKD.
-
-**`pmid_23499048_p11_t1_c1`** *(text)*
-
-(2B) 3.1.2: We recommend the use of vasopressors in conjunction with ﬂuids in patients with vasomotor shock with, or at risk for, AKI. (1C) Table 2 | Staging of AKI Stage Serum creatinine Urine output 1 1.5–1.9 times baseline OR X0.3 mg/dl (X26.5 mmol/l) increase o0.5 ml/kg/h for 6–12 hours 2 2.0–2.9 times baseline o0.5 ml/kg/h for X12 hours 3 3.0 times baseline OR Increase in serum creatinine to X4.0 mg/dl (X353.6 mmol/l) OR Initiation of renal replacement therapy OR, In patients o18 years, decrease in eGFR to o35 ml/min per 1.73 m2 o0.
-
-**`pmid_23499048_p11_t0_c2`** *(text)*
-
-(Not Graded) 2.3.2: Monitor patients with AKI with measurements of SCr and urine output to stage the severity, according to Recommendation 2.1.2. (Not Graded) 2.3.3: Manage patients with AKI according to the stage (see Figure 4) and cause. (Not Graded) 2.3.4: Evaluate patients 3 months after AKI for resolution, new onset, or worsening of pre-existing CKD.
-
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 
@@ -167,4 +187,42 @@ NAC for risk of CI-AKI 85 Figure 17. Flow-chart summary of recommendations 96 Ad
 **`pmid_23499048_p3_t0_c2`** *(text)*
 
 Catheter and patient sizes 104 Table 21. Typical setting of different RRT modalities for AKI (for 70-kg patient) 107 Table 22. Theoretical advantages and disadvantages of CRRT, IHD, SLED, and PD 108 Table 23. Microbiological quality standards of different regulatory agencies 112 FIGURES Figure 1.
+
+### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p40 ===
+
+**`pmid_23499048_p40_t0_c0`** *(text)*
+
+Section 3: Prevention and Treatment of AKI Kidney International Supplements (2012) 2, 37–68; doi:10.1038/kisup.2011.33 Chapter 3.1: Hemodynamic monitoring and support for prevention and management of AKI As discussed in Chapters 2.3 and Appendix D, patients with AKI and at increased risk for AKI require careful attention to be paid to their hemodynamic status. This is ﬁrst because hypotension results in decreased renal perfusion and, if severe or sustained, may result in kidney injury. Second, the injured kidney loses autoregulation of blood ﬂow, a mechanism that maintains relatively constant ﬂow despite changes in pressure above a certain point (roughly, a mean of 65 mm Hg). Management of blood pressure and cardiac output require careful titration of ﬂuids and vasoactive medication. Vasopressors can further reduce blood ﬂow to the tissues if there is insufﬁcient circulating blood volume. Conversely, patients with AKI are also at increased risk for ﬂuid overload (see Chapter 3.2) and continued ﬂuid resuscitation despite increased intravascular volume can cause harm. Fluids and vasoactive medications should be managed carefully and in concert with hemodynamic monitoring. Hemodynamic evaluation and monitoring are discussed in Appendix D.
+
+**`pmid_23499048_p40_t1_c0`** *(text)*
+
+There is an extensive body of literature in this ﬁeld and for a broader as well as more in depth review the reader is directed to the various reviews and textbooks devoted to critical care and nephrology.70–81 FLUIDS 3.1.1: In the absence of hemorrhagic shock, we suggest using isotonic crystalloids rather than colloids (albumin or starches) as initial management for expansion of intravascular volume in patients at risk for AKI or with AKI. (2B) RATIONALE Despite the recognition of volume depletion as an important risk factor for AKI, there are no randomized controlled trials (RCTs) that have directly evaluated the role of ﬂuids vs. placebo in the prevention of AKI, except in the ﬁeld of contrast-induced acute kidney injury (CI-AKI) (see Chapter 4.4). It is accepted that optimization of the hemodynamic status and correction of any volume deﬁcit will have a salutary effect on kidney function, will help minimize further extension of the kidney injury, and will potentially facilitate recovery from AKI with minimization of any residual func- tional impairment. AKI is characterized by a continuum of volume responsiveness through unresponsiveness (Figure 8),78,82 and large multicenter studies have shown that a positive ﬂuid balance is an important factor associated with increased 60-day mortality.78,83,84 The amount and selection of the type of ﬂuid that should be used in the resuscitation of critically ill patients is still controversial.
+
+**`pmid_23499048_p40_t2_c0`** *(text)*
+
+The three main end-points of the studies explored were the effects on mortality, need for RRT, and—if possible—the incidence of AKI. Although many trials have been conducted to compare ﬂuid types for resuscitation, studies without AKI outcomes were not systematically reviewed for this Guideline. Suppl Table 1 summarizes the RCTs examining the effect of starch for the prevention of AKI. Albumin vs. Saline The role of albumin physiology in critically ill patients, and the pros and cons for administering albumin to hypoalbu- minemic patients, have recently been discussed.85 Results of the Saline vs. Albumin Fluid Evaluation (SAFE) study, a RCT comparing 4% human albumin in 0.9% saline with isotonic saline in ICU patients, seem to indicate that albumin is safe, albeit no more effective than isotonic saline (the standard of care choice of isotonic sodium chloride in most centers) for ﬂuid resuscitation. SAFE demonstrated further no difference in renal outcomes, at least based on the need for and duration of RRT.86 The SAFE study was a double-blind study and it was noted that patients in the albumin arm received 27% less study ﬂuid compared to the saline arm (2247 vs. 3096 ml) and were approximately 1 l less positive in overall ﬂuid balance.86 Furthermore, very few patients in the trial received large volume ﬂuid resuscitation (45 l) and thus the results may not be applicable to all patients.
+
+**`pmid_23499048_p40_t3_c0`** *(text)*
+
+The Work Group noted that while isotonic crystalloids may be appropriate for initial management of intravascular ﬂuid deﬁcits, colloids may still have a role in patients requiring additional ﬂuid. http://www.kidney-international.org chapter 3.
+
+**`pmid_23499048_p40_t4_c0`** *(text)*
+
+1 & 2012 KDIGO Kidney International Supplements (2012) 2, 37–68 37
+
+**`pmid_23499048_p40_t0_c1`** *(text)*
+
+Vasopressors can further reduce blood ﬂow to the tissues if there is insufﬁcient circulating blood volume. Conversely, patients with AKI are also at increased risk for ﬂuid overload (see Chapter 3.2) and continued ﬂuid resuscitation despite increased intravascular volume can cause harm. Fluids and vasoactive medications should be managed carefully and in concert with hemodynamic monitoring. Hemodynamic evaluation and monitoring are discussed in Appendix D. In this chapter therapies aimed at correcting hemo- dynamic instability will be discussed. Available therapies to manage hypotension include ﬂuids, vasopressors and proto- cols which integrate these therapies with hemodynamic goals.
+
+**`pmid_23499048_p40_t1_c1`** *(text)*
+
+It is accepted that optimization of the hemodynamic status and correction of any volume deﬁcit will have a salutary effect on kidney function, will help minimize further extension of the kidney injury, and will potentially facilitate recovery from AKI with minimization of any residual func- tional impairment. AKI is characterized by a continuum of volume responsiveness through unresponsiveness (Figure 8),78,82 and large multicenter studies have shown that a positive ﬂuid balance is an important factor associated with increased 60-day mortality.78,83,84 The amount and selection of the type of ﬂuid that should be used in the resuscitation of critically ill patients is still controversial. This guideline focuses on the selection of the ﬂuid (colloid vs. crystalloid ﬂuid in the prevention and early management of AKI).
+
+**`pmid_23499048_p40_t2_c1`** *(text)*
+
+SAFE demonstrated further no difference in renal outcomes, at least based on the need for and duration of RRT.86 The SAFE study was a double-blind study and it was noted that patients in the albumin arm received 27% less study ﬂuid compared to the saline arm (2247 vs. 3096 ml) and were approximately 1 l less positive in overall ﬂuid balance.86 Furthermore, very few patients in the trial received large volume ﬂuid resuscitation (45 l) and thus the results may not be applicable to all patients.
+
+**`pmid_23499048_p40_t0_c2`** *(text)*
+
+Hemodynamic evaluation and monitoring are discussed in Appendix D. In this chapter therapies aimed at correcting hemo- dynamic instability will be discussed. Available therapies to manage hypotension include ﬂuids, vasopressors and proto- cols which integrate these therapies with hemodynamic goals.
 

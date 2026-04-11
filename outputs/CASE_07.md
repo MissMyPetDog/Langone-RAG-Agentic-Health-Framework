@@ -1,44 +1,111 @@
-# Question
+## Questions
 
-What are the evidence-based treatment options for acute kidney injury in a 53-year-old male with severe renal disease, congestive heart failure, diabetes with complications, and severe liver disease, considering current use of nephrotoxic agents, antibiotics, and anticoagulants, alongside mild metabolic acidosis and recent tachycardia?
+What is the optimal management of acute kidney injury in a 53-year-old male with moderate/severe chronic kidney disease, severe liver disease, heart failure, and sepsis who is currently on nephrotoxic antibiotics, anticoagulants, and has experienced a rapid increase in creatinine levels, considering potential interactions with prior use of ACEI/ARB and vancomycin?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
 
 ---
 
-## Answer
+## Summary
 
-### Evidence-Based Treatment Options for Acute Kidney Injury
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-#### Summary
-This is a complex clinical scenario involving acute kidney injury (AKI) in conjunction with severe renal disease, heart failure, diabetes with complications, severe liver disease, and current use of nephrotoxic agents, antibiotics, and anticoagulants. Additionally, the patient experiences mild metabolic acidosis and recent tachycardia. This intricate case requires careful consideration of interventions that prioritize kidney function preservation and overall patient safety.
+```
+CASE ID: CASE_07
+STAY ID: 33570939
+============================================================
+PATIENT CLINICAL PROFILE:
 
-#### Treatment Options
+PATIENT DEMOGRAPHICS:
+  Age: 53 | Sex: Male | Race: WHITE
+  Insurance: Private | Admission type: OBSERVATION ADMIT
 
-1. **Continuous Renal Replacement Therapy (CRRT)**
-   - **Appropriate For:** This option is suitable for patients with hemodynamic instability, as often seen with tachycardia and severe liver disease, allowing for gradual fluid and electrolyte removal [KDOQI US commentary (pmid_23499048_p3)].
-   - **Contraindications:** Limited contraindications, though resource availability and technical expertise are necessary.
-   - **Evidence:** CRRT provides renal support and is favored in critically ill patients with multi-organ dysfunction to manage fluid overload and metabolic disturbances [KDOQI US commentary (pmid_23499048_p3)].
+AKI ONSET:
+  Baseline creatinine: 1.30 mg/dL
+  Hours from ICU admission to AKI onset: 4.0h
 
-2. **Avoidance or Adjustment of Nephrotoxic Agents**
-   - **Appropriate For:** As the patient is on nephrotoxic agents, careful reassessment and adjustment of these medications are needed to prevent further kidney damage [KDOQI US commentary (pmid_23499048_p130)].
-   - **Contraindications:** Complete avoidance might be complex if these agents are essential for concurrent treatments, such as specific antibiotics that require use for infection control.
-   - **Evidence:** Minimizing nephrotoxic exposure is critical in AKI management, reducing further renal compromise [KDOQI US commentary (pmid_23499048_p130)].
+CREATININE (ICU window, intime → onset), n=1 creatinine measurements in this window:
+  First     : 2.10 mg/dL
+  Min       : 2.10 mg/dL
+  Max       : 2.10 mg/dL
+  At onset  : 2.10 mg/dL
+  Delta      : +0.80 mg/dL
+  Ratio      : 1.61x baseline
+  Slope      : N/A
 
-3. **Diuretics with Caution (Furosemide)**
-   - **Appropriate For:** Diuretics may be used carefully to manage fluid overload and associated symptoms, such as pulmonary congestion from heart failure [KDOQI US commentary (pmid_23499048_p3)].
-   - **Contraindications:** Should be used cautiously due to potential adverse effects on renal function, especially given the severe liver disease component [KDOQI US commentary (pmid_23499048_p3)].
-   - **Evidence:** The effects of diuretics like furosemide can assist in managing fluid balance but require close monitoring due to potential renal harm [KDOQI US commentary (pmid_23499048_p3)].
+LAB VALUES (last value before onset):
+  BUN            : last=30.0 mg/dL  [min=30.0, max=30.0]  (n=1)
+  POTASSIUM      : last=4.0 mEq/L  [min=4.0, max=4.0]  (n=1)
+  BICARBONATE    : last=15.0 mEq/L  [min=15.0, max=15.0]  (n=1)
+  HEMOGLOBIN     : last=9.5 g/dL  [min=9.5, max=9.5]  (n=1)
 
-#### Fallback Logic
-- If CRRT is not feasible, perhaps due to limited resources or technical constraints, focus should shift towards optimizing existing nephrotoxic and fluid management strategies.
-- Should altering nephrotoxic agents prove unmanageable due to treatment conflicts, cautious use of diuretics may help control fluid overload but demands careful balance and monitoring.
+VITAL SIGNS (ICU window):
+  MAP   : mean=98.2 mmHg  [min=89.0, max=107.0]  last=94.0  last6h=98.2  (n=5)
+  HR    : mean=110.5 bpm  [min=97.0, max=124.0]  last=97.0  last6h=110.5  (n=6) ⚠ TACHYCARDIA
+  SPO2  : mean=96.1 %  [min=94.0, max=98.0]  last=98.0  last6h=96.1  (n=7)
+  RR    : mean=23.2 /min  [min=14.0, max=30.0]  last=14.0  last6h=23.2  (n=6) ⚠ ELEVATED
+  TEMP  : mean=38.4 °C  [min=38.1, max=38.9]  last=38.3  last6h=38.4  (n=3) ⚠ FEVER
 
-#### References
-- KDOQI US commentary on KDIGO guidelines for AKI [pmid_23499048_p3]: Provides comprehensive recommendations on supportive management for AKI inclusive of RRT.
-- KDOQI US commentary [pmid_23499048_p130]: Discusses nephrotoxic agents' impact and adjustment necessity in AKI patients.
+URINE OUTPUT, n=1 urine-output entries:
+  Total UO   : 225 mL
+  Rate       : 56.2 mL/h
+  Last 6h    : 225 mL
+  Last 12h   : 225 mL
+  Last 24h   : 225 mL
+
+FLUID BALANCE:
+  Total input  : 905 mL
+  Net balance  : +680 mL
+
+COMORBIDITIES (Charlson score: 13):
+  + Congestive heart failure
+  + Dementia
+  + Mild liver disease
+  + Diabetes (mild)
+  + Diabetes (severe/complications)
+  + Moderate/severe renal disease
+  + Malignancy
+  + Severe liver disease
+  Additional flags: Hypertension, Diabetes, Chronic kidney disease, Sepsis, Liver disease, Malignancy, Coagulopathy
+
+PRIOR MEDICATIONS (before current admission):
+  ACEI/ARB, Vancomycin, Statin
+
+CURRENT MEDICATIONS (active at AKI onset):
+  Nephrotoxic agent, Antibiotic, Anticoagulant
+
+OTHER:
+  BMI            : 34.0
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+The management of acute kidney injury (AKI) in a patient with chronic kidney disease, severe liver disease, heart failure, and sepsis is complex, particularly given the concurrent use of nephrotoxic antibiotics, anticoagulants, and a history of ACEI/ARB use. An escalating creatinine level indicates the need for careful consideration of renal replacement therapy (RRT) and anticoagulation strategies, especially in the context of potential interactions and bleeding risk.
+
+### Treatment Options
+
+1. **Regional Citrate Anticoagulation for Continuous Venovenous Hemofiltration (CVVH):**
+   Regional citrate anticoagulation is preferred due to its reduced bleeding risk compared to systemic heparin, which is critical given the patient's hepatic impairment and high bleeding risk associated with sepsis and anticoagulant use [Regional citrate anticoagulation during venovenous hemofiltration (pmid_23499048_p138)]. However, monitoring for citrate accumulation is necessary, especially in liver dysfunction, which can impair citrate metabolism, necessitating close monitoring of calcium levels and metabolic status [Kramer et al., 2003 (pmid_23499048_p138)].
+
+2. **Nafamostat Mesilate:**
+   As an alternative anticoagulant, nafamostat mesilate is particularly useful in patients at high risk for bleeding. Its short half-life makes it an attractive option in this patient population, although there is a potential risk of agranulocytosis that needs monitoring [Nafamostat mesilate as an anticoagulant in hemodialysis (pmid_23499048_p138)]. This can be especially advantageous in liver disease contexts since nafamostat does not depend on hepatic metabolism to the same extent as other agents.
+
+3. **Switching Nephrotoxic Antibiotics:**
+   Reevaluation of the current use of nephrotoxic antibiotics, such as transitioning from vancomycin to less nephrotoxic alternatives if microbiologically appropriate, can mitigate further kidney injury. The discontinuation of ACEI/ARB therapy could also be considered if not already done, as these medications can exacerbate renal impairment in AKI settings [Review on the use of ACEI/ARB and nephrotoxicity in AKI (pmid_23499048_p138)].
+
+If citrate anticoagulation poses metabolic complications due to liver dysfunction (option 1), shifting to nafamostat mesilate (option 2) might be more appropriate. If switching nephrotoxic agents is feasible, it should be prioritized to reduce ongoing renal damage.
+
+### References
+
+- **Regional citrate anticoagulation during venovenous hemofiltration (pmid_23499048_p138):** Supported the use of citrate for anticoagulation in critically ill patients to reduce bleeding risk.
+- **Kramer et al., 2003 (pmid_23499048_p138):** Provided insights into citrate metabolism complications in liver disease.
+- **Nafamostat mesilate as an anticoagulant in hemodialysis (pmid_23499048_p138):** Supported nafamostat's use in high bleeding risk scenarios and highlighted its safety profile in liver dysfunction.
+- **Review on the use of ACEI/ARB and nephrotoxicity in AKI (pmid_23499048_p138):** Discussed the risk of continued ACEI/ARB use in acute renal impairment contexts.
 
 ---
 
@@ -46,141 +113,137 @@ This is a complex clinical scenario involving acute kidney injury (AKI) in conju
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
 VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOURNAL OF THE INTERNATIONAL SOCIETY OF NEPHROLOGY KDIGO Clinical Practice Guideline for Acute Kidney Injury
 
-### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p130 ===
+### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p138 ===
 
-**`pmid_23499048_p130_t0_c0`** *(text)*
+**`pmid_23499048_p138_t0_c0`** *(text)*
 
-160. Cianciaruso B, Bellizzi V, Napoli R, et al. Hepatic uptake and release of glucose, lactate, and amino acids in acutely uremic dogs. Metabolism 1991; 40: 261–269. 161. Druml W, Mitch WE. Metabolic abnormalities in acute renal failure. Semin Dial 1996; 9: 484–490. 162. Schneeweiss B, Graninger W, Stockenhuber F, et al. Energy metabolism in acute and chronic renal failure. Am J Clin Nutr 1990; 52: 596–601. 163. Macias WL, Alaka KJ, Murphy MH, et al. Impact of the nutritional regimen on protein catabolism and nitrogen balance in patients with acute renal failure. JPEN J Parenter Enteral Nutr 1996; 20: 56–62. 164. Fiaccadori E, Maggiore U, Rotelli C, et al. Effects of different energy intakes on nitrogen balance in patients with acute renal failure: a pilot study. Nephrol Dial Transplant 2005; 20: 1976–1980. 165. Fiaccadori E, Cremaschi E. Nutritional assessment and support in acute kidney injury. Curr Opin Crit Care 2009; 15: 474–480. 166. Powell-Tuck J. Nutritional interventions in critical illness. Proc Nutr Soc 2007; 66: 16–24. 167. Scheinkestel CD, Adams F, Mahony L, et al. Impact of increasing parenteral protein loads on amino acid levels and balance in critically ill anuric patients on continuous renal replacement therapy.
+578. Joannidis M, Oudemans-van Straaten HM. Clinical review: Patency of the circuit in continuous renal replacement therapy. Crit Care 2007; 11: 218. 579. Davenport A. Review article: Low-molecular-weight heparin as an alternative anticoagulant to unfractionated heparin for routine outpatient haemodialysis treatments. Nephrology (Carlton) 2009; 14: 455–461. 580. Hirsh J, Bauer KA, Donati MB, et al. Parenteral anticoagulants: American College of Chest Physicians Evidence-Based Clinical Practice Guidelines (8th Edition). Chest 2008; 133: 141S–159S. 581. Warkentin TE, Greinacher A, Koster A, et al. Treatment and prevention of heparin-induced thrombocytopenia: American College of Chest Physicians Evidence-Based Clinical Practice Guidelines (8th Edition). Chest 2008; 133: 340S–380S. 582. Baglin T, Barrowcliffe TW, Cohen A, et al. Guidelines on the use and monitoring of heparin. Br J Haematol 2006; 133: 19–34. 583. Gray E, Mulloy B, Barrowcliffe TW. Heparin and low-molecular-weight heparin. Thromb Haemost 2008; 99: 807–818. 584. Martel N, Lee J, Wells PS. Risk for heparin-induced thrombocytopenia with unfractionated and low-molecular-weight heparin thromboprophylaxis: a meta-analysis. Blood 2005; 106: 2710–2715.
 
-**`pmid_23499048_p130_t1_c0`** *(text)*
+**`pmid_23499048_p138_t1_c0`** *(text)*
 
-Chima CS, Meyer L, Hummell AC, et al. Protein catabolic rate in patients with acute renal failure on continuous arteriovenous hemoﬁltration and total parenteral nutrition. J Am Soc Nephrol 1993; 3: 1516–1521. 171. Leblanc M, Garred LJ, Cardinal J, et al. Catabolism in critical illness: estimation from urea nitrogen appearance and creatinine production during continuous renal replacement therapy. Am J Kidney Dis 1998; 32: 444–453. 172. Marshall MR, Golper TA, Shaver MJ, et al. Urea kinetics during sustained low-efﬁciency dialysis in critically ill patients requiring renal replacement therapy. Am J Kidney Dis 2002; 39: 556–570. 173. Salahudeen AK, Kumar V, Madan N, et al. Sustained low efﬁciency dialysis in the continuous mode (C-SLED): dialysis efﬁcacy, clinical outcomes, and survival predictors in critically ill cancer patients. Clin J Am Soc Nephrol 2009; 4: 1338–1346. 174. Barnert J, Dumitrascu D, Neeser G, et al. Gastric emptying of a liquid meal in intensive care unit patients (abstr). Gastroenterology 1998; 114: A865. 175. Fiaccadori E, Maggiore U, Clima B, et al. Incidence, risk factors, and prognosis of gastrointestinal hemorrhage complicating acute renal failure. Kidney Int 2001; 59: 1510–1519.
+Safety and efﬁcacy of low molecular weight heparins for hemodialysis in patients with end-stage renal failure: a meta-analysis of randomized trials. J Am Soc Nephrol 2004; 15: 3192–3206. 587. European Best Practice Guidelines for Haemodialysis (Part 1). V. Chronic intermittent haemodialysis and prevention of clotting in the extracorporal system. Nephrol Dial Transplant 2002; 17 (Suppl 7): 63–71. 588. Fischer KG. Essentials of anticoagulation in hemodialysis. Hemodial Int 2007; 11: 178–189. 589. Ouseph R, Ward RA. Anticoagulation for intermittent hemodialysis. Semin Dial 2000; 13: 181–187. 590. Lim W, Dentali F, Eikelboom JW, et al. Meta-analysis: low-molecular- weight heparin and bleeding in patients with severe renal insufﬁciency. Ann Intern Med 2006; 144: 673–684. 591. Akizawa T, Koshikawa S, Ota K, et al. Nafamostat mesilate: a regional anticoagulant for hemodialysis in patients at high risk for bleeding. Nephron 1993; 64: 376–381. 592. Matsuo T, Kario K, Nakao K, et al. Anticoagulation with nafamostat mesilate, a synthetic protease inhibitor, in hemodialysis patients with a bleeding risk. Haemostasis 1993; 23: 135–141. 593. Yang JW, Han BG, Kim BR, et al. Superior outcome of nafamostat mesilate as an anticoagulant in patients undergoing maintenance hemodialysis with intracerebral hemorrhage.
 
-**`pmid_23499048_p130_t2_c0`** *(text)*
+**`pmid_23499048_p138_t2_c0`** *(text)*
 
-Prospective randomized trial to assess caloric and protein needs of critically Ill, anuric, ventilated patients requiring continuous renal replacement therapy. Nutrition 2003; 19: 909–916. 178. Fiaccadori E, Maggiore U, Giacosa R, et al. Enteral nutrition in patients with acute renal failure. Kidney Int 2004; 65: 999–1008. 179. Caldwell MD, Kennedy-Caldwell C. Normal nutritional requirements. Surg Clin North Am 1981; 61: 489–507. 180. Zappitelli M, Goldstein SL, Symons JM, et al. Protein and calorie prescription for children and young adults receiving continuous renal replacement therapy: a report from the Prospective Pediatric Continuous Renal Replacement Therapy Registry Group. Crit Care Med 2008; 36: 3239–3245. 181. Mehta RL, Pascual MT, Soroko S, et al. Diuretics, mortality, and nonrecovery of renal function in acute renal failure. JAMA 2002; 288: 2547–2553. 182. Uchino S, Doig GS, Bellomo R, et al. Diuretics and mortality in acute renal failure. Crit Care Med 2004; 32: 1669–1677. 183. Karajala V, Mansour W, Kellum JA. Diuretics in acute kidney injury. Minerva Anestesiol 2009; 75: 251–257. 184. Ponto LL, Schoenwald RD. Furosemide (frusemide). A pharmacokinetic/ pharmacodynamic review (Part II).
+Gen Pharmacol 1995; 26: 1627–1632. 596. Okada H, Suzuki H, Deguchi N, et al. Agranulocytosis in a haemodialysed patient induced by a proteinase inhibitor, nafamostate mesilate. Nephrol Dial Transplant 1992; 7: 980. 597. Novacek G, Kapiotis S, Jilma B, et al. Enhanced blood coagulation and enhanced ﬁbrinolysis during hemodialysis with prostacyclin. Thromb Res 1997; 88: 283–290. 598. Swartz RD, Flamenbaum W, Dubrow A, et al. Epoprostenol (PGI2, prostacyclin) during high-risk hemodialysis: preventing further bleeding complications. J Clin Pharmacol 1988; 28: 818–825. 599. Monchi M, Berghmans D, Ledoux D, et al. Citrate vs. heparin for anticoagulation in continuous venovenous hemoﬁltration: a prospective randomized study. Intensive Care Med 2004; 30: 260–265. 600. Kutsogiannis DJ, Gibney RT, Stollery D, et al. Regional citrate versus systemic heparin anticoagulation for continuous renal replacement in critically ill patients. Kidney Int 2005; 67: 2361–2367. 601. Betjes MG, van Oosterom D, van Agteren M, et al. Regional citrate versus heparin anticoagulation during venovenous hemoﬁltration in patients at low risk for bleeding: similar hemoﬁlter survival but signiﬁcantly less bleeding. J Nephrol 2007; 20: 602–608.
 
-**`pmid_23499048_p130_t3_c0`** *(text)*
+**`pmid_23499048_p138_t3_c0`** *(text)*
 
-Effect of furosemide on renal blood ﬂow in the conscious dog. Proc Soc Exp Biol Med 1970; 133: 513–515. 188. Cantarovich F, Rangoonwala B, Lorenz H, et al. High-dose furosemide for established ARF: a prospective, randomized, double-blind, placebo- controlled, multicenter trial. Am J Kidney Dis 2004; 44: 402–409. 189. Lassnigg A, Donner E, Grubhofer G, et al. Lack of renoprotective effects of dopamine and furosemide during cardiac surgery. J Am Soc Nephrol 2000; 11: 97–104. 190. Lombardi R, Ferreiro A, Servetto C. Renal function after cardiac surgery: adverse effect of furosemide. Ren Fail 2003; 25: 775–786. 191. Solomon R, Werner C, Mann D, et al. Effects of saline, mannitol, and furosemide to prevent acute decreases in renal function induced by radiocontrast agents. N Engl J Med 1994; 331: 1416–1420. 192. Ho KM, Sheridan DJ. Meta-analysis of frusemide to prevent or treat acute renal failure. BMJ 2006; 333: 420. 193. Ho KM, Power BM. Beneﬁts and risks of furosemide in acute kidney injury. Anaesthesia 2010; 65: 283–293. 194. Hager B, Betschart M, Krapf R. Effect of postoperative intravenous loop diuretic on renal function after major surgery. Schweiz Med Wochenschr 1996; 126: 666–673.
+Regional anticoagulation with citrate is superior to systemic anticoagulation with heparin in critically ill patients undergoing continuous venovenous hemodiaﬁltration. Korean J Intern Med 2011; 26: 68–75. 602. Fealy N, Baldwin I, Johnstone M, et al. A pilot randomized controlled crossover study comparing regional heparinization to regional citrate anticoagulation for continuous venovenous hemoﬁltration. Int J Artif Organs 2007; 30: 301–307. 603. Oudemans-van Straaten HM, Bosman RJ, Koopmans M, et al. Citrate anticoagulation for continuous venovenous hemoﬁltration. Crit Care Med 2009; 37: 545–552. 604. Mehta RL, McDonald BR, Aguilar MM, et al. Regional citrate anti- coagulation for continuous arteriovenous hemodialysis in critically ill patients. Kidney Int 1990; 38: 976–981. 605. Morgera S, Scholle C, Voss G, et al. Metabolic complications during regional citrate anticoagulation in continuous venovenous hemodialysis: single-center experience. Nephron Clin Pract 2004; 97: c131–136. 606. Thoenen M, Schmid ER, Binswanger U, et al. Regional citrate anti- coagulation using a citrate-based substitution solution for continuous venovenous hemoﬁltration in cardiac surgery patients. Wien Klin Wochenschr 2002; 114: 108–114.
 
-**`pmid_23499048_p130_t4_c0`** *(text)*
+**`pmid_23499048_p138_t4_c0`** *(text)*
 
-Discontinuation of continuous renal replacement therapy: a post hoc analysis of a prospective multicenter observational study. Crit Care Med 2009; 37: 2576–2582. 197. Weisberg LS, Kurnik PB, Kurnik BR. Risk of radiocontrast nephropathy in patients with and without diabetes mellitus. Kidney Int 1994; 45: 259–265. 198. Schetz M. Should we use diuretics in acute renal failure? Best Pract Res Clin Anaesthesiol 2004; 18: 75–89. 199. Yallop KG, Sheppard SV, Smith DC. The effect of mannitol on renal function following cardio-pulmonary bypass in patients with normal pre-operative creatinine. Anaesthesia 2008; 63: 576–582. 200. Smith MN, Best D, Sheppard SV, et al. The effect of mannitol on renal function after cardiopulmonary bypass in patients with established renal dysfunction. Anaesthesia 2008; 63: 701–704. 201. Schnuelle P, Johannes van der Woude F. Perioperative ﬂuid management in renal transplantation: a narrative review of the literature. Transpl Int 2006; 19: 947–959. 202. van Valenberg PL, Hoitsma AJ, Tiggeler RG, et al. Mannitol as an indispensable constituent of an intraoperative hydration protocol for the prevention of acute renal failure after renal cadaveric transplantation.
+Wien Klin Wochenschr 1997; 109: 123–127. 609. Durao MS, Monte JC, Batista MC, et al. The use of regional citrate anticoagulation for continuous venovenous hemodiaﬁltration in acute kidney injury. Crit Care Med 2008; 36: 3024–3029. 610. Kramer L, Bauer E, Joukhadar C, et al. Citrate pharmacokinetics and metabolism in cirrhotic and noncirrhotic critically ill patients. Crit Care Med 2003; 31: 2450–2455. 611. Hetzel GR, Taskaya G, Sucker C, et al. Citrate plasma levels in patients under regional anticoagulation in continuous venovenous hemoﬁltration. Am J Kidney Dis 2006; 48: 806–811. 612. Meier-Kriesche HU, Gitomer J, Finkel K, et al. Increased total to ionized calcium ratio during continuous venovenous hemodialysis with regional citrate anticoagulation. Crit Care Med 2001; 29: 748–752. 613. Bakker AJ, Boerma EC, Keidel H, et al. Detection of citrate overdose in critically ill patients on citrate-anticoagulated venovenous haemoﬁltration: use of ionised and total/ionised calcium. Clin Chem Lab Med 2006; 44: 962–966. 614. Davies HT, Leslie G, Pereira SM, et al. A randomized comparative crossover study to assess the affect on circuit life of varying pre-dilution volume associated with CVVH and CVVHDF.
 
-**`pmid_23499048_p130_t5_c0`** *(text)*
+**`pmid_23499048_p138_t5_c0`** *(text)*
 
-Management of crush-related injuries after disasters. N Engl J Med 2006; 354: 1052–1063. 206. Vanholder R, Sever MS, Erek E, et al. Rhabdomyolysis. J Am Soc Nephrol 2000; 11: 1553–1561. 207. Bellomo R, Chapman M, Finfer S, et al. Low-dose dopamine in patients with early renal dysfunction: a placebo-controlled randomised trial. Australian and New Zealand Intensive Care Society (ANZICS) Clinical Trials Group. Lancet 2000; 356: 2139–2143. 208. Murray PT. Use of dopaminergic agents for renoprotection in the ICU. Yearbook of Intensive Care and Emergency Medicine. Springer-Verlag: Berlin, Germany, 2003: 637–648. 209. Lauschke A, Teichgraber UK, Frei U, et al. ‘Low-dose’ dopamine worsens renal perfusion in patients with acute renal failure. Kidney Int 2006; 69: 1669–1674. 210. Kellum JA, M Decker J. Use of dopamine in acute renal failure: a meta- analysis. Crit Care Med 2001; 29: 1526–1531. 211. Marik PE. Low-dose dopamine: a systematic review. Intensive Care Med 2002; 28: 877–883. 212. Friedrich JO, Adhikari N, Herridge MS, et al. Meta-analysis: low-dose dopamine increases urine output but does not prevent renal dysfunction or death. Ann Intern Med 2005; 142: 510–524. 213. Murray PT. Fenoldopam: renal-dose dopamine redux?
+unfractionated heparin for anticoagulation during continuous veno-venous hemoﬁltration: a randomized controlled crossover study. Intensive Care Med 2007; 33: 1571–1579. 617. Stefanidis I, Hagel J, Frank D, et al. Hemostatic alterations during continuous venovenous hemoﬁltration in acute renal failure. Clin Nephrol 1996; 46: 199–205. 618. van de Wetering J, Westendorp RG, van der Hoeven JG, et al. Heparin use in continuous renal replacement procedures: the struggle between ﬁlter coagulation and patient hemorrhage. J Am Soc Nephrol 1996; 7: 145–150. 619. Yang RL, Liu DW. [Clinical evaluation of hemoﬁltration without anti- coagulation in critically ill patients at high risk of bleeding]. Zhongguo Yi Xue Ke Xue Yuan Xue Bao 2007; 29: 651–655. 620. Reeves JH, Cumming AR, Gallagher L, et al. A controlled trial of low-molecular-weight heparin (dalteparin) versus unfractionated heparin as anticoagulant during continuous venovenous hemodialysis with ﬁltration. Crit Care Med 1999; 27: 2224–2228. 621. de Pont AC, Oudemans-van Straaten HM, Roozendaal KJ, et al. Nadroparin versus dalteparin anticoagulation in high-volume, continuous venovenous hemoﬁltration: a double-blind, randomized, crossover study.
 
-**`pmid_23499048_p130_t6_c0`** *(text)*
+**`pmid_23499048_p138_t6_c0`** *(text)*
 
-Fenoldopam reduces the need for renal replacement therapy and in-hospital death in cardiovascular surgery: a meta-analysis. J Cardiothorac Vasc Anesth 2008; 22: 27–33. Kidney International Supplements (2012) 2, 124–138 127 references
+Anticoagulation with prostaglandins and unfractionated heparin during continuous venovenous haemoﬁltration: a randomized controlled trial. Wien Klin Wochenschr 2002; 114: 96–101. 624. Fabbri LP, Nucera M, Al Malyan M, et al. Regional anticoagulation and antiaggregation for CVVH in critically ill patients: a prospective, randomized, controlled pilot study. Acta Anaesthesiol Scand 2010; 54: 92–97.
 
-**`pmid_23499048_p130_t0_c1`** *(text)*
+**`pmid_23499048_p138_t7_c0`** *(text)*
 
-Proc Nutr Soc 2007; 66: 16–24. 167. Scheinkestel CD, Adams F, Mahony L, et al. Impact of increasing parenteral protein loads on amino acid levels and balance in critically ill anuric patients on continuous renal replacement therapy. Nutrition 2003; 19: 733–740. 168. Bellomo R, Tan HK, Bhonagiri S, et al. High protein intake during continuous hemodiaﬁltration: impact on amino acids and nitrogen balance. Int J Artif Organs 2002; 25: 261–268. 169. Druml W. Metabolic aspects of continuous renal replacement therapies. Kidney Int Suppl 1999: S56–61. 170.
+Kidney International Supplements (2012) 2, 124–138 135 references
 
-**`pmid_23499048_p130_t1_c1`** *(text)*
+**`pmid_23499048_p138_t0_c1`** *(text)*
 
-Gastric emptying of a liquid meal in intensive care unit patients (abstr). Gastroenterology 1998; 114: A865. 175. Fiaccadori E, Maggiore U, Clima B, et al. Incidence, risk factors, and prognosis of gastrointestinal hemorrhage complicating acute renal failure. Kidney Int 2001; 59: 1510–1519. 176. Metnitz PG, Krenn CG, Steltzer H, et al. Effect of acute renal failure requiring renal replacement therapy on outcome in critically ill patients. Crit Care Med 2002; 30: 2051–2058. 177. Scheinkestel CD, Kar L, Marshall K, et al.
+Heparin and low-molecular-weight heparin. Thromb Haemost 2008; 99: 807–818. 584. Martel N, Lee J, Wells PS. Risk for heparin-induced thrombocytopenia with unfractionated and low-molecular-weight heparin thromboprophylaxis: a meta-analysis. Blood 2005; 106: 2710–2715. 585. Davenport A, Tolwani A. Citrate anticoagulation for continuous renal replacement therapy (CRRT) in patients with acute kidney injury admitted to the intensive care unit. NDT Plus 2009; 2: 439–447. 586. Lim W, Cook DJ, Crowther MA.
 
-**`pmid_23499048_p130_t2_c1`** *(text)*
+**`pmid_23499048_p138_t1_c1`** *(text)*
 
-183. Karajala V, Mansour W, Kellum JA. Diuretics in acute kidney injury. Minerva Anestesiol 2009; 75: 251–257. 184. Ponto LL, Schoenwald RD. Furosemide (frusemide). A pharmacokinetic/ pharmacodynamic review (Part II). Clin Pharmacokinet 1990; 18: 460–471. 185. Ponto LL, Schoenwald RD. Furosemide (frusemide). A pharmacokinetic/ pharmacodynamic review (Part I). Clin Pharmacokinet 1990; 18: 381–408. 186. Ludens JH, Hook JB, Brody MJ, et al. Enhancement of renal blood ﬂow by furosemide. J Pharmacol Exp Ther 1968; 163: 456–460. 187. Ludens JH, Williamson HE.
+Anticoagulation with nafamostat mesilate, a synthetic protease inhibitor, in hemodialysis patients with a bleeding risk. Haemostasis 1993; 23: 135–141. 593. Yang JW, Han BG, Kim BR, et al. Superior outcome of nafamostat mesilate as an anticoagulant in patients undergoing maintenance hemodialysis with intracerebral hemorrhage. Ren Fail 2009; 31: 668–675. 594. Maruyama H, Miyakawa Y, Gejyo F, et al. Anaphylactoid reaction induced by nafamostat mesilate in a hemodialysis patient. Nephron 1996; 74: 468–469. 595. Muto S, Imai M, Asano Y. Mechanisms of hyperkalemia caused by nafamostat mesilate.
 
-**`pmid_23499048_p130_t3_c1`** *(text)*
+**`pmid_23499048_p138_t2_c1`** *(text)*
 
-Ho KM, Power BM. Beneﬁts and risks of furosemide in acute kidney injury. Anaesthesia 2010; 65: 283–293. 194. Hager B, Betschart M, Krapf R. Effect of postoperative intravenous loop diuretic on renal function after major surgery. Schweiz Med Wochenschr 1996; 126: 666–673. 195. van der Voort PH, Boerma EC, Koopmans M, et al. Furosemide does not improve renal recovery after hemoﬁltration for acute renal failure in critically ill patients: a double blind randomized controlled trial. Crit Care Med 2009; 37: 533–538. 196. Uchino S, Bellomo R, Morimatsu H, et al.
+Betjes MG, van Oosterom D, van Agteren M, et al. Regional citrate versus heparin anticoagulation during venovenous hemoﬁltration in patients at low risk for bleeding: similar hemoﬁlter survival but signiﬁcantly less bleeding. J Nephrol 2007; 20: 602–608. 601a. Hetzel GR, Schmitz, Wissing H, et al. Regional citrate versus systemic heparin for anticoagulation in critically ill patients on continuous venovenous haemoﬁltration: a prospective randomized multicentre trial. Nephrol Dial Transplant 2011; 26: 232–239. 601b. Park JS, Kim GH, Kang CM, et al.
 
-**`pmid_23499048_p130_t4_c1`** *(text)*
+**`pmid_23499048_p138_t3_c1`** *(text)*
 
-202. van Valenberg PL, Hoitsma AJ, Tiggeler RG, et al. Mannitol as an indispensable constituent of an intraoperative hydration protocol for the prevention of acute renal failure after renal cadaveric transplantation. Transplantation 1987; 44: 784–788. 203. Weimar W, Geerlings W, Bijnen AB, et al. A controlled study on the effect of mannitol on immediate renal function after cadaver donor kidney transplantation. Transplantation 1983; 35: 99–101. 204. Better OS, Rubinstein I, Winaver JM, et al. Mannitol therapy revisited (1940–1997). Kidney Int 1997; 52: 886–894. 205. Sever MS, Vanholder R, Lameire N.
+606. Thoenen M, Schmid ER, Binswanger U, et al. Regional citrate anti- coagulation using a citrate-based substitution solution for continuous venovenous hemoﬁltration in cardiac surgery patients. Wien Klin Wochenschr 2002; 114: 108–114. 607. Uchino S, Bellomo R, Morimatsu H, et al. Continuous renal replacement therapy: a worldwide practice survey. The beginning and ending supportive therapy for the kidney (B.E.S.T. kidney) investigators. Intensive Care Med 2007; 33: 1563–1570. 608. Apsner R, Schwarzenhofer M, Derﬂer K, et al. Impairment of citrate meta- bolism in acute hepatic failure.
 
-**`pmid_23499048_p130_t5_c1`** *(text)*
+**`pmid_23499048_p138_t4_c1`** *(text)*
 
-212. Friedrich JO, Adhikari N, Herridge MS, et al. Meta-analysis: low-dose dopamine increases urine output but does not prevent renal dysfunction or death. Ann Intern Med 2005; 142: 510–524. 213. Murray PT. Fenoldopam: renal-dose dopamine redux? Crit Care Med 2006; 34: 910–911. 214. Cogliati AA, Vellutini R, Nardini A, et al. Fenoldopam infusion for renal protection in high-risk cardiac surgery patients: a randomized clinical study. J Cardiothorac Vasc Anesth 2007; 21: 847–850. 215. Landoni G, Biondi-Zoccai GG, Marino G, et al.
+Detection of citrate overdose in critically ill patients on citrate-anticoagulated venovenous haemoﬁltration: use of ionised and total/ionised calcium. Clin Chem Lab Med 2006; 44: 962–966. 614. Davies HT, Leslie G, Pereira SM, et al. A randomized comparative crossover study to assess the affect on circuit life of varying pre-dilution volume associated with CVVH and CVVHDF. Int J Artif Organs 2008; 31: 221–227. 615. Holt AW, Bierer P, Bersten AD, et al. Continuous renal replacement therapy in critically ill patients: monitoring circuit function. Anaesth Intensive Care 1996; 24: 423–429. 616. Joannidis M, Kountchev J, Rauchenzauner M, et al. Enoxaparin vs.
 
-**`pmid_23499048_p130_t0_c2`** *(text)*
+**`pmid_23499048_p138_t5_c1`** *(text)*
 
-Bellomo R, Tan HK, Bhonagiri S, et al. High protein intake during continuous hemodiaﬁltration: impact on amino acids and nitrogen balance. Int J Artif Organs 2002; 25: 261–268. 169. Druml W. Metabolic aspects of continuous renal replacement therapies. Kidney Int Suppl 1999: S56–61. 170.
+621. de Pont AC, Oudemans-van Straaten HM, Roozendaal KJ, et al. Nadroparin versus dalteparin anticoagulation in high-volume, continuous venovenous hemoﬁltration: a double-blind, randomized, crossover study. Crit Care Med 2000; 28: 421–425. 622. Birnbaum J, Spies CD, Klotz E, et al. Iloprost for additional anticoagulation in continuous renal replacement therapy–a pilot study. Ren Fail 2007; 29: 271–277. 623. Kozek-Langenecker SA, Spiss CK, Gamsjager T, et al.
 
-**`pmid_23499048_p130_t1_c2`** *(text)*
+**`pmid_23499048_p138_t6_c1`** *(text)*
 
-176. Metnitz PG, Krenn CG, Steltzer H, et al. Effect of acute renal failure requiring renal replacement therapy on outcome in critically ill patients. Crit Care Med 2002; 30: 2051–2058. 177. Scheinkestel CD, Kar L, Marshall K, et al.
+624. Fabbri LP, Nucera M, Al Malyan M, et al. Regional anticoagulation and antiaggregation for CVVH in critically ill patients: a prospective, randomized, controlled pilot study. Acta Anaesthesiol Scand 2010; 54: 92–97.
 
-**`pmid_23499048_p130_t2_c2`** *(text)*
+**`pmid_23499048_p138_t0_c2`** *(text)*
 
-Furosemide (frusemide). A pharmacokinetic/ pharmacodynamic review (Part I). Clin Pharmacokinet 1990; 18: 381–408. 186. Ludens JH, Hook JB, Brody MJ, et al. Enhancement of renal blood ﬂow by furosemide. J Pharmacol Exp Ther 1968; 163: 456–460. 187. Ludens JH, Williamson HE.
+Davenport A, Tolwani A. Citrate anticoagulation for continuous renal replacement therapy (CRRT) in patients with acute kidney injury admitted to the intensive care unit. NDT Plus 2009; 2: 439–447. 586. Lim W, Cook DJ, Crowther MA.
 
-**`pmid_23499048_p130_t3_c2`** *(text)*
+**`pmid_23499048_p138_t1_c2`** *(text)*
 
-van der Voort PH, Boerma EC, Koopmans M, et al. Furosemide does not improve renal recovery after hemoﬁltration for acute renal failure in critically ill patients: a double blind randomized controlled trial. Crit Care Med 2009; 37: 533–538. 196. Uchino S, Bellomo R, Morimatsu H, et al.
+594. Maruyama H, Miyakawa Y, Gejyo F, et al. Anaphylactoid reaction induced by nafamostat mesilate in a hemodialysis patient. Nephron 1996; 74: 468–469. 595. Muto S, Imai M, Asano Y. Mechanisms of hyperkalemia caused by nafamostat mesilate.
 
-**`pmid_23499048_p130_t4_c2`** *(text)*
+**`pmid_23499048_p138_t2_c2`** *(text)*
 
-Weimar W, Geerlings W, Bijnen AB, et al. A controlled study on the effect of mannitol on immediate renal function after cadaver donor kidney transplantation. Transplantation 1983; 35: 99–101. 204. Better OS, Rubinstein I, Winaver JM, et al. Mannitol therapy revisited (1940–1997). Kidney Int 1997; 52: 886–894. 205. Sever MS, Vanholder R, Lameire N.
+Hetzel GR, Schmitz, Wissing H, et al. Regional citrate versus systemic heparin for anticoagulation in critically ill patients on continuous venovenous haemoﬁltration: a prospective randomized multicentre trial. Nephrol Dial Transplant 2011; 26: 232–239. 601b. Park JS, Kim GH, Kang CM, et al.
 
-**`pmid_23499048_p130_t5_c2`** *(text)*
+**`pmid_23499048_p138_t3_c2`** *(text)*
 
-Cogliati AA, Vellutini R, Nardini A, et al. Fenoldopam infusion for renal protection in high-risk cardiac surgery patients: a randomized clinical study. J Cardiothorac Vasc Anesth 2007; 21: 847–850. 215. Landoni G, Biondi-Zoccai GG, Marino G, et al.
+Continuous renal replacement therapy: a worldwide practice survey. The beginning and ending supportive therapy for the kidney (B.E.S.T. kidney) investigators. Intensive Care Med 2007; 33: 1563–1570. 608. Apsner R, Schwarzenhofer M, Derﬂer K, et al. Impairment of citrate meta- bolism in acute hepatic failure.
+
+**`pmid_23499048_p138_t4_c2`** *(text)*
+
+Holt AW, Bierer P, Bersten AD, et al. Continuous renal replacement therapy in critically ill patients: monitoring circuit function. Anaesth Intensive Care 1996; 24: 423–429. 616. Joannidis M, Kountchev J, Rauchenzauner M, et al. Enoxaparin vs.
+
+**`pmid_23499048_p138_t5_c2`** *(text)*
+
+622. Birnbaum J, Spies CD, Klotz E, et al. Iloprost for additional anticoagulation in continuous renal replacement therapy–a pilot study. Ren Fail 2007; 29: 271–277. 623. Kozek-Langenecker SA, Spiss CK, Gamsjager T, et al.
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 
@@ -193,30 +256,4 @@ KDIGO Clinical Practice Guideline for Acute Kidney Injury Tables and Figures iv 
 **`pmid_23499048_p2_t2_c0`** *(text)*
 
 org contents & 2012 KDIGO VOL 2 | SUPPLEMENT 1 | MARCH 2012
-
-### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p3 ===
-
-**`pmid_23499048_p3_t0_c0`** *(text)*
-
-TABLES Table 1. Implications of the strength of a recommendation 18 Table 2. Staging of AKI 19 Table 3. Comparison of RIFLE and AKIN criteria for diagnosis and classification of AKI 21 Table 4. Cross-tabulation of patients classified by RIFLE vs. AKIN 21 Table 5. Causes of AKI and diagnostic tests 22 Table 6. Causes of AKI: exposures and susceptibilities for non-specific AKI 23 Table 7. AKI diagnosis 28 Table 8. Overview of the approaches to determine baseline SCr in the application of RIFLE classification in previous studies 29 Table 9. Estimated baseline SCr 29 Table 10. AKI staging 30 Table 11. Definitions of AKI, CKD, and AKD 33 Table 12. Examples of AKI, CKD, and AKD based on GFR and increases in SCr 33 Table 13. Markers of kidney damage in AKD and CKD 35 Table 14. Integrated approach to interpret measures of kidney function and structure for diagnosis of AKI, AKD, and CKD 35 Table 15. CI-AKI risk-scoring model for percutaneous coronary intervention 73 Table 16. Additional radiological measures to reduce CI-AKI 77 Table 17. Potential applications for RRT 91 Table 18. Fluid overload and outcome in critically ill children with AKI 91 Table 19. Overview of the advantages and disadvantages of different anticoagulants in AKI patients 97 Table 20.
-
-**`pmid_23499048_p3_t1_c0`** *(text)*
-
-The RIFLE criteria for AKI 14 Figure 2. Overview of AKI, CKD, and AKD 20 Figure 3. Conceptual model for AKI 20 Figure 4. Stage-based management of AKI 25 Figure 5. Evaluation of AKI according to the stage and cause 26 Figure 6. Chronic Kidney Disease Epidemiology Collaboration cohort changes in eGFR and final eGFR corresponding to KDIGO definition and stages of AKI 34 Figure 7. GFR/SCr algorithm 34 Figure 8. Conceptual model for development and clinical course of AKI 38 Figure 9. Effect of furosemide vs. control on all-cause mortality 48 Figure 10. Effect of furosemide vs. control on need for RRT 48 Figure 11. Effect of low-dose dopamine on mortality 51 Figure 12. Effect of low-dose dopamine on need for RRT 52 Figure 13. Sample questionnaire 73 Figure 14. Risk for contrast-induced nephropathy 78 Figure 15. Bicarbonate vs. saline and risk of CI-AKI 81 Figure 16. NAC and bicarbonate vs. NAC for risk of CI-AKI 85 Figure 17. Flow-chart summary of recommendations 96 Additional information in the form of supplementary materials can be found online at http://www.kdigo.org/clinical_practice_guidelines/AKI.php contents http://www.kidney-international.
-
-**`pmid_23499048_p3_t2_c0`** *(text)*
-
-org & 2012 KDIGO iv Kidney International Supplements (2012) 2, iv
-
-**`pmid_23499048_p3_t0_c1`** *(text)*
-
-Additional radiological measures to reduce CI-AKI 77 Table 17. Potential applications for RRT 91 Table 18. Fluid overload and outcome in critically ill children with AKI 91 Table 19. Overview of the advantages and disadvantages of different anticoagulants in AKI patients 97 Table 20. Catheter and patient sizes 104 Table 21. Typical setting of different RRT modalities for AKI (for 70-kg patient) 107 Table 22. Theoretical advantages and disadvantages of CRRT, IHD, SLED, and PD 108 Table 23. Microbiological quality standards of different regulatory agencies 112 FIGURES Figure 1.
-
-**`pmid_23499048_p3_t1_c1`** *(text)*
-
-NAC for risk of CI-AKI 85 Figure 17. Flow-chart summary of recommendations 96 Additional information in the form of supplementary materials can be found online at http://www.kdigo.org/clinical_practice_guidelines/AKI.php contents http://www.kidney-international.
-
-**`pmid_23499048_p3_t0_c2`** *(text)*
-
-Catheter and patient sizes 104 Table 21. Typical setting of different RRT modalities for AKI (for 70-kg patient) 107 Table 22. Theoretical advantages and disadvantages of CRRT, IHD, SLED, and PD 108 Table 23. Microbiological quality standards of different regulatory agencies 112 FIGURES Figure 1.
 

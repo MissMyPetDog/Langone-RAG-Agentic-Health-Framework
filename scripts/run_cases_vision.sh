@@ -17,8 +17,8 @@ if [[ ! -x .venv/bin/python ]]; then
   exit 1
 fi
 
-# Cluster: uncomment if libpython errors appear
-# export LD_LIBRARY_PATH="/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}"
+# BigPurple / NYUMC: .venv Python needs libpython3.10.so.1.0 from shared module tree
+export LD_LIBRARY_PATH="/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}"
 
 for n in $(seq "$FROM" "$TO"); do
   id=$(printf 'CASE_%02d' "$n")

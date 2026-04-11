@@ -1,44 +1,96 @@
-# Question
+## Questions
 
-In an elderly female patient with acute kidney injury characterized by a creatinine rise from 0.60 to 1.80 mg/dL within 22 hours, BUN of 46 mg/dL, hyperkalemia of 5.1 mEq/L, and metabolic acidosis evidenced by bicarbonate of 19 mEq/L, how do comorbid congestive heart failure and malignancy influence evidence-based treatment options for acute kidney injury while considering the balance of fluid overload (net +5728 mL) without prior medication history?
+What are the evidence-based treatment options for acute kidney injury in a 91-year-old White female with congestive heart failure, malignancy, and elevated lab values such as BUN at 46 mg/dL, potassium at 5.1 mEq/L, and bicarbonate at 19 mEq/L, considering her comorbid hypertension and fluid overload, and ensuring treatment does not exacerbate heart failure or cancer progression?
 
-**Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+**Run configuration**
 
-**Vision:** 6 figure(s) sent as `image_url` (pixels). max=6 | VISION_MAX_EDGE=1536
+- **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
 
 ---
 
-## Answer
+## Summary
 
-### Summary
+**Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
-The patient presents with acute kidney injury (AKI), likely of prerenal or multifactorial origin, considering the acute rise in creatinine, elevated BUN, hyperkalemia, metabolic acidosis, and significant fluid overload. The presence of comorbid congestive heart failure (CHF) and malignancy further complicates the management of AKI by increasing the risk of volume overload and limiting treatment options.
+```
+CASE ID: CASE_19
+STAY ID: 39852670
+============================================================
+PATIENT CLINICAL PROFILE:
 
-### Treatment Options
+PATIENT DEMOGRAPHICS:
+  Age: 91 | Sex: Female | Race: WHITE
+  Insurance: Medicare | Admission type: EW EMER.
 
-1. **Isotonic Bicarbonate Infusion**
-   - **Appropriate Use**: This option is useful for addressing metabolic acidosis and may have benefits in reducing contrast-induced AKI (CI-AKI), as noted in some studies, although results are inconsistent across different studies [KDOQI US commentary (pmid_23499048_p85) and Figure 15].
-   - **Contraindications**: Be cautious due to the risk of fluid overload, especially in CHF patients. The potential for preparation errors with bicarbonate solutions must be managed carefully.
-   - **Fallback Justification**: If the fluid overload or preparation logistics limit bicarbonate use, consider normal saline.
+AKI ONSET:
+  Baseline creatinine: 0.60 mg/dL
+  Hours from ICU admission to AKI onset: 21.8h
 
-2. **Isotonic Saline Infusion**
-   - **Appropriate Use**: Provides effective volume resuscitation and is generally easier to administer than bicarbonate. Indicated when bicarbonate is contraindicated or impractical [KDOQI US commentary (pmid_23499048_p85)].
-   - **Contraindications**: Fluid overload is a serious concern in CHF, so close monitoring of the patient's volume status is critical.
-   - **Fallback Justification**: If fluid overload risk is unacceptable, or saline therapy does not address metabolic acidosis, this approach may need reconsideration.
+CREATININE (ICU window, intime → onset), n=2 creatinine measurements in this window:
+  First     : 1.40 mg/dL
+  Min       : 1.40 mg/dL
+  Max       : 1.80 mg/dL
+  At onset  : 1.80 mg/dL
+  Delta      : +1.20 mg/dL
+  Ratio      : 3.00x baseline
+  Slope      : +0.0345 mg/dL/h
 
-3. **Renal Replacement Therapy (RRT) Consideration**
-   - **Appropriate Use**: Necessary for severe hyperkalemia, refractory fluid overload, or worsening metabolic acidosis not amenable to medical therapy. Particularly significant in patients with both AKI and CHF.
-   - **Contraindications**: Resource availability and patient stability must be evaluated. Timing is crucial to prevent further complications.
-   - **Fallback Justification**: If medical management (bicarbonate or saline) fails or the patient deteriorates, RRT becomes essential.
+LAB VALUES (last value before onset):
+  BUN            : last=46.0 mg/dL  [min=39.0, max=46.0]  (n=2)
+  POTASSIUM      : last=5.1 mEq/L  [min=5.1, max=5.3]  (n=2)
+  BICARBONATE    : last=19.0 mEq/L  [min=16.0, max=19.0]  (n=2)
+  HEMOGLOBIN     : last=11.7 g/dL  [min=11.7, max=11.7]  (n=1)
 
-### Conclusion
+VITAL SIGNS (ICU window):
+  MAP   : mean=78.7 mmHg  [min=51.0, max=163.0]  last=73.0  last6h=61.7  (n=23)
+  HR    : mean=96.7 bpm  [min=79.0, max=115.0]  last=79.0  last6h=83.5  (n=23)
+  SPO2  : mean=95.5 %  [min=90.0, max=100.0]  last=100.0  last6h=97.5  (n=23)
+  RR    : mean=22.6 /min  [min=16.0, max=33.0]  last=16.0  last6h=18.5  (n=23) ⚠ ELEVATED
+  TEMP  : mean=36.8 °C  [min=36.6, max=36.9]  last=36.9  last6h=36.9  (n=5)
 
-Due to the patient's CHF and fluid overload, isotonic bicarbonate might be cautiously trialed to manage metabolic acidosis, shifting to isotonic saline if issues arise. RRT remains a critical consideration, especially if biochemical parameters worsen despite medical management.
+URINE OUTPUT, n=10 urine-output entries:
+  Total UO   : 390 mL
+  Rate       : 17.9 mL/h
+  Last 6h    : N/A
+  Last 12h   : 75 mL
+  Last 24h   : 390 mL
+
+FLUID BALANCE:
+  Total input  : 6118 mL
+  Net balance  : +5728 mL
+
+COMORBIDITIES (Charlson score: 3):
+  + Congestive heart failure
+  + Malignancy
+  Additional flags: Hypertension, Heart failure, Malignancy
+
+PRIOR MEDICATIONS (before current admission):
+  None recorded
+
+CURRENT MEDICATIONS (active at AKI onset):
+  None recorded
+
+OTHER:
+  BMI            : 22.7
+  Smoking status : not recorded
+```
+
+---
+
+### Answer (generated by LLM based on literature)
+
+In managing acute kidney injury (AKI) in a 91-year-old woman with coexisting congestive heart failure, malignancy, and a mild elevation of potassium, it is essential to select treatments that do not worsen her heart failure or impact cancer management. Sodium bicarbonate and isotonic saline are two studied prophylactic regimens shown to aid in managing certain types of AKI, such as contrast-induced AKI (CI-AKI) [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p85)].
+
+1. **Sodium Bicarbonate Infusion**: Sodium bicarbonate has demonstrated effectiveness in preventing contrast-induced AKI compared to saline solutions [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p85)]. It may be preferable in cases where metabolic acidosis is present, as indicated by this patient's low bicarbonate level (19 mEq/L). However, caution must be exercised due to her heart failure, as sodium overload from bicarbonate can exacerbate fluid overload, worsening her congestive heart failure symptoms. Its use would ideally be in a monitored setting with careful assessment of fluid balance and cardiac function.
+
+2. **Isotonic Saline Infusion**: Isotonic saline is broadly accepted for fluid management in AKI and may be preferred if sodium bicarbonate is contraindicated due to existing fluid overload [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p85)]. This option should be considered especially if there are concerns about exacerbating heart failure with sodium bicarbonate, as saline can also help in managing dehydration without significantly altering blood pH or introducing additional bicarbonate load.
+
+3. **Oral N-acetylcysteine (NAC) Supplementation**: NAC has shown benefits in preventing contrast-induced nephropathy and is considered an adjunct to both sodium bicarbonate and saline infusions [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p85)]. It has an antioxidative effect and can be safely administered in her case, given the lack of significant interactions with heart failure or cancer therapies. It can be considered as an adjunctive therapy, particularly if neither bicarbonate nor saline infusions are possible due to her fluid status.
+
+The clinical choice for this patient should consider her heart failure, fluid overload, and the potential for metabolic disturbances from interventions. Consultation with her healthcare provider is crucial, ensuring close monitoring and adjustment of therapies based on response and tolerance.
 
 ### References
-
-- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury [pmid_23499048_p85] - Supports bicarbonate and saline comparisons, risk of CI-AKI, and potential interventions.
-
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p85)**: Supported the use of sodium bicarbonate and isotonic saline in CI-AKI prevention as well as NAC as an adjunct therapy.
 
 ---
 
@@ -46,47 +98,41 @@ Due to the patient's CHF and fluid overload, isotonic bicarbonate might be cauti
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p1 ===
 
-**`pmid_23499048_p1_fig_0_c0`** *(image)*
+**`pmid_23499048_p1_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_0.png](../data/raw/pmid_23499048/page_1_fig_0.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_0.png`
 
-**OCR text**
+**`pmid_23499048_p1_fig_1_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-```
-KIDNEY DIGO R GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_1_fig_1.png`
 
-**`pmid_23499048_p1_fig_1_c0`** *(image)*
+**`pmid_23499048_p1_fig_2_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_1.png](../data/raw/pmid_23499048/page_1_fig_1.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_2.png`
 
-**`pmid_23499048_p1_fig_2_c0`** *(image)*
+**`pmid_23499048_p1_fig_3_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_2.png](../data/raw/pmid_23499048/page_1_fig_2.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_3.png`
 
-**`pmid_23499048_p1_fig_3_c0`** *(image)*
+**`pmid_23499048_p1_fig_4_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_3.png](../data/raw/pmid_23499048/page_1_fig_3.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_4.png`
 
-**`pmid_23499048_p1_fig_4_c0`** *(image)*
+**`pmid_23499048_p1_fig_5_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_4.png](../data/raw/pmid_23499048/page_1_fig_4.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_5.png`
 
-**`pmid_23499048_p1_fig_5_c0`** *(image)*
+**`pmid_23499048_p1_fig_6_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_5.png](../data/raw/pmid_23499048/page_1_fig_5.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_6.png`
 
-**`pmid_23499048_p1_fig_6_c0`** *(image)*
+**`pmid_23499048_p1_fig_7_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_6.png](../data/raw/pmid_23499048/page_1_fig_6.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_7.png`
 
-**`pmid_23499048_p1_fig_7_c0`** *(image)*
+**`pmid_23499048_p1_fig_8_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_1_fig_7.png](../data/raw/pmid_23499048/page_1_fig_7.png)
-
-**`pmid_23499048_p1_fig_8_c0`** *(image)*
-
-![page_1_fig_8.png](../data/raw/pmid_23499048/page_1_fig_8.png)
+- Path: `data/raw/pmid_23499048/page_1_fig_8.png`
 
 **`pmid_23499048_p1_t0_c0`** *(text)*
 
@@ -94,15 +140,9 @@ VOLUME 2 | ISSUE 1 | MARCH 2012 http://www.kidney-international.org OFFICIAL JOU
 
 ### === DOC pmid_23499048 / KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury. / pmid_23499048_p2 ===
 
-**`pmid_23499048_p2_fig_0_c0`** *(image)*
+**`pmid_23499048_p2_fig_0_c0`** *(image — preview omitted: not cited in sibling text and OCR below threshold)*
 
-![page_2_fig_0.png](../data/raw/pmid_23499048/page_2_fig_0.png)
-
-**OCR text**
-
-```
-DISEASE KIDNEY GLOBAL
-```
+- Path: `data/raw/pmid_23499048/page_2_fig_0.png`
 
 **`pmid_23499048_p2_t0_c0`** *(text)*
 
