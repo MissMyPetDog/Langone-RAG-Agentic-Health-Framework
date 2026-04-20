@@ -11,6 +11,34 @@ bash scripts/install_venv.sh
 source .venv/bin/activate
 ```
 
+**HPC 공유 Python 기반 venv 주의 (libpython3.10.so.1.0 오류)**
+
+이 프로젝트의 `.venv/bin/python`은 bigpurple 공유 Python(`/gpfs/share/apps/python/gpu/3.10.6`)을 심볼릭 링크로 참조합니다. 새 셸에서 바로 실행하면 다음과 같이 공유 라이브러리를 못 찾을 수 있습니다.
+
+```
+./.venv/bin/python: error while loading shared libraries:
+libpython3.10.so.1.0: cannot open shared object file: No such file or directory
+```
+
+그래서 `generate.py` 등을 돌리기 **전에** 반드시 Python 라이브러리 경로를 잡아줘야 합니다. 둘 중 하나를 쓰세요.
+
+```bash
+# 방법 A: LD_LIBRARY_PATH 직접 지정 (셸 세션에서 한 번만)
+export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
+
+# 방법 B: 환경 모듈 로드 (가능한 클러스터에서)
+module load python/gpu/3.10.6
+```
+
+설정 후 아래로 정상 동작 확인.
+
+```bash
+./.venv/bin/python --version          # Python 3.10.6
+ldd ./.venv/bin/python3 | grep libpython   # libpython3.10.so.1.0 => ... 경로 잡힘
+```
+
+`.bashrc`에 `export LD_LIBRARY_PATH=...` 줄을 넣어두면 매번 신경 쓰지 않아도 됩니다.
+
 ### 요구 사항
 
 - **Python**: 3.10+
