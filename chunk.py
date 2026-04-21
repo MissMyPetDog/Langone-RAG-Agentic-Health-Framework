@@ -59,7 +59,7 @@ _BOILERPLATE_PATTERNS = [
     re.compile(r"\bKidney\s+International\s+Supplements?\b", re.IGNORECASE),
 ]
 
-# Front-matter (서문/면책/디스클로저/바이오): 길이와 무관하게 2+ 히트면 드롭
+# Front-matter (서문/면책/디스클로저/바이오/방법론/단위표): 길이 무관, 서로 다른 시그너처 2+ 히트면 드롭
 # 실제 권고문에는 거의 등장 안 하는 표현들만 선별.
 _FRONT_MATTER_PATTERNS = [
     re.compile(r"\bSECTION\s+[IVX]+\s*:", re.IGNORECASE),
@@ -73,7 +73,25 @@ _FRONT_MATTER_PATTERNS = [
     re.compile(r"\bAbbreviations\s+and\s+Acronyms\b", re.IGNORECASE),
     re.compile(r"\bForeword\b", re.IGNORECASE),
     re.compile(r"\bdoi:\s*10\.", re.IGNORECASE),
+    # Board Members / Co-Chairs / Guideline Development 류 bio-list 시그너처
+    re.compile(r"\bKDIGO\s+Board\b", re.IGNORECASE),
+    re.compile(r"\bCo[- ]Chairs?\b", re.IGNORECASE),
+    re.compile(r"\bProject\s+Director\b", re.IGNORECASE),
+    re.compile(r"\bGuideline\s+Development\b", re.IGNORECASE),
+    # 방법론(등급 정의 / ungraded) — 실제 권고문에 섞여 있을 수 있어 단독으론 드롭 안 됨. 2+ 규칙으로 안전.
+    re.compile(r"\bungraded\s+recommendations?\b", re.IGNORECASE),
+    re.compile(r"\bquality\s+of\s+evidence\b", re.IGNORECASE),
+    re.compile(r"\bgrade\s+of\s+evidence\b", re.IGNORECASE),
+    # SI 단위 변환표 시그너처
+    re.compile(r"\bMetric\s+units\b", re.IGNORECASE),
+    re.compile(r"\bSI\s+units\b", re.IGNORECASE),
+    re.compile(r"\bconversion\s+factor\b", re.IGNORECASE),
 ]
+
+# 의사 이름+학위 패턴(3회+ 등장하면 인명 명단으로 간주)
+_PERSON_TITLE_RE = re.compile(
+    r"\b[A-Z][A-Za-z\-]+(?:\s+[A-Z][A-Za-z\-\.]+){0,3}\s*,\s*(?:MD|PhD|MSc?|MPH|DO|RN|DrPH|MB\s*BS)(?:\s*,\s*(?:MD|PhD|MSc?|MPH|DO|RN|DrPH))?\b"
+)
 
 
 def _looks_like_toc_or_boilerplate(text: str) -> bool:
@@ -112,6 +130,10 @@ def _looks_like_toc_or_boilerplate(text: str) -> bool:
     #    한 chunk에 서로 다른 front-matter signature가 2개 이상 등장하면 본문 아님으로 간주.
     fm_hits = sum(1 for p in _FRONT_MATTER_PATTERNS if p.search(t))
     if fm_hits >= 2:
+        return True
+
+    # 4) 인명 명단(Board/Work Group bio): "Name, MD"/"Name, MD, PhD" 패턴 3회 이상이면 드롭
+    if len(_PERSON_TITLE_RE.findall(t)) >= 3:
         return True
 
     return False
