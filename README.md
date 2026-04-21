@@ -197,6 +197,19 @@ export KONG_API_KEY=...
 
 **Used Sources / 답변 텍스트**: 디스크에 `stem.png`가 있으면 chunk의 `asset_path`가 `.jpx` 등이어도 **미리보기·컨텍스트에는 PNG 경로를 우선**합니다. LLM 본문에 잘못된 `.jpx` 경로가 나오면 저장 전에 figure 경로만 `.png`로 치환하는 후처리가 들어갑니다.
 
+**Retrieval hits 표 (점수 포함)**: MD 상단 `Run configuration` 바로 아래에 retrieval 후보 top-k가 표로 같이 저장됩니다.
+
+```markdown
+### Retrieval hits
+| rank | score | chunk_id | doc_id | parent_block_id |
+...
+<sub>Score: cosine similarity (BGE bge-base-en-v1.5, L2-normalized → dot product). ...</sub>
+```
+
+- **`--rerank` OFF**: `score` = BGE bi-encoder **cosine similarity**(쿼리·청크 벡터 내적). 범위 ≈ `[-1, 1]`, 높을수록 관련. BGE 경험칙 `>0.7` strong / `0.5–0.7` moderate / `<0.5` weak.
+- **`--rerank` ON**: 헤더가 `### Retrieval hits (reranked)`로 바뀌고, `score` = `bge-reranker-base` **cross-encoder relevance**(정규화 X, 음수 가능). Stage-1 후보는 BGE cosine top-`topn`에서 뽑음.
+- 터미널에도 동일하게 `Top hits:` 프린트가 나오므로 실행 중 빠르게 확인 가능.
+
 **케이스 여러 개 (`CASE_01`~`CASE_20` 등)**:
 
 ```bash
