@@ -1,10 +1,11 @@
 ## Questions
 
-For a 50-year-old Hispanic female with acute kidney injury (AKI) onset after elective ICU admission, considering comorbidities such as COPD, severe diabetes with complications, moderate/severe renal disease, and metastatic malignancy, all compounded by extreme obesity (BMI 51.9) and prior NSAID use, what are the most effective and evidence-based treatment options, particularly addressing anticoagulant use and minimizing further renal damage?
+In an 80-year-old female with acute kidney injury (AKI) onset following sepsis, complicated by heart failure, chronic kidney disease, and mild liver disease, how can treatment be optimized considering her current use of nephrotoxic agents and antibiotics, along with prior medications such as ACEI/ARB and NSAIDs, while also managing her electrolyte imbalances and hypotension?
 
 **Run configuration**
 
 - **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+- **Text-only context:** image chunks stripped (no OCR, no pixels)
 
 ---
 
@@ -13,69 +14,70 @@ For a 50-year-old Hispanic female with acute kidney injury (AKI) onset after ele
 **Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
 ```
-CASE ID: CASE_02
-STAY ID: 36469053
+CASE ID: CASE_10
+STAY ID: 31507319
 ============================================================
 PATIENT CLINICAL PROFILE:
 
 PATIENT DEMOGRAPHICS:
-  Age: 50 | Sex: Female | Race: HISPANIC/LATINO - PUERTO RICAN
-  Insurance: Medicaid | Admission type: ELECTIVE
+  Age: 80 | Sex: Female | Race: WHITE
+  Insurance: Medicare | Admission type: EW EMER.
 
 AKI ONSET:
-  Baseline creatinine: 0.80 mg/dL
-  Hours from ICU admission to AKI onset: 76.3h
+  Baseline creatinine: 1.00 mg/dL
+  Hours from ICU admission to AKI onset: 15.6h
 
-CREATININE (ICU window, intime → onset), n=6 creatinine measurements in this window:
-  First     : 1.00 mg/dL
-  Min       : 0.90 mg/dL
-  Max       : 1.30 mg/dL
-  At onset  : 1.30 mg/dL
-  Delta      : +0.50 mg/dL
-  Ratio      : 1.62x baseline
-  Slope      : +0.0045 mg/dL/h
+CREATININE (ICU window, intime → onset), n=2 creatinine measurements in this window:
+  First     : 2.70 mg/dL
+  Min       : 2.20 mg/dL
+  Max       : 2.70 mg/dL
+  At onset  : 2.20 mg/dL
+  Delta      : +1.20 mg/dL
+  Ratio      : 2.20x baseline
+  Slope      : -0.0426 mg/dL/h
 
 LAB VALUES (last value before onset):
-  BUN            : last=16.0 mg/dL  [min=16.0, max=20.0]  (n=6)
-  POTASSIUM      : last=3.6 mEq/L  [min=3.6, max=4.1]  (n=5)
-  BICARBONATE    : last=21.0 mEq/L  [min=20.0, max=25.0]  (n=5)
-  HEMOGLOBIN     : last=8.9 g/dL  [min=8.9, max=10.3]  (n=5)
+  BUN            : last=49.0 mg/dL  [min=49.0, max=53.0]  (n=2)
+  POTASSIUM      : last=3.1 mEq/L  [min=3.1, max=3.2]  (n=2)
+  BICARBONATE    : last=19.0 mEq/L  [min=19.0, max=19.0]  (n=2)
+  HEMOGLOBIN     : last=8.8 g/dL  [min=8.8, max=9.0]  (n=2)
 
 VITAL SIGNS (ICU window):
-  MAP   : mean=90.5 mmHg  [min=62.0, max=135.0]  last=69.0  last6h=N/A  (n=50)
-  HR    : mean=115.1 bpm  [min=91.0, max=135.0]  last=121.0  last6h=N/A  (n=52) ⚠ TACHYCARDIA
-  SPO2  : mean=95.3 %  [min=92.0, max=98.0]  last=92.0  last6h=N/A  (n=50)
-  RR    : mean=23.1 /min  [min=16.0, max=33.0]  last=25.0  last6h=N/A  (n=52) ⚠ ELEVATED
-  TEMP  : mean=36.8 °C  [min=36.4, max=37.0]  last=36.8  last6h=N/A  (n=12)
+  MAP   : mean=54.5 mmHg  [min=41.0, max=69.0]  last=64.0  last6h=60.2  (n=15) ⚠ BELOW TARGET
+  HR    : mean=57.3 bpm  [min=52.0, max=69.0]  last=60.0  last6h=56.2  (n=18)
+  SPO2  : mean=98.6 %  [min=97.0, max=100.0]  last=99.0  last6h=99.7  (n=17)
+  RR    : mean=18.2 /min  [min=15.0, max=22.0]  last=19.0  last6h=18.8  (n=18)
+  TEMP  : mean=36.3 °C  [min=35.7, max=36.8]  last=35.7  last6h=36.0  (n=4)
 
-URINE OUTPUT, n=36 urine-output entries:
-  Total UO   : 6795 mL
-  Rate       : 89.1 mL/h
-  Last 6h    : N/A
-  Last 12h   : N/A
-  Last 24h   : N/A
+URINE OUTPUT, n=15 urine-output entries:
+  Total UO   : 900 mL
+  Rate       : 57.7 mL/h
+  Last 6h    : 385 mL
+  Last 12h   : 560 mL
+  Last 24h   : 900 mL
 
 FLUID BALANCE:
-  Total input  : 1755 mL
-  Net balance  : -5040 mL
+  Total input  : 3906 mL
+  Net balance  : +3006 mL
 
-COMORBIDITIES (Charlson score: 14):
+COMORBIDITIES (Charlson score: 9):
+  + Myocardial infarction
+  + Congestive heart failure
+  + Peripheral vascular disease
   + COPD
-  + Diabetes (mild)
-  + Diabetes (severe/complications)
+  + Mild liver disease
   + Moderate/severe renal disease
   + Malignancy
-  + Metastatic solid tumor
-  Additional flags: Hypertension, Diabetes, Chronic kidney disease, Malignancy
+  Additional flags: Hypertension, Chronic kidney disease, Heart failure, Sepsis, Liver disease, Malignancy
 
 PRIOR MEDICATIONS (before current admission):
-  NSAID
+  ACEI/ARB, Diuretic, NSAID, Statin
 
 CURRENT MEDICATIONS (active at AKI onset):
-  Anticoagulant
+  Nephrotoxic agent, Antibiotic
 
 OTHER:
-  BMI            : 51.9
+  BMI            : not recorded
   Smoking status : not recorded
 ```
 
@@ -83,29 +85,27 @@ OTHER:
 
 ### Answer (generated by LLM based on literature)
 
-This 50-year-old patient with acute kidney injury (AKI) has complex health challenges, including a BMI of 51.9, indicating extreme obesity, marked renal impairment from comorbidities like COPD and diabetes, and baseline moderate/severe renal disease. Moreover, recent NSAID use and current metastatic malignancy may further compromise renal function. Critical values such as a high BMI, severe diabetes complications, and previous use of nephrotoxic NSAIDs suggest a need for careful management to avoid worsening the AKI.
+The 80-year-old female patient presents with acute kidney injury (AKI) following sepsis, with complicating factors of heart failure, chronic kidney disease, and mild liver disease. Her low blood pressure and nephrotoxic agent usage pose additional risks. Specifically, the combination of hypotension, nephrotoxic exposure, and the patient's multi-organ challenges, highlight the complexity of her condition. Here are optimized treatment suggestions considering her clinical specifics:
 
-1. **Adjust Medication Regimen to Eliminate Nephrotoxic Drugs:**
-   - **Why this patient:** The patient's history of NSAID use and moderate/severe renal disease increases the risk of further kidney damage, suggesting the discontinuation of nephrotoxic agents as a critical step [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p12)].
-   - **When to use / contraindications:** Eliminating nephrotoxic agents is indicated in any case of AKI to prevent further renal injury [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p12)]. Contraindications mainly involve ensuring that any removed medication is substituted with a suitable, safer alternative.
-   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p8)].
+1. **Discontinue Nephrotoxic Agents:**
+   - **Why this patient:** The patient's AKI can be exacerbated by continued use of nephrotoxic medications such as ACEIs, ARBs, and NSAIDs, which are commonly recognized to reduce kidney perfusion. Additionally, she has reported hypotension which can further compromise renal function. 
+   - **When to use / contraindications:** These agents should be discontinued or replaced with alternatives that have a less detrimental effect on kidney function. This is especially significant given her underlying chronic kidney disease and acute kidney injury. Caution should be maintained, however, for patients where these medications are critical for heart disease management, underlining the importance of tailored oversight by healthcare professionals.
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
 
-2. **Use of Insulin Therapy to Avoid Hyperglycemia:**
-   - **Why this patient:** Severe diabetes with complications necessitates maintaining plasma glucose levels to prevent further renal stress, supporting a target of 110–149 mg/dL [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p12)].
-   - **When to use / contraindications:** Intensive insulin therapy is advised unless there is an associated risk of hypoglycemia, which must be monitored closely, especially in patients experiencing variations in dietary intake or ongoing critical illness.
-   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p10)].
+2. **Optimize Fluid Management:**
+   - **Why this patient:** The patient's low blood pressure, possibly indicating hypoperfusion or volume depletion, supports the need for careful volume status management; dialogues with her AKI, heart failure, and low blood pressure highlight the complexity. 
+   - **When to use / contraindications:** Fluid management should be monitored to avoid volume overload, which may worsen heart failure. Diuretics should not be used unless there is clear evidence of volume overload. Proper fluid therapy can be challenging in this context, necessitating individualized therapy closely guided by hemodynamic monitoring and patient tolerability.
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p10)].
 
-3. **Optimize Nutritional Support:**
-   - **Why this patient:** The patient has extreme obesity (BMI 51.9) and severe comorbidities which necessitate careful nutritional management to prevent exacerbating the AKI [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p12)]. Nutritional intake, especially protein, needs to be tailored to avoid further renal stress.
-   - **When to use / contraindications:** The recommendation is to provide 0.8–1.0 g/kg/day of protein if renal replacement therapy (RRT) is not needed; however, this should be adjusted during any period requiring RRT [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p12)]. Careful monitoring is essential to avoid malnutrition.
-   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO (pmid_23499048_p10)].
-
-If discontinuation of nephrotoxic agents is not viable due to essential treatments for her malignancy or COPD, focus on optimizing her glucose control with insulin therapy. If insulin adjustments are not feasible due to nutritional challenges, reassess nutritional strategies focusing on adequate protein intake and overall energy needs.
+3. **Consider Antibiotic Adjustment:**
+   - **Why this patient:** To mitigate potential nephrotoxicity, adjusting her antibiotic therapy may be beneficial, especially if aminoglycosides are part of the current regimen. Given the patient's mild liver disease and compromised renal function, altering the antibiotic choice to a less nephrotoxic alternative can be crucial.
+   - **When to use / contraindications:** Avoid aminoglycosides unless no safer alternatives exist, ensuring antibiotic choice aligns with infection sensitivity profiles and pharmacokinetic dynamics in patients with altered liver and kidney function.
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
 
 ### References
-- **KDOQI US commentary on the 2012 KDIGO** (pmid_23499048_p12): Discussed nephrotoxic agents and glucose management.
-- **KDOQI US commentary on the 2012 KDIGO** (pmid_23499048_p8): Additional insights into systemic management of AKI and diuretic use.
-- **KDOQI US commentary on the 2012 KDIGO** (pmid_23499048_p10): Covered nutritional considerations in AKI management.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12):** Discontinuation of nephrotoxic agents and fluid management recommendations.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8):** Use of antibiotics and management of nephrotoxic medications.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p10):** Recommendations on avoiding routine diuretics in AKI.
 
 ---
 
@@ -115,11 +115,11 @@ If discontinuation of nephrotoxic agents is not viable due to essential treatmen
 
 | rank | score | chunk_id | doc_id | parent_block_id |
 |------|-------|----------|--------|-----------------|
-| 1 | 0.7964 | `pmid_23499048_p12_t0_c0` | `pmid_23499048` | `pmid_23499048_p12` |
-| 2 | 0.7494 | `pmid_23499048_p8_t1_c1` | `pmid_23499048` | `pmid_23499048_p8` |
-| 3 | 0.7412 | `pmid_23499048_p8_t1_c0` | `pmid_23499048` | `pmid_23499048_p8` |
-| 4 | 0.7228 | `pmid_23499048_p3_t1_c0` | `pmid_23499048` | `pmid_23499048_p3` |
-| 5 | 0.6808 | `pmid_23499048_p10_t0_c0` | `pmid_23499048` | `pmid_23499048_p10` |
+| 1 | 0.8159 | `pmid_23499048_p12_t0_c0` | `pmid_23499048` | `pmid_23499048_p12` |
+| 2 | 0.7638 | `pmid_23499048_p8_t1_c1` | `pmid_23499048` | `pmid_23499048_p8` |
+| 3 | 0.7575 | `pmid_23499048_p8_t1_c0` | `pmid_23499048` | `pmid_23499048_p8` |
+| 4 | 0.7314 | `pmid_23499048_p3_t1_c0` | `pmid_23499048` | `pmid_23499048_p3` |
+| 5 | 0.6972 | `pmid_23499048_p10_t0_c0` | `pmid_23499048` | `pmid_23499048_p10` |
 
 <sub>**Score**: cosine similarity between query and chunk embedding (BGE `bge-base-en-v1.5`, L2-normalized → dot product). Range ≈ [-1, 1]; higher = more relevant. Rule of thumb for BGE: &gt;0.7 strong, 0.5–0.7 moderate, &lt;0.5 weak.</sub>
 

@@ -1,10 +1,11 @@
 ## Questions
 
-In a 53-year-old male with acute kidney injury (AKI) onset within 4 hours of ICU admission, noted tachycardia, elevated respiratory rate, fever, moderate/severe renal disease, severe liver disease, and concurrent sepsis, how should treatment be optimized considering prior use of ACEI/ARB, current nephrotoxic agents, and concurrent anticoagulant and antibiotic therapy, while managing comorbid conditions like congestive heart failure, diabetes, chronic kidney disease, and coagulopathy?
+For a 54-year-old male patient with acute kidney injury (AKI) and sepsis, considering comorbid conditions like peripheral vascular disease, severe liver disease, COPD, and malignancy, along with recent exposure to nephrotoxic agents such as NSAIDs, vancomycin, and current vasopressor and anticoagulant use, what evidence-based treatment options are recommended to manage AKI while mitigating risks of fluid overload and potential drug interactions?
 
 **Run configuration**
 
 - **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+- **Text-only context:** image chunks stripped (no OCR, no pixels)
 
 ---
 
@@ -13,71 +14,69 @@ In a 53-year-old male with acute kidney injury (AKI) onset within 4 hours of ICU
 **Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
 ```
-CASE ID: CASE_07
-STAY ID: 33570939
+CASE ID: CASE_17
+STAY ID: 35977583
 ============================================================
 PATIENT CLINICAL PROFILE:
 
 PATIENT DEMOGRAPHICS:
-  Age: 53 | Sex: Male | Race: WHITE
-  Insurance: Private | Admission type: OBSERVATION ADMIT
+  Age: 54 | Sex: Male | Race: UNKNOWN
+  Insurance: Medicare | Admission type: EW EMER.
 
 AKI ONSET:
-  Baseline creatinine: 1.30 mg/dL
-  Hours from ICU admission to AKI onset: 4.0h
+  Baseline creatinine: 0.70 mg/dL
+  Hours from ICU admission to AKI onset: 7.4h
 
-CREATININE (ICU window, intime → onset), n=1 creatinine measurements in this window:
-  First     : 2.10 mg/dL
-  Min       : 2.10 mg/dL
-  Max       : 2.10 mg/dL
-  At onset  : 2.10 mg/dL
-  Delta      : +0.80 mg/dL
-  Ratio      : 1.61x baseline
-  Slope      : N/A
+CREATININE (ICU window, intime → onset), n=2 creatinine measurements in this window:
+  First     : 2.70 mg/dL
+  Min       : 2.70 mg/dL
+  Max       : 2.80 mg/dL
+  At onset  : 2.80 mg/dL
+  Delta      : +2.10 mg/dL
+  Ratio      : 4.00x baseline
+  Slope      : +0.0168 mg/dL/h
 
 LAB VALUES (last value before onset):
-  BUN            : last=30.0 mg/dL  [min=30.0, max=30.0]  (n=1)
-  POTASSIUM      : last=4.0 mEq/L  [min=4.0, max=4.0]  (n=1)
-  BICARBONATE    : last=15.0 mEq/L  [min=15.0, max=15.0]  (n=1)
-  HEMOGLOBIN     : last=9.5 g/dL  [min=9.5, max=9.5]  (n=1)
+  BUN            : last=24.0 mg/dL  [min=23.0, max=24.0]  (n=2)
+  POTASSIUM      : last=4.4 mEq/L  [min=3.7, max=4.4]  (n=2)
+  BICARBONATE    : last=11.0 mEq/L  [min=11.0, max=11.0]  (n=2)
+  HEMOGLOBIN     : last=12.0 g/dL  [min=12.0, max=12.8]  (n=2)
 
 VITAL SIGNS (ICU window):
-  MAP   : mean=98.2 mmHg  [min=89.0, max=107.0]  last=94.0  last6h=98.2  (n=5)
-  HR    : mean=110.5 bpm  [min=97.0, max=124.0]  last=97.0  last6h=110.5  (n=6) ⚠ TACHYCARDIA
-  SPO2  : mean=96.1 %  [min=94.0, max=98.0]  last=98.0  last6h=96.1  (n=7)
-  RR    : mean=23.2 /min  [min=14.0, max=30.0]  last=14.0  last6h=23.2  (n=6) ⚠ ELEVATED
-  TEMP  : mean=38.4 °C  [min=38.1, max=38.9]  last=38.3  last6h=38.4  (n=3) ⚠ FEVER
+  MAP   : mean=66.7 mmHg  [min=56.0, max=75.0]  last=65.0  last6h=71.7  (n=11)
+  HR    : mean=112.7 bpm  [min=110.0, max=116.0]  last=111.0  last6h=113.6  (n=10) ⚠ TACHYCARDIA
+  SPO2  : mean=81.6 %  [min=66.0, max=94.0]  last=92.0  last6h=80.3  (n=10) ⚠ LOW
+  RR    : mean=22.0 /min  [min=8.0, max=30.0]  last=30.0  last6h=27.2  (n=7) ⚠ ELEVATED
+  TEMP  : mean=36.3 °C  [min=35.7, max=37.0]  last=37.0  last6h=36.3  (n=4)
 
-URINE OUTPUT, n=1 urine-output entries:
-  Total UO   : 225 mL
-  Rate       : 56.2 mL/h
-  Last 6h    : 225 mL
-  Last 12h   : 225 mL
-  Last 24h   : 225 mL
+URINE OUTPUT, n=2 urine-output entries:
+  Total UO   : 1200 mL
+  Rate       : 162.2 mL/h
+  Last 6h    : 1200 mL
+  Last 12h   : 1200 mL
+  Last 24h   : 1200 mL
 
 FLUID BALANCE:
-  Total input  : 905 mL
-  Net balance  : +680 mL
+  Total input  : 14060 mL
+  Net balance  : +12860 mL ⚠ SEVERE OVERLOAD
 
-COMORBIDITIES (Charlson score: 13):
-  + Congestive heart failure
-  + Dementia
+COMORBIDITIES (Charlson score: 9):
+  + Peripheral vascular disease
+  + Cerebrovascular disease
+  + COPD
   + Mild liver disease
-  + Diabetes (mild)
-  + Diabetes (severe/complications)
-  + Moderate/severe renal disease
   + Malignancy
   + Severe liver disease
-  Additional flags: Hypertension, Diabetes, Chronic kidney disease, Sepsis, Liver disease, Malignancy, Coagulopathy
+  Additional flags: Sepsis, Liver disease, Malignancy, Coagulopathy
 
 PRIOR MEDICATIONS (before current admission):
-  ACEI/ARB, Vancomycin, Statin
+  Diuretic, NSAID, Vancomycin
 
 CURRENT MEDICATIONS (active at AKI onset):
-  Nephrotoxic agent, Antibiotic, Anticoagulant
+  Nephrotoxic agent, Vasopressor, Antibiotic, Anticoagulant
 
 OTHER:
-  BMI            : 34.0
+  BMI            : 30.1
   Smoking status : not recorded
 ```
 
@@ -85,28 +84,29 @@ OTHER:
 
 ### Answer (generated by LLM based on literature)
 
-This 53-year-old male patient with acute kidney injury (AKI) and concurrent sepsis faces a complex clinical scenario, including the presence of tachycardia, fever, and pre-existing severe liver disease. Specific numeric patient values include a fever (indicative of infection), moderate/severe renal disease in the context of AKI onset within 4 hours, and potential concerns over nephrotoxic agents due to current infection and treatment needs.
+For the 54-year-old male with acute kidney injury (AKI) and sepsis, key clinical parameters include exposure to nephrotoxic medications and current utilization of vasopressors and anticoagulants. Considering comorbid conditions like peripheral vascular disease and severe liver disease, treatment must focus on managing AKI while mitigating fluid overload and drug interactions.
 
-1. **Renal Replacement Therapy (RRT):**
-   - **Why this patient:** The patient's described AKI onset within 4 hours and possibly severe renal disease necessitate acute management. In severe cases of AKI, particularly with concurrent life-threatening conditions such as sepsis, considering RRT is crucial to manage fluid overload, electrolyte imbalances, and removal of nephrotoxic agents [KDOQI commentary (pmid_23499048_p12)].
-   - **When to use / contraindications:** RRT is often indicated in severe AKI when biochemical derangements and fluid overload cannot be managed conservatively. It should be used after assessing hemodynamic stability and potential contraindications like severe comorbidities or coagulopathy [Stage-based management of AKI (pmid_23499048_p12)].
-   - **Supporting sources:** [KDOQI commentary (pmid_23499048_p12)], [KDOQI guideline for AKI (pmid_23499048_p8)].
+1. **Optimizing Hemodynamic Status:**
+   - **Why this patient:** The combination of sepsis and vasopressor use indicates potential hemodynamic instability, which can worsen AKI. The objective is to maintain adequate perfusion pressure to support kidney function. Specifically, managing mean arterial pressure (MAP) can be crucial given the patient's multiple comorbidities and risk of perioperative AKI, which may not be explicitly quantified in this excerpt but are known to impact perfusion dynamics in such cases [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)].
+   - **When to use / contraindications:** Optimizing fluids and vasopressor therapy should proceed with caution, ensuring fluids are not overloaded. This strategy might be complex in those with severe liver disease due to potential fluid accumulation [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)].
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p8)].
 
-2. **Management of Hemodynamic and Oxygenation Parameters:**
-   - **Why this patient:** The presence of tachycardia and fever suggests hemodynamic instability, often necessitating protocol-based management to prevent worsening of AKI in septic shock patients. This aligns with the goal of optimizing oxygenation and perfusion [KDIGO guideline (pmid_23499048_p12)].
-   - **When to use / contraindications:** Intensive monitoring and management should be applied in settings of shock and severe infection to prevent renal complications, while avoiding nephrotoxic drug interactions and inappropriate fluid usage [KDOQI commentary (pmid_23499048_p10)].
-   - **Supporting sources:** [KDOQI commentary (pmid_23499048_p12)], [KDOQI guideline for AKI (pmid_23499048_p3)].
+2. **Nutritional Support with Enteral Route:**
+   - **Why this patient:** AKI patients benefit from specific nutrient delivery, where nutritional support needs to be balanced for energy and protein without overloading the kidneys. Administering nutrition via the enteral route is advantageous, considering the patient is not in need of maintenance dialysis at this stage [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)].
+   - **When to use / contraindications:** This approach is contraindicated if gastrointestinal complications are present or if the patient cannot tolerate enteral feeding [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)].
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p10)].
 
-3. **Avoidance of Nephrotoxic Medications:**
-   - **Why this patient:** Given potential nephrotoxicity from concurrent treatments with ACEI/ARB and current antibiotics, and the risk of further renal damage in this patient with acute AKI, discontinuing nephrotoxic agents is prudent [Stage-based management of AKI (pmid_23499048_p12)].
-   - **When to use / contraindications:** This approach is recommended in all stages of AKI to preserve remaining renal function. Should be considered particularly when feasible alternatives for medication exist [KDOQI commentary (pmid_23499048_p10)].
-   - **Supporting sources:** [KDIGO guideline (pmid_23499048_p12)], [KDOQI guideline for AKI (pmid_23499048_p8)].
+3. **Avoidance of Nephrotoxic Agents:**
+   - **Why this patient:** The patient has recent exposure to nephrotoxic agents like NSAIDs and vancomycin. Avoiding further administration of nephrotoxic drugs or considering less nephrotoxic alternatives (e.g., different antibiotic classes) is crucial to mitigating additional kidney damage [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)].
+   - **When to use / contraindications:** This approach should be adapted based on the need for these agents for other comorbid conditions, but generally avoided when alternatives exist given the risk of exacerbating renal impairment [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)].
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p10)].
+
+When the first option is not feasible due to complications of fluid overload per severe liver disease, consider option 2. If enteral nutrition is not tolerated, switching to option 3 to focus on further avoidance of nephrotoxic drugs is advised.
 
 ### References
-- **KDOQI commentary (pmid_23499048_p12):** Addressed primary management strategies for AKI, including RRT and nephrotoxic agent avoidance.
-- **KDOQI guideline for AKI (pmid_23499048_p8):** Provided guidelines on RRT usage and managing severe AKI cases.
-- **KDOQI guideline for AKI (pmid_23499048_p3):** Supported recommendations on hemodynamic management strategies in AKI.
-- **Stage-based management of AKI (pmid_23499048_p12):** Highlighted the importance of nephrotoxic agent avoidance in AKI management.
+- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p12), addressing hemodynamic support and nutritional recommendations.
+- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p8), providing additional guidance on managing AKI in intensive care.
+- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for AKI (pmid_23499048_p10), reinforcing the need to avoid nephrotoxic agents.
 
 ---
 
@@ -116,11 +116,11 @@ This 53-year-old male patient with acute kidney injury (AKI) and concurrent seps
 
 | rank | score | chunk_id | doc_id | parent_block_id |
 |------|-------|----------|--------|-----------------|
-| 1 | 0.8062 | `pmid_23499048_p12_t0_c0` | `pmid_23499048` | `pmid_23499048_p12` |
-| 2 | 0.7538 | `pmid_23499048_p8_t1_c1` | `pmid_23499048` | `pmid_23499048_p8` |
-| 3 | 0.7516 | `pmid_23499048_p8_t1_c0` | `pmid_23499048` | `pmid_23499048_p8` |
-| 4 | 0.7359 | `pmid_23499048_p3_t1_c0` | `pmid_23499048` | `pmid_23499048_p3` |
-| 5 | 0.6854 | `pmid_23499048_p10_t0_c0` | `pmid_23499048` | `pmid_23499048_p10` |
+| 1 | 0.8034 | `pmid_23499048_p12_t0_c0` | `pmid_23499048` | `pmid_23499048_p12` |
+| 2 | 0.7411 | `pmid_23499048_p8_t1_c1` | `pmid_23499048` | `pmid_23499048_p8` |
+| 3 | 0.7290 | `pmid_23499048_p8_t1_c0` | `pmid_23499048` | `pmid_23499048_p8` |
+| 4 | 0.7120 | `pmid_23499048_p3_t1_c0` | `pmid_23499048` | `pmid_23499048_p3` |
+| 5 | 0.6628 | `pmid_23499048_p10_t0_c0` | `pmid_23499048` | `pmid_23499048_p10` |
 
 <sub>**Score**: cosine similarity between query and chunk embedding (BGE `bge-base-en-v1.5`, L2-normalized → dot product). Range ≈ [-1, 1]; higher = more relevant. Rule of thumb for BGE: &gt;0.7 strong, 0.5–0.7 moderate, &lt;0.5 weak.</sub>
 

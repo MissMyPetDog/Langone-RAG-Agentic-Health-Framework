@@ -93,7 +93,7 @@ OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 | 보조 | `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`에서 무효 chunk 제거 또는 `--strip-images` |
 | 보조 | `embed_multimodal_resume.sh` | CPU에서 멀티모달 임베딩을 끊어서 재개 (`0` 또는 `35`) |
 | 6 | `retrieval.py` | 쿼리 → 텍스트 검색 + parent 확장. `--rerank` 시 cross-encoder 재순위 |
-| 7 | `generate.py` | Kong API로 답변 생성. `--rerank`, `--dry-run`, `--patient-data` / `--patient-data-file`, **`--vision`**(figure를 `image_url`로 전달). 결과 자동 MD 저장 |
+| 7 | `generate.py` | Kong API로 답변 생성. `--rerank`, `--dry-run`, `--patient-data` / `--patient-data-file`, **`--vision`**(figure를 `image_url`로 전달), **`--text-only`**(이미지 chunk 전부 제거: OCR·픽셀 둘 다 off). 결과 자동 MD 저장 |
 | (단독) | `rerank.py` | BGE 검색 + cross-encoder 재순위 2단계(실험·디버그용 CLI) |
 | (참고) | `schema.py` | JSONL 레코드 TypedDict 정의 |
 | (참고) | `vectordb.py` | hash 임베딩(`embed.py`와 동일 계열) 데모 검색 |
@@ -194,6 +194,17 @@ export KONG_API_KEY=...
 - 위 둘 다 없고 질문만 있을 때: `outputs/result_YYYY-MM-DD_HH-MM-SS.md`
 
 **`--vision`**: 검색에 걸린 figure를 디스크에서 읽어 API에 `image_url`(base64 data URL)로 붙입니다. RAG용 CLIP 벡터와는 별개이며, **비전 가능 모델**(기본 `gpt-4o`)이어야 합니다. 환경 변수 `GENERATE_VISION=1`로 플래그와 동일하게 켤 수 있음. `VISION_MAX_IMAGES`(기본 6), `VISION_MAX_EDGE`(기본 1536, 긴 변 기준 리사이즈 후 JPEG).
+
+**`--text-only`**: 검색된 이미지 chunk 자체를 LLM 컨텍스트에서 완전히 제거합니다 (OCR 텍스트·`asset_path` 둘 다 빠짐). `--vision`이 **픽셀만** 켜고 `--text-only`는 **OCR까지** 끄는 관계라, 비전 파이프라인 기여도 A/B/C 비교가 아래처럼 됩니다.
+
+| 모드 | OCR 텍스트 | 이미지 픽셀 | 명령 예 |
+|---|---|---|---|
+| Vision full | ✅ 컨텍스트 포함 | ✅ `image_url` 첨부 | `generate.py --patient-data-file ... --vision` |
+| OCR only (default) | ✅ 컨텍스트 포함 | ❌ | `generate.py --patient-data-file ...` |
+| Text only | ❌ | ❌ | `generate.py --patient-data-file ... --text-only` |
+
+- `--vision`과 `--text-only`가 동시에 주어지면 `--text-only`가 우선이고 비전은 경고와 함께 자동 off.
+- 결과 MD의 `Run configuration`에 `**Text-only context:** image chunks stripped (no OCR, no pixels)` 줄이 추가되어 파일이 자기기술적.
 
 **Used Sources / 답변 텍스트**: 디스크에 `stem.png`가 있으면 chunk의 `asset_path`가 `.jpx` 등이어도 **미리보기·컨텍스트에는 PNG 경로를 우선**합니다. LLM 본문에 잘못된 `.jpx` 경로가 나오면 저장 전에 figure 경로만 `.png`로 치환하는 후처리가 들어갑니다.
 

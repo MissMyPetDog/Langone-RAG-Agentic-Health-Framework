@@ -163,7 +163,11 @@ def _parent_text_for_rerank(cids: List[str], chunk_records: Dict[str, ChunkRecor
     return "\n\n".join(parts).strip()
 
 
-def _format_parent_content_for_llm(cids: List[str], chunk_records: Dict[str, ChunkRecord]) -> str:
+def _format_parent_content_for_llm(
+    cids: List[str],
+    chunk_records: Dict[str, ChunkRecord],
+    include_image_chunks: bool = True,
+) -> str:
     parts: List[str] = []
     for cid in cids:
         rec = chunk_records.get(cid)
@@ -171,6 +175,8 @@ def _format_parent_content_for_llm(cids: List[str], chunk_records: Dict[str, Chu
             continue
         mod = rec.get("modality") or "text"
         if mod == "image":
+            if not include_image_chunks:
+                continue
             ap = rec.get("asset_path") or ""
             t = rec.get("text") or ""
             ap_show = _prefer_png_asset_path_if_exists(ap.strip()) if ap else ""
@@ -567,6 +573,7 @@ def _build_context(
     by_parent: Dict[str, List[str]],
     chunk_records: Dict[str, ChunkRecord],
     papers_meta: Dict[str, Dict[str, str]],
+    include_image_chunks: bool = True,
 ) -> str:
     # Order parents by best score descending
     ordered = sorted(parent_meta.items(), key=lambda kv: -kv[1]["score"])
@@ -576,7 +583,9 @@ def _build_context(
         p_meta = papers_meta.get(doc_id, {})
         title = (p_meta.get("title") or "").strip()
         cids = by_parent.get(pid, [])
-        text = _format_parent_content_for_llm(cids, chunk_records)
+        text = _format_parent_content_for_llm(
+            cids, chunk_records, include_image_chunks=include_image_chunks
+        )
         text = _truncate_tokens(text)
         if not text:
             continue
@@ -923,6 +932,12 @@ def main() -> None:
         "(default 1536 long edge, JPEG). Also set GENERATE_VISION=1 to enable without the flag.",
     )
     parser.add_argument(
+        "--text-only",
+        action="store_true",
+        help="Strip all image chunks (both OCR text and pixels) from the LLM context. Useful to "
+        "isolate text-only answer behavior. Implicitly disables --vision if both are passed.",
+    )
+    parser.add_argument(
         "--case-id",
         type=str,
         default="",
@@ -1012,23 +1027,31 @@ def main() -> None:
         pid = row["parent_block_id"]
         print(f"  {cid}  score={score:.4f}  doc_id={doc_id}  parent_block_id={pid}")
 
-    context = _build_context(parent_meta, by_parent, chunk_records, papers_meta)
+    text_only = bool(args.text_only)
+    include_image_chunks = not text_only
+    context = _build_context(
+        parent_meta, by_parent, chunk_records, papers_meta,
+        include_image_chunks=include_image_chunks,
+    )
     if not context:
         print("\nNo context could be assembled; aborting LLM call.")
         print("  → Ensure chunks.jsonl, linked_chunks.jsonl, and real_vectors.jsonl are from the same run.")
         print("  → Re-run: python chunk.py && python link.py && python real_embed.py")
         raise SystemExit(1)
 
-    use_vision = bool(args.vision) or os.environ.get("GENERATE_VISION", "").lower() in (
-        "1",
-        "true",
-        "yes",
+    if text_only and (args.vision or os.environ.get("GENERATE_VISION", "").lower() in ("1", "true", "yes")):
+        print("\n--text-only is set; ignoring --vision (pixels + OCR both disabled).", flush=True)
+    use_vision = (
+        not text_only
+        and (bool(args.vision) or os.environ.get("GENERATE_VISION", "").lower() in ("1", "true", "yes"))
     )
     max_vision = max(0, int(os.environ.get("VISION_MAX_IMAGES", "6")))
 
     if args.dry_run:
         print("\nAssembled context:\n")
         print(context)
+        if text_only:
+            print("\n--text-only: image chunks stripped from context (no OCR, no pixels).")
         if use_vision and max_vision > 0:
             v_items = _collect_vision_images(parent_meta, by_parent, chunk_records, max_vision)
             print(f"\n--vision: would attach {len(v_items)} image(s) (max {max_vision}):")
@@ -1075,6 +1098,8 @@ def main() -> None:
             f"- **Vision:** {len(vision_items)} figure(s) as `image_url` (pixels), max={max_vision} | "
             f"VISION_MAX_EDGE={os.environ.get('VISION_MAX_EDGE', '1536')}\n"
         )
+    if text_only:
+        lines.append("- **Text-only context:** image chunks stripped (no OCR, no pixels)\n")
 
     lines.append("\n---\n\n")
     lines.append(_format_case_summary_markdown(patient_data, question))

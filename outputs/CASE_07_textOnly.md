@@ -1,10 +1,11 @@
 ## Questions
 
-What are the evidence-based treatment options for acute kidney injury in a 54-year-old male with sepsis, severe liver disease, peripheral vascular disease, COPD, and malignancy, who is experiencing severe fluid overload and taking nephrotoxic agents, vasopressors, antibiotics, and anticoagulants, considering the contraindications with previous use of diuretics, NSAIDs, and vancomycin?
+What are the recommended evidence-based treatment options for a 53-year-old male with acute kidney injury (AKI), comorbid congestive heart failure, moderate to severe renal disease, severe liver disease, and diabetes on current therapy including nephrotoxic agents, antibiotics, and anticoagulants, considering potential contraindications and interactions with prior use of ACEI/ARB and vancomycin?
 
 **Run configuration**
 
 - **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+- **Text-only context:** image chunks stripped (no OCR, no pixels)
 
 ---
 
@@ -13,69 +14,71 @@ What are the evidence-based treatment options for acute kidney injury in a 54-ye
 **Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
 ```
-CASE ID: CASE_17
-STAY ID: 35977583
+CASE ID: CASE_07
+STAY ID: 33570939
 ============================================================
 PATIENT CLINICAL PROFILE:
 
 PATIENT DEMOGRAPHICS:
-  Age: 54 | Sex: Male | Race: UNKNOWN
-  Insurance: Medicare | Admission type: EW EMER.
+  Age: 53 | Sex: Male | Race: WHITE
+  Insurance: Private | Admission type: OBSERVATION ADMIT
 
 AKI ONSET:
-  Baseline creatinine: 0.70 mg/dL
-  Hours from ICU admission to AKI onset: 7.4h
+  Baseline creatinine: 1.30 mg/dL
+  Hours from ICU admission to AKI onset: 4.0h
 
-CREATININE (ICU window, intime → onset), n=2 creatinine measurements in this window:
-  First     : 2.70 mg/dL
-  Min       : 2.70 mg/dL
-  Max       : 2.80 mg/dL
-  At onset  : 2.80 mg/dL
-  Delta      : +2.10 mg/dL
-  Ratio      : 4.00x baseline
-  Slope      : +0.0168 mg/dL/h
+CREATININE (ICU window, intime → onset), n=1 creatinine measurements in this window:
+  First     : 2.10 mg/dL
+  Min       : 2.10 mg/dL
+  Max       : 2.10 mg/dL
+  At onset  : 2.10 mg/dL
+  Delta      : +0.80 mg/dL
+  Ratio      : 1.61x baseline
+  Slope      : N/A
 
 LAB VALUES (last value before onset):
-  BUN            : last=24.0 mg/dL  [min=23.0, max=24.0]  (n=2)
-  POTASSIUM      : last=4.4 mEq/L  [min=3.7, max=4.4]  (n=2)
-  BICARBONATE    : last=11.0 mEq/L  [min=11.0, max=11.0]  (n=2)
-  HEMOGLOBIN     : last=12.0 g/dL  [min=12.0, max=12.8]  (n=2)
+  BUN            : last=30.0 mg/dL  [min=30.0, max=30.0]  (n=1)
+  POTASSIUM      : last=4.0 mEq/L  [min=4.0, max=4.0]  (n=1)
+  BICARBONATE    : last=15.0 mEq/L  [min=15.0, max=15.0]  (n=1)
+  HEMOGLOBIN     : last=9.5 g/dL  [min=9.5, max=9.5]  (n=1)
 
 VITAL SIGNS (ICU window):
-  MAP   : mean=66.7 mmHg  [min=56.0, max=75.0]  last=65.0  last6h=71.7  (n=11)
-  HR    : mean=112.7 bpm  [min=110.0, max=116.0]  last=111.0  last6h=113.6  (n=10) ⚠ TACHYCARDIA
-  SPO2  : mean=81.6 %  [min=66.0, max=94.0]  last=92.0  last6h=80.3  (n=10) ⚠ LOW
-  RR    : mean=22.0 /min  [min=8.0, max=30.0]  last=30.0  last6h=27.2  (n=7) ⚠ ELEVATED
-  TEMP  : mean=36.3 °C  [min=35.7, max=37.0]  last=37.0  last6h=36.3  (n=4)
+  MAP   : mean=98.2 mmHg  [min=89.0, max=107.0]  last=94.0  last6h=98.2  (n=5)
+  HR    : mean=110.5 bpm  [min=97.0, max=124.0]  last=97.0  last6h=110.5  (n=6) ⚠ TACHYCARDIA
+  SPO2  : mean=96.1 %  [min=94.0, max=98.0]  last=98.0  last6h=96.1  (n=7)
+  RR    : mean=23.2 /min  [min=14.0, max=30.0]  last=14.0  last6h=23.2  (n=6) ⚠ ELEVATED
+  TEMP  : mean=38.4 °C  [min=38.1, max=38.9]  last=38.3  last6h=38.4  (n=3) ⚠ FEVER
 
-URINE OUTPUT, n=2 urine-output entries:
-  Total UO   : 1200 mL
-  Rate       : 162.2 mL/h
-  Last 6h    : 1200 mL
-  Last 12h   : 1200 mL
-  Last 24h   : 1200 mL
+URINE OUTPUT, n=1 urine-output entries:
+  Total UO   : 225 mL
+  Rate       : 56.2 mL/h
+  Last 6h    : 225 mL
+  Last 12h   : 225 mL
+  Last 24h   : 225 mL
 
 FLUID BALANCE:
-  Total input  : 14060 mL
-  Net balance  : +12860 mL ⚠ SEVERE OVERLOAD
+  Total input  : 905 mL
+  Net balance  : +680 mL
 
-COMORBIDITIES (Charlson score: 9):
-  + Peripheral vascular disease
-  + Cerebrovascular disease
-  + COPD
+COMORBIDITIES (Charlson score: 13):
+  + Congestive heart failure
+  + Dementia
   + Mild liver disease
+  + Diabetes (mild)
+  + Diabetes (severe/complications)
+  + Moderate/severe renal disease
   + Malignancy
   + Severe liver disease
-  Additional flags: Sepsis, Liver disease, Malignancy, Coagulopathy
+  Additional flags: Hypertension, Diabetes, Chronic kidney disease, Sepsis, Liver disease, Malignancy, Coagulopathy
 
 PRIOR MEDICATIONS (before current admission):
-  Diuretic, NSAID, Vancomycin
+  ACEI/ARB, Vancomycin, Statin
 
 CURRENT MEDICATIONS (active at AKI onset):
-  Nephrotoxic agent, Vasopressor, Antibiotic, Anticoagulant
+  Nephrotoxic agent, Antibiotic, Anticoagulant
 
 OTHER:
-  BMI            : 30.1
+  BMI            : 34.0
   Smoking status : not recorded
 ```
 
@@ -83,29 +86,29 @@ OTHER:
 
 ### Answer (generated by LLM based on literature)
 
-The patient, a 54-year-old male with a history of sepsis, severe liver disease, COPD, peripheral vascular disease, and malignancy, presents with acute kidney injury (AKI) characterized by severe fluid overload. The patient's current medications include nephrotoxic agents, vasopressors, antibiotics, and anticoagulants, and he has a prior history of using diuretics, NSAIDs, and vancomycin. Key clinical values like severe fluid overload and the potential interactions with current medications underscore the need for careful management of AKI.
+The patient, a 53-year-old male with acute kidney injury, presents with comorbidities such as congestive heart failure, severe liver disease, and diabetes under a regime including nephrotoxic agents. Key clinical concerns include managing AKI while accounting for his moderate-to-severe renal disease, prior ACEI/ARB use, and recent vancomycin treatment.
 
 1. **Renal Replacement Therapy (RRT):**
-   - **Why this patient:** Given the severe fluid overload and potential nephrotoxicity from current medications, RRT might be indicated to manage volume status and support renal function. The patient's compromised liver function and cardiac conditions may also contribute to non-responsiveness to conservative fluid management [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
-   - **When to use / contraindications:** RRT, such as dialysis, is generally used when there is refractory fluid overload, severe acidosis, or electrolyte imbalances unmanageable by other means. However, it can be challenging with existing anticoagulant use, as it may require adjustments to avoid bleeding risks.
+   - **Why this patient:** Given the patient's AKI amidst severe liver and heart conditions, and potential nephrotoxic drug exposure, RRT may be appropriate to manage fluid overload and waste clearance. Patients with AKI, particularly with significant reductions in urine output or when complications rise from concurrent conditions, could benefit from RRT [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+   - **When to use / contraindications:** RRT is recommended for patients with refractory electrolyte imbalance, acid-base disturbances, or fluid overload not responsive to diuretics, which may be present given his comorbidities. Contraindications could include severe hemodynamic instability, although RRT might be essential if benefits outweigh risks [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
+
+2. **Adjusting Antihypertensive Therapy:**
+   - **Why this patient:** Given his history of ACEI/ARB use and the presence of severe liver disease, adjusting antihypertensive therapy may help in managing hypertension and reducing further renal injury. Avoiding agents that further compromise renal perfusion is critical in this context [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+   - **When to use / contraindications:** This step is crucial when blood pressure control is inconsistent, and renal function is compromised. Options may include using alternative agents like calcium channel blockers if blood pressure remains a concern without worsening renal function [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
+
+3. **Strict Glycemic Control:**
+   - **Why this patient:** Tight glycemic control may help mitigate some complications of diabetes-related kidney damage, especially in the setting of AKI. A target glucose range between 110–149 mg/dL is generally recommended [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
+   - **When to use / contraindications:** Suitable for maintaining metabolic stability in diabetic patients with AKI. However, hypoglycemia should be avoided; the regimen should be adjusted in cases of severe liver dysfunction due to altered glucose metabolism [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p10)].
    - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p10)].
 
-2. **Discontinuation or Adjustment of Nephrotoxic Agents:**
-   - **Why this patient:** In the presence of AKI, reducing exposure to nephrotoxic agents—especially given the history of diuretics, NSAIDs, and vancomycin—can help prevent further kidney damage. This is particularly crucial in managing acute cases [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
-   - **When to use / contraindications:** This approach should always be considered unless absolutely necessary for managing comorbid conditions. Drug interactions must be carefully monitored.
-   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
-
-3. **Hemodynamic and Perfusion Management:**
-   - **Why this patient:** Managing hemodynamics is critical, particularly in septic patients with vascular complications, to ensure adequate renal perfusion and mitigate AKI progression. Protocol-based management can prevent worsening renal function [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)].
-   - **When to use / contraindications:** Used broadly unless contraindicated by severe cardiac dysfunction or intolerance to vasopressor modifications.
-   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
-
-If option 1 (RRT) is not feasible due to vascular access issues heightened by peripheral vascular disease or coagulopathy from anticoagulant use, consider option 2 (adjustment of nephrotoxic agents). Similarly, if there are unavoidable drug-required constraints, pursue option 3 to stabilize hemodynamics as a fundamental step.
+Fallback logic: If RRT is not implementable due to hemodynamic instability, antihypertensive therapy adjustments should be prioritized; should this also be unsuitable, primary focus should shift to strict glycemic control. 
 
 ### References
-- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12). Supported considerations for RRT and hemodynamic management.
-- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8). Supported adjustment of nephrotoxic agents and overall AKI management.
-- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p10). Provided additional commentary on management strategies for AKI.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p12):** Supported the use of RRT and tight glycemic control.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8):** Provided evidence for managing AKI with supportive measures, antihypertensive adjustments.
+- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p10):** Highlighted importance of glycemic control and overview of guideline implementation.
 
 ---
 
@@ -115,11 +118,11 @@ If option 1 (RRT) is not feasible due to vascular access issues heightened by pe
 
 | rank | score | chunk_id | doc_id | parent_block_id |
 |------|-------|----------|--------|-----------------|
-| 1 | 0.7988 | `pmid_23499048_p12_t0_c0` | `pmid_23499048` | `pmid_23499048_p12` |
-| 2 | 0.7442 | `pmid_23499048_p8_t1_c1` | `pmid_23499048` | `pmid_23499048_p8` |
-| 3 | 0.7295 | `pmid_23499048_p8_t1_c0` | `pmid_23499048` | `pmid_23499048_p8` |
-| 4 | 0.7089 | `pmid_23499048_p3_t1_c0` | `pmid_23499048` | `pmid_23499048_p3` |
-| 5 | 0.6643 | `pmid_23499048_p10_t0_c0` | `pmid_23499048` | `pmid_23499048_p10` |
+| 1 | 0.7831 | `pmid_23499048_p12_t0_c0` | `pmid_23499048` | `pmid_23499048_p12` |
+| 2 | 0.7452 | `pmid_23499048_p8_t1_c1` | `pmid_23499048` | `pmid_23499048_p8` |
+| 3 | 0.7284 | `pmid_23499048_p8_t1_c0` | `pmid_23499048` | `pmid_23499048_p8` |
+| 4 | 0.7241 | `pmid_23499048_p3_t1_c0` | `pmid_23499048` | `pmid_23499048_p3` |
+| 5 | 0.6788 | `pmid_23499048_p10_t0_c0` | `pmid_23499048` | `pmid_23499048_p10` |
 
 <sub>**Score**: cosine similarity between query and chunk embedding (BGE `bge-base-en-v1.5`, L2-normalized → dot product). Range ≈ [-1, 1]; higher = more relevant. Rule of thumb for BGE: &gt;0.7 strong, 0.5–0.7 moderate, &lt;0.5 weak.</sub>
 

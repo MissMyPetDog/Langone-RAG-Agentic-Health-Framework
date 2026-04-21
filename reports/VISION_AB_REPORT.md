@@ -1,171 +1,214 @@
-# Vision ON vs OFF 기여도 리포트
+# Vision vs Text-only 기여도 리포트
 
-**생성일**: 2026-04-21  
-**케이스 수**: 6 (paired)  
-**비교 대상**: `outputs/CASE_{02,03,05,06,07,17}.md` (Vision ON) ↔ `outputs/CASE_{02,03,05,06,07,17}_noVision.md` (Vision OFF)  
-**공통 조건**: 동일 질의, 동일 필터(99 drop), 동일 프롬프트(`generate.py` 신규 버전), 동일 모델  
-**변수**: `--vision` 플래그만 on/off
-
----
-
-## 1. 실험 설계
-
-1. **코퍼스**: PMID 23499048 (KDIGO 2012 AKI Clinical Practice Guideline) 단일 논문
-2. **필터 상태**: TOC + front-matter + bio-list 필터 적용 (1240 text chunks / 23 image chunks)
-3. **프롬프트**: 새 system prompt (patient-grounded reasoning, "Why this patient:" 구조, multi-source 강제)
-4. **모델**: `gpt-4o` (기본값)
-5. **vision 구현**: retrieval된 parent blocks 중 figure chunk가 있으면 해당 PNG를 `image_url`로 LLM에 첨부 (max 6, VISION_MAX_EDGE=1536)
-
-**선정 근거**: 전체 20 케이스 중 retrieval top-5에 figure chunk 포함 parent가 등장하여 실제로 이미지가 LLM에 전달된 6 케이스만 A/B 비교 대상으로 삼음. 나머지 14개는 vision 플래그 유무와 무관하게 동일한 text-only 호출이므로 비교 의미 없음.
+- **생성일**: 2026-04-21
+- **케이스**: `CASE_{02,03,05,06,07,08,10,17}` (paired, N = 8)
+- **비교 방향**: `--text-only` (baseline) → `--vision` (pixels + OCR). Δ = Vision − Text-only.
+- **공통 조건**: 동일 질의, 동일 필터(TOC/front-matter/bio-list), 동일 system prompt, `gpt-4o`
+- **집계 스크립트**: `scripts/reports/vision_two_way.py`
+- **산출물**: `outputs/CASE_NN.md` (vision), `outputs/CASE_NN_textOnly.md`
 
 ---
 
-## 2. 집계 결과
+## 1. Setup
 
-| 지표 | Vision ON | Vision OFF | Δ (ON − OFF) | 해석 |
-|------|----------|------------|--------------|------|
-| "Why this patient" 라인 수 | μ=3.00, sd=0.00 | μ=3.00, sd=0.00 | 0.00 | 새 프롬프트 구조는 플래그 무관 100% 준수 |
-| **Distinct cited parents** | μ=**2.17**, sd=0.98 | μ=**3.17**, sd=0.75 | **−1.00** | ⚠️ OFF가 multi-source 더 많이 인용 |
-| **Answer word count** | μ=**411.5**, sd=69.4 | μ=**521.8**, sd=58.5 | **−110.3** | ⚠️ OFF 답변이 +27% 더 긺 |
-| Numeric-value hits | μ=0.83, sd=1.33 | μ=0.17, sd=0.41 | +0.67 | ON 약간 유리, 절대값 작음 |
-| Patient-signal hits | μ=2.50, sd=2.07 | μ=2.00, sd=1.41 | +0.50 | ON 약간 유리 |
-| **Figure / visual-ref hits** | μ=**0.00** | μ=**0.00** | 0.00 | 🔴 양쪽 모두 figure 언급 전무 |
+1. **코퍼스**: PMID 23499048 (KDIGO 2012 AKI Clinical Practice Guideline) 단일 논문. 필터 후 text 1240 / image 23 chunks. 의미있는 figure는 p12의 *stage-based management of AKI* flowchart 1장이 사실상 유일.
 
-*Numeric-value hit = `NN.N (mg/dL|mmHg|mL/kg/h|%|...)` 형태의 verbatim 수치*  
-*Patient-signal hit = `Hgb / SpO2 / UO / Cr / MAP / sepsis / ...` 등 약자/키워드 매치*  
-*Figure hit = `Figure N`, `.png`, `flowchart`, `diagram`, `axes` 매치*
+2. **세 가지 모드** (`generate.py`):
 
-### 케이스별 변화 (ON → OFF)
+   | 모드 | OCR 텍스트 | 이미지 픽셀 |
+   |---|---|---|
+   | `--vision` | ✅ context 포함 | ✅ `image_url` 첨부 |
+   | default | ✅ context 포함 | ❌ |
+   | `--text-only` | ❌ | ❌ |
 
-| CASE | cite | patient-signal | numeric | figure-ref |
-|------|------|----------------|---------|------------|
-| 02 | 2 → **3 (+1)** | 5 → 0 (−5) | 2 → 1 (−1) | 0 → 0 |
-| 03 | 2 → 2 (0) | 5 → 4 (−1) | 3 → 0 (−3) | 0 → 0 |
-| 05 | 2 → **4 (+2)** | 2 → 2 (0) | 0 → 0 | 0 → 0 |
-| 06 | 1 → **3 (+2)** | 1 → 3 (+2) | 0 → 0 | 0 → 0 |
-| 07 | 4 → 4 (0) | 0 → 2 (+2) | 0 → 0 | 0 → 0 |
-| 17 | 2 → **3 (+1)** | 2 → 1 (−1) | 0 → 0 | 0 → 0 |
+   본 리포트는 **Vision vs Text-only** 양 끝값만 비교. Default(OCR-only 중간값)는 3원 분석에서 다룸.
+
+3. **선정 기준**: 전체 20 케이스 중 retrieval top-5에 image chunk를 포함하는 parent가 등장한 8개만 대상.
 
 ---
 
-## 3. Retrieval 독립성 검증
+## 2. 측정 지표
 
-`--vision`은 retrieval 이후의 LLM 호출 단계에만 개입하므로 이론상 top-5 parent 집합은 동일해야 한다. 실제로도 거의 같음.
+| 지표 | 정의 |
+|------|------|
+| `word_count` | 답변 본문 단어 수 |
+| `distinct_cite` | 답변이 인용한 distinct parent_block_id 수 |
+| `num_hits` | `NN.N (mg/dL\|mmHg\|mL/kg/h\|%\|…)` 형태의 verbatim 수치 개수 |
+| `signal_hits` | `Hgb/SpO2/UO/Cr/MAP/sepsis/…` 등 환자 관련 키워드 매치 수 |
+| `figure_explicit` | 본문에 `Figure N / .png / flowchart / diagram / axes` 등 **표면 문구** 언급 수 |
+| **`image_parent_cite`** | 답변이 인용한 parent 중 image chunk를 포함하는 parent 개수 — "figure의 **간접** 인용" |
+| `ocr_borrow` | 답변의 5-gram 중 그 케이스가 retrieve한 image chunk의 OCR 텍스트와 겹치는 개수 |
 
-| CASE | top-5 공통 parent | 동일 순서 | 비고 |
-|------|--------------------|-----------|------|
-| 02 | 4 / 5 | ✓ | 한 chunk id의 c0/c1 차이로 재집계 시 동일 |
-| 03 | 3 / 5 | ✗ | 1위 p12 ↔ p13 교체 |
-| 05 | 3 / 5 | ✗ | 1위 p12 ↔ p130 교체 |
-| 06 | 3 / 5 | ✗ | 1위 p12 ↔ p76 교체 |
-| 07 | 4 / 5 | ✓ | |
-| 17 | 4 / 5 | ✓ | |
-
-**평균 공통 = 3.5 / 5.** 케이스 3/6이 완전 동일 순서. 차이나는 3개는 **retrieval query 생성 단계**(LLM이 환자 텍스트로부터 query 문장 합성)에서 발생하는 **stochasticity** 때문으로 보임. vision 플래그 자체가 retrieval 결과를 바꾸지는 않는다.
-
----
-
-## 4. 답변 유사도 (paired)
-
-5-gram Jaccard로 vision ON ↔ OFF 페어 답변이 얼마나 다른지 측정.
-
-| CASE | Jaccard |
-|------|---------|
-| 02 | 0.009 |
-| 03 | 0.017 |
-| 05 | 0.016 |
-| 06 | 0.032 |
-| 07 | 0.007 |
-| 17 | 0.050 |
-| **평균** | **0.022** |
-
-참고: 서로 다른 케이스들 사이의 평균 Jaccard = 0.024.  
-⇒ **같은 케이스 on/off 페어 Jaccard ≈ 완전 다른 케이스 간 평균**.  
-즉 vision 차이가 만드는 답변 변화의 크기 ≲ LLM의 baseline stochasticity. 시그널이 노이즈에 묻힘.
+> **왜 figure 지표를 세 개로 쪼갰나**: LLM은 "Figure 4"라고 말하지 않아도, 해당 parent_block_id를 인용하거나 OCR 텍스트를 paraphrase해서 figure를 쓸 수 있다. 표면 문구만 보면 기여가 과소평가된다.
 
 ---
 
-## 5. 핵심 해석
+## 3. 결과
 
-### 5.1 LLM이 figure를 실제로 사용한 증거가 보이지 않는다
+### 3.1 Retrieval 독립성
 
-- 6/6 ON 답변 모두 "Figure N / .png / flowchart / diagram / axes" 언급 **0건**
-- 즉 pixel을 받더라도 답변에 시각 정보를 인용/요약/근거화하지 않음
-- 원인 후보:
-  1. **코퍼스 문제**: 현재 figure는 `Figure 4 stage-based management of AKI` flowchart 1장뿐. 의미있는 플롯/수치 그림이 부족.
-  2. **프롬프트 약함**: system prompt는 "figure filename 언급 시 `.png`" 규칙만 포함, figure 내용 인용을 *강제*하지 않음.
-  3. **retrieval 연계 부족**: figure chunk가 top-5 filler 자리에 들어갈 뿐, 해당 parent가 인용되지 않기 때문에 LLM이 figure 맥락을 답변에 엮을 동기가 없음.
+`--text-only`는 retrieval 이후 단계만 바꾸므로 top-5 parent는 거의 동일해야 한다.
 
-### 5.2 Vision ON이 multi-source 다양성을 오히려 낮춘다
+| CASE | top-5 공통 | | CASE | top-5 공통 |
+|------|-----------:|-|------|-----------:|
+| 02 | 3 / 5 | | 08 | 3 / 5 |
+| 03 | 3 / 5 | | 10 | 4 / 5 |
+| 05 | 3 / 5 | | 17 | 4 / 5 |
+| 06 | 3 / 5 | | **평균** | **3.38 / 5** |
+| 07 | 4 / 5 | |      |            |
 
-- Distinct cited parent: ON=2.17, OFF=3.17 → **−1.00**
-- 6/6 케이스에서 OFF가 같거나 더 많이 인용
-- 메커니즘 가설: 이미지 토큰이 attention을 할당받으면서 텍스트 근거를 크로스-레퍼런스하는 여력이 줄어듦. 결과적으로 답변이 더 짧고(−27%) cite가 줄어듦.
+차이는 retrieval query 생성 단계(LLM이 환자 텍스트로 query 문장 합성)의 stochasticity에서 발생. text-only 플래그 자체가 retrieval을 바꾸지 않음.
 
-### 5.3 Numeric-value verbatim 인용은 ON이 소폭 유리
+### 3.2 집계 메트릭 (μ ± sd, N = 8)
 
-- ON=0.83, OFF=0.17 → +0.67  
-- 단 **대부분 0/0**이라 표본이 매우 얕음(케이스 2개에서만 유의미한 count). "vision이 수치 인용을 돕는다"고 결론 내리기 어려움.
+| 지표 | Text-only | Vision | Δ (V − T) |
+|------|-----------|--------|----------:|
+| word_count | **480 ± 41** | 369 ± 58 | **−111 (−23 %)** |
+| distinct_cite | **3.25 ± 0.43** | 1.75 ± 0.97 | **−1.50** |
+| num_hits | 0.62 ± 1.32 | 0.88 ± 1.17 | +0.25 |
+| signal_hits | 9.12 ± 4.91 | 7.50 ± 2.69 | −1.62 |
+| figure_explicit | 0.00 | 0.00 | 0.00 |
+| **image_parent_cite** | 0.38 ± 0.48 | **1.00 ± 0.00** | **+0.62** |
+| ocr_borrow (5-gram) | 0.00 | 0.25 ± 0.66 | +0.25 |
 
-### 5.4 페어 유사도가 stochastic baseline과 동급
+### 3.3 방향 일치 (Δ = T − V 부호, "텍스트온리가 비전보다 큰 케이스 수")
 
-- 페어 평균 Jaccard = 0.022, 케이스간 평균 = 0.024 → **거의 같음**
-- 즉 vision 조건이 만드는 답변 차이와, LLM을 두 번 다른 시드로 돌렸을 때의 차이가 구분되지 않음
+| 지표 | T > V | T = V | T < V |
+|------|------:|------:|------:|
+| word_count | **8 / 8** | 0 | 0 |
+| distinct_cite | **7 / 8** | 0 | 1 |
+| image_parent_cite | 0 | 3 | **5** |
+| signal_hits | 3 | 2 | 3 |
+| num_hits | 2 | 4 | 2 |
+| figure_explicit | 0 | 8 | 0 |
+| ocr_borrow | 0 | 7 | 1 |
+
+### 3.4 케이스별 핵심 변화 (T → V)
+
+| CASE | words T→V | cite T→V | image_parent_cite T→V | ocr_borrow T→V |
+|------|----------:|---------:|---------------------:|---------------:|
+| 02 | 468 → **311 (−157)** | 4 → **1 (−3)** | 0 → 1 | 0 → 0 |
+| 03 | 424 → **343 (−81)**  | 3 → **2 (−1)** | 0 → 1 | **0 → 2** |
+| 05 | 531 → **318 (−213)** | 3 → **1 (−2)** | 0 → 1 | 0 → 0 |
+| 06 | 434 → **334 (−100)** | 4 → **1 (−3)** | 0 → 1 | 0 → 0 |
+| 07 | 528 → **362 (−166)** | 3 → 4 (+1)     | 1 → 1 | 0 → 0 |
+| 08 | 505 → **442 (−63)**  | 3 → **2 (−1)** | 0 → 1 | 0 → 0 |
+| 10 | 440 → **361 (−79)**  | 3 → **1 (−2)** | 1 → 1 | 0 → 0 |
+| 17 | 510 → **484 (−26)**  | 3 → **2 (−1)** | 1 → 1 | 0 → 0 |
+
+### 3.5 답변 유사도 (paired 5-gram Jaccard)
+
+| CASE | Jaccard | | CASE | Jaccard |
+|------|--------:|-|------|--------:|
+| 02 | 0.007 | | 08 | 0.014 |
+| 03 | 0.005 | | 10 | 0.028 |
+| 05 | 0.007 | | 17 | 0.024 |
+| 06 | 0.024 | | **평균** | **0.016** |
+| 07 | 0.015 | |      |         |
+
+평균 0.016 = "사실상 다른 텍스트". 이미지 chunk 유무가 답변을 **체계적으로** 바꾼다.
 
 ---
 
-## 6. 한계
+## 4. 해석 (T → V 관점: "vision을 켜면 어떻게 되나")
 
-1. **표본 N=6**: 통계적 검정력 부족. 개별 Δ는 케이스별 변동 폭보다 작음.
-2. **단일 논문 코퍼스**: figure 1장. vision 잠재 효용을 평가하기에 근본적으로 부적합한 테스트 환경.
-3. **LLM temperature 기본값**: 재현마다 답변이 크게 달라지므로 paired 1회 비교로 인과 분석 어려움. Seed 고정 또는 N회 repeat 후 평균이 필요.
-4. **OCR 품질**: figure chunk의 OCR 텍스트 품질을 별도로 확인하지 않음. 이미지가 텍스트와 중복 정보만 담고 있다면 vision의 marginal value가 0에 가까움.
+### 4.1 Vision 켜면 답변이 짧아진다 (8/8)
+
+- word_count: **480 → 369 (−23 %)**, **8/8** 케이스에서 T > V.
+- 유일한 예외 없음. 가장 일관된 효과.
+
+### 4.2 Vision 켜면 인용 다양성이 줄어든다 (7/8)
+
+- distinct_cite: **3.25 → 1.75 (−1.5)**, **7/8** 에서 T > V (CASE_07만 예외).
+- 답변이 여러 parent를 엮는 대신 한두 parent에 집중한다.
+
+### 4.3 Vision 켜면 image-bearing parent 인용이 늘어난다 (5/8, 나머지는 동률)
+
+- image_parent_cite: **0.38 → 1.00 (+0.62)**, 방향 T<V 5건 / 동률 3건 / T>V **0건**.
+- 즉 Vision 답변은 **8/8 모두** image-bearing parent(주로 p12 KDIGO management flowchart)를 인용한다.
+- Text-only도 3/8에서 p12를 인용(해당 parent에 text chunk도 있으므로) — 다만 빈도 낮음.
+- **"LLM이 figure를 안 쓴다"는 해석은 틀림**: "Figure 4"라고 쓰지 않을 뿐, parent_block_id로 간접 인용한다.
+
+### 4.4 Vision 켜도 OCR 텍스트를 verbatim 재사용하진 않는다
+
+- ocr_borrow: Text-only 0 → Vision 0.25 (CASE_03 2건 + 나머지 0).
+- LLM은 OCR 조각("Discontinue all nephrotoxic agents… Ensure volume status…")을 자체 어휘로 paraphrase한다.
+- Figure는 **conceptual anchor** 역할 — "이 parent가 종합 관리 요약"이라는 신호로 기능하고, 표면은 재작성됨.
+
+### 4.5 Numeric / patient-signal은 모드 효과 불명확
+
+- 방향 2-4-2 (num) / 3-2-3 (signal) 거의 대칭. 분산이 커서(signal sd 4.91) 평균 차이가 묻힘.
+- "Vision이 환자 수치를 더 잘 인용한다"는 가설은 **지지받지 못함**.
+
+### 4.6 메커니즘 가설
+
+- image-bearing parent(특히 p12 flowchart)가 LLM에 "종합 관리 요약"으로 강하게 어필
+- Vision 켜면 그 parent에 citation이 집중 (§4.3 image_parent_cite ↑)
+- 그 결과 다른 text parent를 덜 인용하고(§4.2 cite ↓), 전체 답변도 짧아짐(§4.1 words ↓)
+- 세 관찰은 같은 메커니즘의 표현형
+
+### 4.7 Pixel의 marginal 기여는 이 실험으로 분리 불가
+
+- 양 끝값만 비교했으므로 pixel 효과와 OCR 효과가 섞여 있음.
+- 중간값(default = OCR-only) 추가 시:
+  - Vision − default = pixel marginal
+  - default − text-only = OCR marginal
 
 ---
 
-## 7. 권고
+## 5. 한계
 
-1. **당분간 기본값 = `--vision` off 로 운용**  
-   - 현 코퍼스·현 프롬프트에서 ON의 명확한 이득 없음, 오히려 cite/길이에서 약세
-   - API 이미지 토큰 비용 절약
-
-2. **Vision을 의미있게 평가하려면 아래 3가지가 선행되어야 함**  
-   - (a) **코퍼스에 figure가 많은 논문 추가** (플롯, 유병률 그래프, 알고리즘 트리 등)
-   - (b) **프롬프트에 figure 인용 강제 규칙 추가**: 예) "For any attached figure, reproduce its key axis labels or flow step in ≤1 sentence and cite the parent_block_id."
-   - (c) **OCR vs image 불일치 케이스 설계**: 텍스트만 보면 틀리고, 이미지를 봐야 맞는 질문을 만들어 vision-only signal 측정
-
-3. **보조 수정**
-   - retrieval 단계에서 figure chunk를 강조하거나, figure가 포함된 parent를 top-5 내에 조기 삽입하는 mild boost 검토
-   - p3/p8/p10 같은 새 "never-cited filler"를 2차 필터 대상으로 검토 (vision 이슈와는 별개)
-
-4. **문서화**  
-   - `README.md`에 "vision 기본값: OFF, 코퍼스 확장 시 재평가" 원칙 반영
-   - 이 리포트를 `reports/`에 남겨 이후 코퍼스 확장 후 delta 측정의 기준선으로 사용
+1. **N = 8**: 통계적 검정력 낮음.
+2. **단일 논문 코퍼스**: 의미있는 figure 1장(p12). vision 잠재 효용 평가에 근본적으로 부족.
+3. **Noise floor 미측정**: 동일 플래그 N회 반복 실행으로 얻는 stochastic noise baseline을 비교하지 않음. Jaccard 0.016 / 방향 일치가 "순수 LLM 재생성 분산" 대비 얼마나 큰지 엄밀히 분리 불가.
+4. **OCR vs pixel 미분리**: 3원 비교 필요.
+5. **평가 지표**: Jaccard는 token overlap 기반. "다른 어휘, 같은 임상 논지"는 놓침.
 
 ---
 
-## 8. 재현 방법
+## 6. 권고
+
+1. **2-way만 보고 default를 `--text-only`로 단정하지 말 것**
+   - Vision은 figure를 실제로 근거로 쓰고 있음(§4.1).
+   - Text-only의 답변이 더 길고 다양하지만, 그 diversity가 **Vision이 놓친 실근거**인지 **Vision이 정확히 pruning한 filler**인지는 본 실험만으로 구분 불가.
+
+2. **3원 비교 (다음 단계)**
+   - 동일 8 케이스에 default(OCR-only) 8회 추가 실행 → Vision / OCR-only / Text-only의 pixel·OCR marginal 분리.
+
+3. **Vision 평가 upgrade 선결 조건**
+   - 플롯·알고리즘 트리가 많은 논문 추가 (p12 같은 flowchart 단일에 의존하지 않도록).
+   - system prompt에 figure 인용 강제 규칙 추가 — 예: *"For any attached figure, reproduce its key axis labels or flow step in ≤1 sentence and cite the parent_block_id."*
+   - OCR이 틀리고 pixel만 맞는 케이스(혹은 반대) 설계해 pure vision signal 측정.
+
+4. **Noise floor 측정**
+   - 동일 플래그로 각 케이스 N회 재실행해 V↔V / T↔T Jaccard 분포를 얻고, V↔T 페어 차이와 비교.
+
+5. **문서화 / 운영**
+   - 용도별 default 가이드:
+     - 빠른 multi-source 요약 → `--text-only`
+     - 관리 프로토콜 정리 → `--vision`
+   - 코퍼스 확장 전까지 본 리포트를 baseline으로 보존, 확장 후 delta 측정의 기준으로 사용.
+
+---
+
+## 7. 재현
 
 ```bash
-# 공통 환경 준비
 cd /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739
 module load python/gpu/3.10.6
 export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
+export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+D=/gpfs/data/razavianlab/capstone/2025_agentic/tester_for_momo/case_texts
 
-# Vision ON (이미 outputs/CASE_XX.md 로 존재)
-for i in 02 03 05 06 07 17; do
-  .venv/bin/python generate.py \
-    --patient-data-file /gpfs/data/razavianlab/capstone/2025_agentic/tester_for_momo/case_texts/CASE_${i}.txt \
-    --case-id CASE_${i} \
-    --vision
+for n in 02 03 05 06 07 08 10 17; do
+  ./.venv/bin/python generate.py \
+    --patient-data-file "$D/CASE_${n}.txt" \
+    --case-id "CASE_${n}" --vision
+
+  ./.venv/bin/python generate.py \
+    --patient-data-file "$D/CASE_${n}.txt" \
+    --case-id "CASE_${n}_textOnly" --text-only
 done
 
-# Vision OFF (outputs/CASE_XX_noVision.md)
-for i in 02 03 05 06 07 17; do
-  .venv/bin/python generate.py \
-    --patient-data-file /gpfs/data/razavianlab/capstone/2025_agentic/tester_for_momo/case_texts/CASE_${i}.txt \
-    --case-id CASE_${i}_noVision
-done
+./.venv/bin/python scripts/reports/vision_two_way.py
 ```
-
-집계 스크립트(메트릭 계산)는 이 리포트 생성에 사용된 ad-hoc 스크립트이며, 필요 시 `scripts/` 하위로 정식화 예정.

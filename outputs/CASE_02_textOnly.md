@@ -1,10 +1,11 @@
 ## Questions
 
-For a 55-year-old Hispanic male with acute kidney injury onset after ICU admission, compounded by comorbidities such as myocardial infarction, chronic heart failure, diabetes, renal disease, and active malignancy, how can evidence-based treatment be tailored considering his prior use of ACEI/ARB, NSAID, vancomycin, and current use of nephrotoxic agents, antibiotics, and anticoagulants while managing potential complications like anemia and sepsis?
+In a 50-year-old Hispanic female with severe obesity (BMI 51.9), acute kidney injury (AKI) (creatinine rise to 1.30 mg/dL), and comorbidities including moderate/severe renal disease, COPD, severe diabetes complications, and metastatic malignancy, what are the evidence-based treatment options considering current anticoagulant use and prior NSAID exposure, and how do these manage her high-risk profile while accounting for potential drug interactions and contraindications?
 
 **Run configuration**
 
 - **Vectors:** `data/real_vectors.jsonl` | topk=5, rerank=False, topn=5
+- **Text-only context:** image chunks stripped (no OCR, no pixels)
 
 ---
 
@@ -13,70 +14,69 @@ For a 55-year-old Hispanic male with acute kidney injury onset after ICU admissi
 **Patient / treatment context** — verbatim from the case file (used to build the retrieval query in **Questions**):
 
 ```
-CASE ID: CASE_06
-STAY ID: 39888253
+CASE ID: CASE_02
+STAY ID: 36469053
 ============================================================
 PATIENT CLINICAL PROFILE:
 
 PATIENT DEMOGRAPHICS:
-  Age: 55 | Sex: Male | Race: HISPANIC/LATINO - CUBAN
-  Insurance: Medicare | Admission type: EW EMER.
+  Age: 50 | Sex: Female | Race: HISPANIC/LATINO - PUERTO RICAN
+  Insurance: Medicaid | Admission type: ELECTIVE
 
 AKI ONSET:
-  Baseline creatinine: 1.10 mg/dL
-  Hours from ICU admission to AKI onset: 5.4h
+  Baseline creatinine: 0.80 mg/dL
+  Hours from ICU admission to AKI onset: 76.3h
 
-CREATININE (ICU window, intime → onset), n=2 creatinine measurements in this window:
-  First     : 2.50 mg/dL
-  Min       : 2.10 mg/dL
-  Max       : 2.50 mg/dL
-  At onset  : 2.10 mg/dL
-  Delta      : +1.00 mg/dL
-  Ratio      : 1.91x baseline
-  Slope      : -0.1132 mg/dL/h
+CREATININE (ICU window, intime → onset), n=6 creatinine measurements in this window:
+  First     : 1.00 mg/dL
+  Min       : 0.90 mg/dL
+  Max       : 1.30 mg/dL
+  At onset  : 1.30 mg/dL
+  Delta      : +0.50 mg/dL
+  Ratio      : 1.62x baseline
+  Slope      : +0.0045 mg/dL/h
 
 LAB VALUES (last value before onset):
-  BUN            : last=42.0 mg/dL  [min=42.0, max=46.0]  (n=2)
-  POTASSIUM      : last=3.6 mEq/L  [min=3.6, max=4.1]  (n=2)
-  BICARBONATE    : last=20.0 mEq/L  [min=18.0, max=20.0]  (n=2)
-  HEMOGLOBIN     : last=6.2 g/dL  [min=6.2, max=6.8]  (n=2)
+  BUN            : last=16.0 mg/dL  [min=16.0, max=20.0]  (n=6)
+  POTASSIUM      : last=3.6 mEq/L  [min=3.6, max=4.1]  (n=5)
+  BICARBONATE    : last=21.0 mEq/L  [min=20.0, max=25.0]  (n=5)
+  HEMOGLOBIN     : last=8.9 g/dL  [min=8.9, max=10.3]  (n=5)
 
 VITAL SIGNS (ICU window):
-  MAP   : mean=71.6 mmHg  [min=56.0, max=98.0]  last=61.0  last6h=71.6  (n=7)
-  HR    : mean=130.1 bpm  [min=116.0, max=151.0]  last=116.0  last6h=130.1  (n=9) ⚠ TACHYCARDIA
-  SPO2  : mean=98.2 %  [min=95.0, max=100.0]  last=98.0  last6h=98.2  (n=9)
-  RR    : mean=13.9 /min  [min=9.0, max=19.0]  last=9.0  last6h=13.9  (n=9)
-  TEMP  : mean=37.5 °C  [min=37.4, max=37.6]  last=37.4  last6h=37.5  (n=2)
+  MAP   : mean=90.5 mmHg  [min=62.0, max=135.0]  last=69.0  last6h=N/A  (n=50)
+  HR    : mean=115.1 bpm  [min=91.0, max=135.0]  last=121.0  last6h=N/A  (n=52) ⚠ TACHYCARDIA
+  SPO2  : mean=95.3 %  [min=92.0, max=98.0]  last=92.0  last6h=N/A  (n=50)
+  RR    : mean=23.1 /min  [min=16.0, max=33.0]  last=25.0  last6h=N/A  (n=52) ⚠ ELEVATED
+  TEMP  : mean=36.8 °C  [min=36.4, max=37.0]  last=36.8  last6h=N/A  (n=12)
 
-URINE OUTPUT, n=2 urine-output entries:
-  Total UO   : 1800 mL
-  Rate       : 333.3 mL/h
-  Last 6h    : 1800 mL
-  Last 12h   : 1800 mL
-  Last 24h   : 1800 mL
+URINE OUTPUT, n=36 urine-output entries:
+  Total UO   : 6795 mL
+  Rate       : 89.1 mL/h
+  Last 6h    : N/A
+  Last 12h   : N/A
+  Last 24h   : N/A
 
 FLUID BALANCE:
-  Total input  : 11201 mL
-  Net balance  : +9401 mL
+  Total input  : 1755 mL
+  Net balance  : -5040 mL
 
-COMORBIDITIES (Charlson score: 10):
-  + Myocardial infarction
-  + Congestive heart failure
-  + Peripheral vascular disease
+COMORBIDITIES (Charlson score: 14):
+  + COPD
   + Diabetes (mild)
   + Diabetes (severe/complications)
   + Moderate/severe renal disease
   + Malignancy
-  Additional flags: Hypertension, Diabetes, Chronic kidney disease, Heart failure, Sepsis, Malignancy, Coagulopathy
+  + Metastatic solid tumor
+  Additional flags: Hypertension, Diabetes, Chronic kidney disease, Malignancy
 
 PRIOR MEDICATIONS (before current admission):
-  ACEI/ARB, Diuretic, NSAID, Vancomycin, Statin
+  NSAID
 
 CURRENT MEDICATIONS (active at AKI onset):
-  Nephrotoxic agent, Antibiotic, Anticoagulant
+  Anticoagulant
 
 OTHER:
-  BMI            : 26.1
+  BMI            : 51.9
   Smoking status : not recorded
 ```
 
@@ -84,28 +84,27 @@ OTHER:
 
 ### Answer (generated by LLM based on literature)
 
-The patient in question has developed acute kidney injury (AKI) while in the ICU, with comorbidities including myocardial infarction, chronic heart failure, diabetes, renal disease, and active malignancy. The AKI occurs in the context of prior use of ACE inhibitors/ARBs, NSAIDs, and vancomycin, along with current use of nephrotoxic agents, antibiotics, and anticoagulants. Given the complexity of his condition and compounding risk factors, tailored treatment strategies are critical.
+The patient presents with a specific clinical profile: severe obesity (BMI 51.9), acute kidney injury marked by a rise in creatinine to 1.30 mg/dL, and a background of moderate/severe renal disease, COPD, severe diabetes complications, and metastatic malignancy. This combination places her at high risk for complications, especially concerning her kidney function and potential drug interactions.
 
-1. **Withdrawal of Nephrotoxic Agents**:
-   - **Why this patient:** The patient's AKI is likely exacerbated by the use of nephrotoxic drugs like NSAIDs and the potential nephrotoxicity from other agents such as antibiotics. In such scenarios, it is advised to discontinue nephrotoxic medications as recommended by guidelines [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
-   - **When to use / contraindications:** Withdrawal should be performed cautiously, particularly if these medications are critical to managing other aspects of the patient's health (e.g., pain management, infection control). Close monitoring and alternative treatments should be considered to balance other health needs.
+1. **ACE Inhibitors or ARBs Consideration:**
+   - **Why this patient:** The patient has AKI with a creatinine rise to 1.30 mg/dL and diabetes, which in conjunction creates a risk for CI-AKI. ACE inhibitors or ARBs may influence renal perfusion and hyperkalemia risk, which is exacerbated in AKI [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
+   - **When to use / contraindications:** These should be used cautiously in patients with severe renal impairment due to potential worsening of kidney function. Hold if there's significant renal dysfunction or hyperkalemia [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
    - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)].
 
-2. **Avoidance of Contrast Media**:
-   - **Why this patient:** Given the patient's history of renal disease and current AKI, risks associated with contrast-induced acute kidney injury (CI-AKI) are heightened [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)]. Avoiding further exposure to iodinated contrast, as recommended, is crucial especially if the patient's serum creatinine or eGFR reflect significant impairment.
-   - **When to use / contraindications:** This approach is pertinent if imaging requiring contrast is on the table. In some cases where it's unavoidable, alternative imaging modalities should be considered or rigorous hydration protocols applied.
+2. **Discontinuation or Avoidance of Nephrotoxic Agents:**
+   - **Why this patient:** The patient's creatinine is elevated to 1.30 mg/dL indicating AKI, with prior NSAID use potentially contributing to renal stress and injury. NSAIDs should be avoided due to their nephrotoxic potential [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
+   - **When to use / contraindications:** Cease use of NSAIDs and other nephrotoxic drugs like aminoglycosides and high doses of diuretics to prevent further kidney damage [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
    - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p10)].
 
-3. **Consideration for Renal Replacement Therapy (RRT)**:
-   - **Why this patient:** Given the risk factors and possible progression of AKI, such as heart failure and diabetes, RRT might be needed if renal function continues to deteriorate [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)]. In cases where creatinine levels rise significantly or urine output becomes minimal, RRT is justified.
-   - **When to use / contraindications:** RRT should be considered if conservative measures fail and oliguria persists or severe acid-base/electrolyte imbalances develop. Decisions must weigh the risk of complications associated with RRT, such as anticoagulation issues given his current use of anticoagulants.
-   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
-
-Fallback logic for this patient would involve initially trying to reduce nephrotoxicity by withdrawing offending agents. If renal function does not stabilize or instability persists, avoidance of contrast would be critical, with RRT serving as a final option if significant renal dysfunction continues.
+3. **Contrast Media and Delay for Imaging Studies:**
+   - **Why this patient:** With her renal function already compromised (creatinine rise to 1.30 mg/dL) and history of diabetes, she is at increased risk for contrast-induced nephropathy. Delaying contrast exposure and ensuring optimal hydration status can mitigate risk [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
+   - **When to use / contraindications:** Avoid contrast media use if possible until renal function stabilizes. Continue hydration protocols if contrast exposure is necessary, and monitor renal parameters closely [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)].
+   - **Supporting sources:** [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76)], [KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p3)].
 
 ### References
-- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8):** Supported recommendations on the use of RRT in unresolved AKI cases.
-- **KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76):** Advised on discontinuation of nephrotoxic agents and avoidance of contrast media in AKI.
+- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p76): Supported avoidance of nephrotoxic agents and outlined risks regarding ACE inhibitors/ARBs.
+- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p8): Provided additional context on potential effects of medications in renal-compromised patients.
+- KDOQI US commentary on the 2012 KDIGO clinical practice guideline for acute kidney injury (pmid_23499048_p3): Supported delay in contrast media use for patients with AKI.
 
 ---
 
@@ -115,11 +114,11 @@ Fallback logic for this patient would involve initially trying to reduce nephrot
 
 | rank | score | chunk_id | doc_id | parent_block_id |
 |------|-------|----------|--------|-----------------|
-| 1 | 0.8097 | `pmid_23499048_p76_t0_c0` | `pmid_23499048` | `pmid_23499048_p76` |
-| 2 | 0.7820 | `pmid_23499048_p8_t1_c1` | `pmid_23499048` | `pmid_23499048_p8` |
-| 3 | 0.7749 | `pmid_23499048_p8_t1_c0` | `pmid_23499048` | `pmid_23499048_p8` |
-| 4 | 0.7583 | `pmid_23499048_p3_t1_c0` | `pmid_23499048` | `pmid_23499048_p3` |
-| 5 | 0.7297 | `pmid_23499048_p10_t0_c0` | `pmid_23499048` | `pmid_23499048_p10` |
+| 1 | 0.7945 | `pmid_23499048_p76_t0_c0` | `pmid_23499048` | `pmid_23499048_p76` |
+| 2 | 0.7523 | `pmid_23499048_p8_t1_c1` | `pmid_23499048` | `pmid_23499048_p8` |
+| 3 | 0.7441 | `pmid_23499048_p8_t1_c0` | `pmid_23499048` | `pmid_23499048_p8` |
+| 4 | 0.7281 | `pmid_23499048_p3_t1_c0` | `pmid_23499048` | `pmid_23499048_p3` |
+| 5 | 0.7028 | `pmid_23499048_p10_t0_c0` | `pmid_23499048` | `pmid_23499048_p10` |
 
 <sub>**Score**: cosine similarity between query and chunk embedding (BGE `bge-base-en-v1.5`, L2-normalized → dot product). Range ≈ [-1, 1]; higher = more relevant. Rule of thumb for BGE: &gt;0.7 strong, 0.5–0.7 moderate, &lt;0.5 weak.</sub>
 
