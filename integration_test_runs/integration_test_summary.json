@@ -1,0 +1,90 @@
+[
+  {
+    "stage": "CKD, unspecified",
+    "subject_id": "16468520",
+    "ok": true,
+    "n_turns": 6,
+    "n_patient_queries": 5,
+    "n_lit_queries": 1,
+    "summary_chars": 792,
+    "recommendation_chars": 3857,
+    "duration_sec": 83.3
+  },
+  {
+    "stage": "ESRD",
+    "subject_id": "19421240",
+    "ok": true,
+    "n_turns": 8,
+    "n_patient_queries": 7,
+    "n_lit_queries": 1,
+    "summary_chars": 824,
+    "recommendation_chars": 4252,
+    "duration_sec": 46.1
+  },
+  {
+    "stage": "Stage 1",
+    "subject_id": "12407578",
+    "ok": true,
+    "n_turns": 8,
+    "n_patient_queries": 7,
+    "n_lit_queries": 1,
+    "summary_chars": 602,
+    "recommendation_chars": 3803,
+    "duration_sec": 50.8
+  },
+  {
+    "stage": "Stage 2",
+    "subject_id": "18992637",
+    "ok": true,
+    "n_turns": 7,
+    "n_patient_queries": 6,
+    "n_lit_queries": 1,
+    "summary_chars": 668,
+    "recommendation_chars": 3926,
+    "duration_sec": 51.8
+  },
+  {
+    "stage": "Stage 3_a",
+    "subject_id": "10043050",
+    "ok": true,
+    "n_turns": 8,
+    "n_patient_queries": 7,
+    "n_lit_queries": 1,
+    "summary_chars": 748,
+    "recommendation_chars": 3403,
+    "duration_sec": 46.7
+  },
+  {
+    "stage": "Stage 3b",
+    "subject_id": "16237451",
+    "ok": true,
+    "n_turns": 6,
+    "n_patient_queries": 5,
+    "n_lit_queries": 1,
+    "summary_chars": 856,
+    "recommendation_chars": 3892,
+    "duration_sec": 40.1
+  },
+  {
+    "stage": "Stage 4",
+    "subject_id": "11234135",
+    "ok": true,
+    "n_turns": 8,
+    "n_patient_queries": 7,
+    "n_lit_queries": 1,
+    "summary_chars": 748,
+    "recommendation_chars": 3137,
+    "duration_sec": 45.2
+  },
+  {
+    "stage": "Stage 5",
+    "subject_id": "14991576",
+    "ok": true,
+    "n_turns": 7,
+    "n_patient_queries": 6,
+    "n_lit_queries": 1,
+    "summary_chars": 590,
+    "recommendation_chars": 3546,
+    "duration_sec": 44.7
+  }
+]

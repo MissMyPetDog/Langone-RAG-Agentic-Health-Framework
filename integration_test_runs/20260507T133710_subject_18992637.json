@@ -1,0 +1,294 @@
+{
+  "subject_id": "18992637",
+  "t_cutoff": "2173-03-24 13:23:00",
+  "stage": "Stage 2",
+  "started_at": "2026-05-07T13:37:10.224258Z",
+  "duration_sec": 51.8,
+  "n_turns_used": 7,
+  "transcript": [
+    {
+      "turn": 0,
+      "type": "patient_query",
+      "query": "patient demographics: gender, anchor_age, anchor_year_group, dod",
+      "sql_agent": {
+        "error": "[Errno 13] Permission denied: '/gpfs/data/razavianlab/capstone/2025_agentic/sql_agent/logs/20260507.jsonl'"
+      },
+      "vector_db": [
+        {
+          "source_table": "hosp.patients",
+          "score": 0.7374594211578369,
+          "timestamp": null,
+          "text": "[source: hosp.patients] | subject_id: 18992637 | gender: M | anchor_age: 67 | anchor_year: 2171 | anchor_year_group: 2017 - 2019"
+        },
+        {
+          "source_table": "hosp.poe_detail",
+          "score": 0.5544514656066895,
+          "timestamp": null,
+          "text": "[source: hosp.poe_detail] | poe_id: 18992637-77 | poe_seq: 77 | subject_id: 18992637 | field_name: Admit category | field_value: Admit to inpatient"
+        },
+        {
+          "source_table": "hosp.admissions",
+          "score": 0.5541068315505981,
+          "timestamp": "2172-02-04 13:36:00",
+          "text": "[source: hosp.admissions] | subject_id: 18992637 | hadm_id: 23795100 | admittime: 2172-02-04 13:36:00 | dischtime: 2172-02-05 18:22:00 | admission_type: EU OBSERVATION | admit_provider_id: P15AW0 | admission_location: WALK-IN/SELF REFERRAL | insurance: Private | language: English | marital_status: MARRIED | race: WHITE | edregtime: 2172-02-04 04:43:00 | edouttime: 2172-02-04 14:24:00 | hospital_ex"
+        },
+        {
+          "source_table": "hosp.admissions",
+          "score": 0.5516682863235474,
+          "timestamp": "2171-11-12 01:52:00",
+          "text": "[source: hosp.admissions] | subject_id: 18992637 | hadm_id: 27577979 | admittime: 2171-11-12 01:52:00 | dischtime: 2171-11-13 16:00:00 | admission_type: EW EMER. | admit_provider_id: P975A9 | admission_location: PHYSICIAN REFERRAL | discharge_location: HOME | insurance: Private | language: English | marital_status: MARRIED | race: WHITE | edregtime: 2171-11-11 16:35:00 | edouttime: 2171-11-12 03:2"
+        },
+        {
+          "source_table": "hosp.admissions",
+          "score": 0.5482891798019409,
+          "timestamp": "2171-08-08 17:51:00",
+          "text": "[source: hosp.admissions] | subject_id: 18992637 | hadm_id: 29029556 | admittime: 2171-08-08 17:51:00 | dischtime: 2171-08-10 18:36:00 | admission_type: OBSERVATION ADMIT | admit_provider_id: P93QMB | admission_location: PHYSICIAN REFERRAL | discharge_location: HOME | insurance: Private | language: English | marital_status: MARRIED | race: WHITE | edregtime: 2171-08-08 10:53:00 | edouttime: 2171-0"
+        }
+      ]
+    },
+    {
+      "turn": 1,
+      "type": "patient_query",
+      "query": "all hospital admissions before cutoff with type and length of stay",
+      "sql_agent": {
+        "error": "Execution failed on sql 'SELECT hadm_id, admission_type, admittime, dischtime, \n       EXTRACT(EPOCH FROM (dischtime - admittime)) / 86400 AS length_of_stay_days\nFROM mimiciv_hosp.admissions\nWHERE subject_id = '18992637'\n  AND admittime < '2173-03-24 13:23:00'\nLIMIT 1000': operator does not exist: text - text\nLINE 2:        EXTRACT(EPOCH FROM (dischtime - admittime)) / 86400 A...\n                                             ^\nHINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.\n"
+      },
+      "vector_db": [
+        {
+          "source_table": "hosp.admissions",
+          "score": 0.5107749700546265,
+          "timestamp": "2171-08-08 17:51:00",
+          "text": "[source: hosp.admissions] | subject_id: 18992637 | hadm_id: 29029556 | admittime: 2171-08-08 17:51:00 | dischtime: 2171-08-10 18:36:00 | admission_type: OBSERVATION ADMIT | admit_provider_id: P93QMB | admission_location: PHYSICIAN REFERRAL | discharge_location: HOME | insurance: Private | language: English | marital_status: MARRIED | race: WHITE | edregtime: 2171-08-08 10:53:00 | edouttime: 2171-0"
+        },
+        {
+          "source_table": "hosp.transfers",
+          "score": 0.5070682764053345,
+          "timestamp": "2171-08-08 19:22:00",
+          "text": "[source: hosp.transfers] | subject_id: 18992637 | hadm_id: 29029556 | transfer_id: 31047413 | eventtype: admit | careunit: Medicine/Cardiology Intermediate | intime: 2171-08-08 19:22:00 | outtime: 2171-08-10 18:39:30"
+        },
+        {
+          "source_table": "hosp.admissions",
+          "score": 0.5022493600845337,
+          "timestamp": "2172-02-04 13:36:00",
+          "text": "[source: hosp.admissions] | subject_id: 18992637 | hadm_id: 23795100 | admittime: 2172-02-04 13:36:00 | dischtime: 2172-02-05 18:22:00 | admission_type: EU OBSERVATION | admit_provider_id: P15AW0 | admission_location: WALK-IN/SELF REFERRAL | insurance: Private | language: English | marital_status: MARRIED | race: WHITE | edregtime: 2172-02-04 04:43:00 | edouttime: 2172-02-04 14:24:00 | hospital_ex"
+        },
+        {
+          "source_table": "hosp.admissions",
+          "score": 0.49340927600860596,
+          "timestamp": "2171-11-12 01:52:00",
+          "text": "[source: hosp.admissions] | subject_id: 18992637 | hadm_id: 27577979 | admittime: 2171-11-12 01:52:00 | dischtime: 2171-11-13 16:00:00 | admission_type: EW EMER. | admit_provider_id: P975A9 | admission_location: PHYSICIAN REFERRAL | discharge_location: HOME | insurance: Private | language: English | marital_status: MARRIED | race: WHITE | edregtime: 2171-11-11 16:35:00 | edouttime: 2171-11-12 03:2"
+        },
+        {
+          "source_table": "hosp.transfers",
+          "score": 0.4916767477989197,
+          "timestamp": "2171-11-12 03:21:00",
+          "text": "[source: hosp.transfers] | subject_id: 18992637 | hadm_id: 27577979 | transfer_id: 34864875 | eventtype: admit | careunit: Medicine | intime: 2171-11-12 03:21:00 | outtime: 2171-11-13 17:07:13"
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "type": "patient_query",
+      "query": "active diagnoses with ICD long titles",
+      "sql_agent": {
+        "error": "[Errno 13] Permission denied: '/gpfs/data/razavianlab/capstone/2025_agentic/sql_agent/logs/20260507.jsonl'"
+      },
+      "vector_db": [
+        {
+          "source_table": "hosp.diagnoses_icd",
+          "score": 0.6242194771766663,
+          "timestamp": null,
+          "text": "[source: hosp.diagnoses_icd] | subject_id: 18992637 | hadm_id: 29029556 | seq_num: 9 | icd_code: Z7902 | icd_version: 10 | long_title: Long term (current) use of antithrombotics/antiplatelets"
+        },
+        {
+          "source_table": "hosp.diagnoses_icd",
+          "score": 0.6216610670089722,
+          "timestamp": null,
+          "text": "[source: hosp.diagnoses_icd] | subject_id: 18992637 | hadm_id: 23795100 | seq_num: 10 | icd_code: Z7902 | icd_version: 10 | long_title: Long term (current) use of antithrombotics/antiplatelets"
+        },
+        {
+          "source_table": "hosp.diagnoses_icd",
+          "score": 0.5735961198806763,
+          "timestamp": null,
+          "text": "[source: hosp.diagnoses_icd] | subject_id: 18992637 | hadm_id: 23795100 | seq_num: 2 | icd_code: I110 | icd_version: 10 | long_title: Hypertensive heart disease with heart failure"
+        },
+        {
+          "source_table": "hosp.diagnoses_icd",
+          "score": 0.5720359683036804,
+          "timestamp": null,
+          "text": "[source: hosp.diagnoses_icd] | subject_id: 18992637 | hadm_id: 23795100 | seq_num: 3 | icd_code: I5030 | icd_version: 10 | long_title: Unspecified diastolic (congestive) heart failure"
+        },
+        {
+          "source_table": "hosp.diagnoses_icd",
+          "score": 0.5686484575271606,
+          "timestamp": null,
+          "text": "[source: hosp.diagnoses_icd] | subject_id: 18992637 | hadm_id: 23795100 | seq_num: 4 | icd_code: I2510 | icd_version: 10 | long_title: Atherosclerotic heart disease of native coronary artery without angina pectoris"
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "type": "patient_query",
+      "query": "most recent creatinine values",
+      "sql_agent": {
+        "error": "Execution failed on sql 'WITH filtered_admissions AS (\n  SELECT hadm_id \n  FROM mimiciv_hosp.admissions \n  WHERE subject_id = '18992637' AND admittime < '2173-03-24 13:23:00'\n)\nSELECT le.charttime, le.valuenum AS creatinine_value, le.valueuom\nFROM mimiciv_hosp.labevents le\nJOIN filtered_admissions fa ON le.hadm_id = fa.hadm_id\nWHERE le.itemid = 50912\nORDER BY le.charttime DESC\nLIMIT 1': operator does not exist: text = integer\nLINE 9: WHERE le.itemid = 50912\n                        ^\nHINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.\n"
+      },
+      "vector_db": [
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6214022636413574,
+          "timestamp": "2171-08-10 07:13:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957165 | subject_id: 18992637 | hadm_id: 29029556 | specimen_id: 66563835 | itemid: 50912 | charttime: 2171-08-10 07:13:00 | storetime: 2171-08-10 09:11:00 | value: 0.8 | valuenum: 0.8 | valueuom: mg/dL | ref_range_lower: 0.5 | ref_range_upper: 1.2 | priority: ROUTINE | label: Creatinine"
+        },
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6180225610733032,
+          "timestamp": "2171-08-09 05:40:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957127 | subject_id: 18992637 | hadm_id: 29029556 | specimen_id: 17023061 | itemid: 50912 | charttime: 2171-08-09 05:40:00 | storetime: 2171-08-09 09:12:00 | value: 1.0 | valuenum: 1 | valueuom: mg/dL | ref_range_lower: 0.5 | ref_range_upper: 1.2 | priority: ROUTINE | label: Creatinine"
+        },
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6126531362533569,
+          "timestamp": "2172-02-05 06:15:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957433 | subject_id: 18992637 | hadm_id: 23795100 | specimen_id: 64362404 | itemid: 50912 | charttime: 2172-02-05 06:15:00 | storetime: 2172-02-05 07:56:00 | value: 1.0 | valuenum: 1 | valueuom: mg/dL | ref_range_lower: 0.5 | ref_range_upper: 1.2 | priority: ROUTINE | label: Creatinine"
+        },
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.61109858751297,
+          "timestamp": "2171-11-11 18:10:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957256 | subject_id: 18992637 | hadm_id: 27577979 | specimen_id: 29815294 | itemid: 50920 | charttime: 2171-11-11 18:10:00 | storetime: 2171-11-11 18:49:00 | priority: STAT | comments: Using this patient's age, gender, and serum creatinine value of 1.0, .  estimated GFR (eGFR) is likely between 75 and >75 mL/min/1.73 m2, .  provided the serum creatinine v"
+        },
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6103953123092651,
+          "timestamp": "2171-11-12 07:10:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957334 | subject_id: 18992637 | hadm_id: 27577979 | specimen_id: 38422959 | itemid: 50912 | charttime: 2171-11-12 07:10:00 | storetime: 2171-11-12 10:20:00 | value: 1.0 | valuenum: 1 | valueuom: mg/dL | ref_range_lower: 0.5 | ref_range_upper: 1.2 | priority: ROUTINE | label: Creatinine"
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "type": "patient_query",
+      "query": "current medications with start/stop times",
+      "sql_agent": {
+        "error": "Execution failed on sql 'SELECT p.medication, p.starttime, p.stoptime\nFROM mimiciv_hosp.prescriptions p\nWHERE p.hadm_id IN (\n    SELECT hadm_id FROM mimiciv_hosp.admissions \n    WHERE subject_id = '18992637' AND admittime < '2173-03-24 13:23:00'\n)\nAND p.starttime < '2173-03-24 13:23:00'\nLIMIT 1000': column p.medication does not exist\nLINE 1: SELECT p.medication, p.starttime, p.stoptime\n               ^\n"
+      },
+      "vector_db": [
+        {
+          "source_table": "hosp.pharmacy",
+          "score": 0.6864132881164551,
+          "timestamp": "2171-11-12 18:00:00",
+          "text": "[source: hosp.pharmacy] | subject_id: 18992637 | hadm_id: 27577979 | pharmacy_id: 78550285 | poe_id: 18992637-151 | starttime: 2171-11-12 18:00:00 | stoptime: 2171-11-13 21:00:00 | medication: benazepril | proc_type: Non-Formulary | status: Discontinued via patient discharge | entertime: 2171-11-12 18:03:20 | verifiedtime: 2171-11-12 18:03:20 | route: ORAL | frequency: DAILY | disp_sched: 08 | dos"
+        },
+        {
+          "source_table": "hosp.pharmacy",
+          "score": 0.6818525791168213,
+          "timestamp": "2172-02-05 08:00:00",
+          "text": "[source: hosp.pharmacy] | subject_id: 18992637 | hadm_id: 23795100 | pharmacy_id: 23712397 | poe_id: 18992637-207 | starttime: 2172-02-05 08:00:00 | stoptime: 2172-02-05 22:00:00 | medication: Citalopram | proc_type: Unit Dose | status: Discontinued via patient discharge | entertime: 2172-02-04 15:50:01 | verifiedtime: 2172-02-04 15:50:01 | route: PO/NG | frequency: DAILY | disp_sched: 8 | doses_p"
+        },
+        {
+          "source_table": "hosp.pharmacy",
+          "score": 0.6796355843544006,
+          "timestamp": "2171-11-12 08:00:00",
+          "text": "[source: hosp.pharmacy] | subject_id: 18992637 | hadm_id: 27577979 | pharmacy_id: 40179313 | poe_id: 18992637-134 | starttime: 2171-11-12 08:00:00 | stoptime: 2171-11-13 21:00:00 | medication: Citalopram | proc_type: Unit Dose | status: Discontinued via patient discharge | entertime: 2171-11-12 04:24:25 | verifiedtime: 2171-11-12 04:24:25 | route: PO/NG | frequency: DAILY | disp_sched: 08 | doses_"
+        },
+        {
+          "source_table": "hosp.pharmacy",
+          "score": 0.6792038679122925,
+          "timestamp": "2171-08-08 21:00:00",
+          "text": "[source: hosp.pharmacy] | subject_id: 18992637 | hadm_id: 29029556 | pharmacy_id: 8646287 | poe_id: 18992637-53 | starttime: 2171-08-08 21:00:00 | stoptime: 2171-08-10 22:00:00 | medication: Citalopram | proc_type: Unit Dose | status: Discontinued via patient discharge | entertime: 2171-08-08 20:13:38 | verifiedtime: 2171-08-08 20:13:38 | route: PO/NG | frequency: DAILY | disp_sched: 08 | doses_pe"
+        },
+        {
+          "source_table": "hosp.pharmacy",
+          "score": 0.6782901287078857,
+          "timestamp": "2171-11-12 20:00:00",
+          "text": "[source: hosp.pharmacy] | subject_id: 18992637 | hadm_id: 27577979 | pharmacy_id: 71486610 | poe_id: 18992637-130 | starttime: 2171-11-12 20:00:00 | stoptime: 2171-11-13 21:00:00 | medication: Atorvastatin | proc_type: Unit Dose | status: Discontinued via patient discharge | entertime: 2171-11-12 04:25:05 | verifiedtime: 2171-11-12 04:25:05 | route: PO/NG | frequency: QPM | disp_sched: 20 | doses_"
+        }
+      ]
+    },
+    {
+      "turn": 5,
+      "type": "patient_query",
+      "query": "most recent potassium values",
+      "sql_agent": {
+        "error": "Execution failed on sql 'SELECT le.charttime, le.valuenum AS potassium_value, le.valueuom\nFROM mimiciv_hosp.labevents le\nWHERE le.itemid = 50971\nAND le.hadm_id IN (\n  SELECT hadm_id\n  FROM mimiciv_hosp.admissions\n  WHERE subject_id = '18992637' AND admittime < '2173-03-24 13:23:00'\n)\nORDER BY le.charttime DESC\nLIMIT 1': operator does not exist: text = integer\nLINE 3: WHERE le.itemid = 50971\n                        ^\nHINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.\n"
+      },
+      "vector_db": [
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6745160818099976,
+          "timestamp": "2171-11-11 18:10:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957263 | subject_id: 18992637 | hadm_id: 27577979 | specimen_id: 29815294 | itemid: 50971 | charttime: 2171-11-11 18:10:00 | storetime: 2171-11-11 18:49:00 | valuenum: 4.6 | valueuom: mEq/L | ref_range_lower: 3.5 | ref_range_upper: 5.4 | priority: STAT | comments: New reference range as of ___. | label: Potassium"
+        },
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6684757471084595,
+          "timestamp": "2172-02-05 06:15:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957439 | subject_id: 18992637 | hadm_id: 23795100 | specimen_id: 64362404 | itemid: 50971 | charttime: 2172-02-05 06:15:00 | storetime: 2172-02-05 07:56:00 | valuenum: 4.6 | valueuom: mEq/L | ref_range_lower: 3.5 | ref_range_upper: 5.4 | priority: ROUTINE | comments: New reference range as of ___. | label: Potassium"
+        },
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6649318933486938,
+          "timestamp": "2171-11-12 07:10:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957340 | subject_id: 18992637 | hadm_id: 27577979 | specimen_id: 38422959 | itemid: 50971 | charttime: 2171-11-12 07:10:00 | storetime: 2171-11-12 10:20:00 | valuenum: 4 | valueuom: mEq/L | ref_range_lower: 3.5 | ref_range_upper: 5.4 | priority: ROUTINE | comments: New reference range as of ___. | label: Potassium"
+        },
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6514452695846558,
+          "timestamp": "2171-08-10 07:13:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957171 | subject_id: 18992637 | hadm_id: 29029556 | specimen_id: 66563835 | itemid: 50971 | charttime: 2171-08-10 07:13:00 | storetime: 2171-08-10 09:11:00 | value: 4.8 | valuenum: 4.8 | valueuom: mEq/L | ref_range_lower: 3.3 | ref_range_upper: 5.1 | priority: ROUTINE | label: Potassium"
+        },
+        {
+          "source_table": "hosp.labevents",
+          "score": 0.6511877775192261,
+          "timestamp": "2171-08-09 05:40:00",
+          "text": "[source: hosp.labevents] | labevent_id: 142957133 | subject_id: 18992637 | hadm_id: 29029556 | specimen_id: 17023061 | itemid: 50971 | charttime: 2171-08-09 05:40:00 | storetime: 2171-08-09 09:12:00 | value: 4.5 | valuenum: 4.5 | valueuom: mEq/L | ref_range_lower: 3.3 | ref_range_upper: 5.1 | priority: ROUTINE | label: Potassium"
+        }
+      ]
+    },
+    {
+      "turn": 6,
+      "type": "literature_query",
+      "query": "ACE inhibitor titration in CKD Stage 2",
+      "literature": [
+        {
+          "parent_block_id": "ndumele_aha_ckm_2023_p19",
+          "doc_id": "ndumele_aha_ckm_2023",
+          "title": "",
+          "score": 0.7891089734292518,
+          "text": "CLINICAL STATEMENTS AND GUIDELINES November 14, 2023\b Circulation. 2023;148:1606\u20131635. DOI: 10.1161/CIR.0000000000001184 Ndumele et al AHA Presidential Advisory: Cardiovascular-Kidney-Metabolic Health 1624 CKD and ASCVD In patients with concomitant ASCVD and CKD, moder- ate- to high-intensity statins are recommended as part of optimal medical therapy for ASCVD and CKD.41 Medi- cations that preserve kidney function and reduce car- diovascular death such as SGTL2 inhibitors should be \u00adprioritized, regardless of diabetes status.121 For those who have not achieved individualized glycemic targets despite metformin and SGLT2 inhibitor or who are un- able to use those medications, a long-acting GLP-1RA is recommended.103 Finerenone can be considered to reduce adverse cardiovascular and kidney events in \u00adpatients with diabetes and CKD already on maximally tolerated renin-angiotensin system inhibition,104 with or without SGLT2 inhibitor use. CKD and HF The systematic underuse of high-quality evidence-based therapies for CVD in patients with kidney disease, his- torically referred to as renalism,122 remains a significant barrier to GDMT optimization in HF with CKD. This para- digm extends to..."
+        },
+        {
+          "parent_block_id": "ndumele_ckm_synopsis_2023_p12",
+          "doc_id": "ndumele_ckm_synopsis_2023",
+          "title": "",
+          "score": 0.7800112772109662,
+          "text": "CLINICAL STATEMENTS AND GUIDELINES Circulation. 2023;148:1636\u20131664. DOI: 10.1161/CIR.0000000000001186\b November 14, 2023 Ndumele et al Science and Clinical Management of CKM Syndrome 1647 Figure 3. Summary of the evidence for recommended approaches and treatments at each stage of CKM syndrome. ACEi indicates angiotensin-converting-enzyme inhibitors; ARB, angiotensin II receptor blockers; ARNi, angiotensin receptor/neprilysin inhibitors; ASCVD, atherosclerotic cardiovascular disease; BP, blood pressure; CAC, coronary artery calcium; CKD, chronic kidney disease; CKM, cardiovascular-kidney-metabolic; CVD, cardiovascular disease; CVH, cardiovascular health; eGFR, estimated glomerular filtration rate; GDMT, guideline-directed medical therapy; GLP-1RA, glucagon-like peptide 1 receptor agonist; HbA1c, hemoglobin A1c; HF, heart failure; HFpEF, heart failure with preserved ejection fraction; HFrEF, heart failure with reduced ejection fraction; LDL-C, low-density cholesterol; LV, left ventricle; MACE, major adverse cardiac event; MetS, metabolic syndrome; MRA, mineralocorticoid receptor antagonist; P2Y12i, P2Y12 inhibitor; QOL, quality of life; and SGLT2i, sodium-glucose cotransporter-2 inhi..."
+        },
+        {
+          "parent_block_id": "ndumele_ckm_synopsis_2023_p16",
+          "doc_id": "ndumele_ckm_synopsis_2023",
+          "title": "",
+          "score": 0.7748809703566115,
+          "text": "CLINICAL STATEMENTS AND GUIDELINES Circulation. 2023;148:1636\u20131664. DOI: 10.1161/CIR.0000000000001186\b November 14, 2023 Ndumele et al Science and Clinical Management of CKM Syndrome 1651 and ASCVD, favoring GLP-1RA in those with severe obesity or marked hyperglycemia and SGLT2 inhibitors in those with CKD or coexisting HF. Metformin is helpful for achieving glycemic targets but should be avoided in decompensated/unstable HF or for eGFR <30 mL\u2219min\u22121\u22191.73 m\u22122 because of increased risk for lactic acidosis. Combination therapy with SGLT2 inhibitors and GLP-1RA, associated with lower CVD risk in observational studies, could be considered for com- bined HF and ASCVD or CVD with multiple or severely uncontrolled CKM risk factors.159 CKD and CVD In patients with HF, SGLT2 inhibitors causes reductions in kidney disease progression, as well as HF hospitaliza- tions and cardiovascular death.39,171,172 These outcomes are consistent regardless of diabetes status and ejection frac- tion.171,172 ACE inhibitors/ARBs are well known to reduce morbidity and mortality in HFrEF71; concomitantly, various trials have shown efficacy for preventing worsening renal function.173\u2013175 Use of ACE inhibitors/AR..."
+        },
+        {
+          "parent_block_id": "pmid_23499048_p70",
+          "doc_id": "pmid_23499048",
+          "title": "",
+          "score": 0.7747360187097091,
+          "text": "N-ACETYLCYSTEINE (NAC) 3.9.2: We suggest not using NAC to prevent AKI in critically ill patients with hypotension. (2D) RATIONALE NAC has been most frequently applied in the prevention of CI-AKI, and this topic is discussed in more detail in Chapter 4.4. NAC is a modi\ufb01ed form of L-cysteine, an amino acid that is a precursor to reduced glutathione that can regenerate glutathione stores. It is known to be a potent antioxidant that scavenges oxygen-free radicals in the body. It also has vasodilatory properties derived from enhanced nitric oxide availability.359 NAC has been shown to attenuate ischemic and nephrotoxic ARF in a number of animal studies,360\u2013363 and the pharmacological characteristics of NAC that could play a role in the prevention of AKI have recently been summarized.364 NAC undergoes extensive \ufb01rst-pass metabo- lization in the gastric mucosa and liver. This results in a very low oral bioavailability, with substantial intrapatient varia- bility (3\u201320%), as well as inconsistency between available oral products. The plasma half-life of acetylcysteine after i.v. injection is approximately 6\u201340 minutes, and there is extensive binding to plasma and tissue proteins through the..."
+        },
+        {
+          "parent_block_id": "ndumele_aha_ckm_2023_p17",
+          "doc_id": "ndumele_aha_ckm_2023",
+          "title": "",
+          "score": 0.7676483098400093,
+          "text": "CLINICAL STATEMENTS AND GUIDELINES November 14, 2023\b Circulation. 2023;148:1606\u20131635. DOI: 10.1161/CIR.0000000000001184 Ndumele et al AHA Presidential Advisory: Cardiovascular-Kidney-Metabolic Health 1622 Chronic Kidney Disease Addressing comorbid traditional CVD risk factors re- mains key in patients with CKD. For hypertension, especially in the setting of proteinuria, which is an in- dependent CVD risk factor (particularly for HF), ACE inhibitors/ARBs are the first-line treatment. The use of SGLT2 inhibitors should be extended to all patients with CKD (at moderate or higher risk per the KDIGO classification), regardless of diabetes status, to \u00adprotect kidney function and to reduce rates of HF hospitaliza- tion and cardiovascular mortality.103 SGLT2 inhibitors can be safely initiated for patients with eGFR \u226520 mL\u2219min\u22121\u22191.73 m\u22122. In patients with diabetic kidney disease and proteinuria on ACE inhibitors/ARBs, fi- nerenone may be considered to reduce adverse car- diovascular and kidney events.104 Finerenone can likely be initiated on background SGLT2 inhibitor therapy for those with eGFR >25 mL\u2219min\u22121\u22191.73 m\u22122 and potas- sium <5 mEq/L, although definitive data on concurrent use of t..."
+        }
+      ]
+    }
+  ],
+  "patient_summary": "Patient context:\n- Demographics: 67yo M; data window 2017 - 2019; (not retrieved)\n- CKD stage: Stage 2\n- Prior admissions in t0: 3; types: OBSERVATION ADMIT, EW EMER., EU OBSERVATION\n- Recent labs (latest values, with units and dates):\n  - Creatinine: 1.0 mg/dL (2172-02-05)\n  - Potassium: 4.6 mEq/L (2172-02-05)\n- Current/recent medications: Benazepril, Citalopram, Atorvastatin\n- Active comorbidities: Z7902 (Long term use of antithrombotics/antiplatelets), I110 (Hypertensive heart disease with heart failure), I5030 (Unspecified diastolic heart failure), I2510 (Atherosclerotic heart disease)\n- Other: Insurance: Private, Marital Status: Married, Language: English",
+  "recommendation": "The patient in question presents with Stage 2 CKD, uses benazepril for hypertension, and has comorbid hypertensive heart disease with heart failure, and atherosclerotic heart disease. The patient's recent laboratory results show a creatinine of 1.0 mg/dL and potassium of 4.6 mEq/L, reflecting relatively stable kidney function. The management of this patient should focus on therapies that support both cardiovascular and renal health.\n\n1. **SGLT2 Inhibitors:**\n   - **Why this patient:** This class of medication is beneficial for patients with CKD and heart failure for reducing kidney disease progression, hospitalization due to heart failure, and cardiovascular mortality. Given the patient's CKD stage, creatinine of 1.0 mg/dL, and heart failure condition, SGLT2 inhibitors can provide significant benefits [Ndumele et al AHA Presidential Advisory (ndumele_aha_ckm_2023_p17), Science and Clinical Management of CKM Syndrome (ndumele_ckm_synopsis_2023_p16)].\n   - **When to use / contraindications:** These can be initiated in patients with CKD and an eGFR \u226520 mL/min/1.73 m\u00b2, typically safe to use even without diabetes, except in cases of type I diabetes or significant renal impairment below the acceptable eGFR threshold.\n   - **Supporting sources:** [Ndumele et al AHA Presidential Advisory (ndumele_aha_ckm_2023_p17)], [Science and Clinical Management of CKM Syndrome (ndumele_ckm_synopsis_2023_p16)].\n\n2. **ACE Inhibitors/ARBs:**\n   - **Why this patient:** The patient is already on benazepril, an ACE inhibitor. Continuation or optimization of ACE inhibitors/ARBs can benefit in managing both hypertension and CKD progression while also improving outcomes for heart failure with a creatinine level of 1.0 mg/dL and normal potassium of 4.6 mEq/L [Science and Clinical Management of CKM Syndrome (ndumele_ckm_synopsis_2023_p12), AHA Presidential Advisory (ndumele_aha_ckm_2023_p17)].\n   - **When to use / contraindications:** These should continue unless problematic hyperkalemia develops or renal function severely declines, yet regular monitoring is crucial due to potential renal function impact.\n   - **Supporting sources:** [Science and Clinical Management of CKM Syndrome (ndumele_ckm_synopsis_2023_p12)], [AHA Presidential Advisory (ndumele_aha_ckm_2023_p17)].\n\n3. **GLP-1 Receptor Agonists (GLP-1RA):**\n   - **Why this patient:** Although typically used for diabetes management, GLP-1RAs can be considered in patients with CKD and atherosclerotic cardiovascular disease for additional cardiovascular benefits, even in the absence of diabetes. This therapy is suitable given the patient\u2019s stable creatinine and potassium values, and ongoing atherosclerotic conditions such as heart disease [AHA Presidential Advisory (ndumele_aha_ckm_2023_p19), Science and Clinical Management of CKM Syndrome (ndumele_ckm_synopsis_2023_p16)].\n   - **When to use / contraindications:** Suitable unless the patient experiences gastrointestinal side effects or significant renal impairment. Not first-line if options 1 and 2 are effective and tolerated.\n   - **Supporting sources:** [AHA Presidential Advisory (ndumele_aha_ckm_2023_p19)], [Science and Clinical Management of CKM Syndrome (ndumele_ckm_synopsis_2023_p16)].\n\nIf SGLT2 inhibitors are infeasible due to a contraindication, then optimizing ACE inhibitors/ARBs is the next best step. If both are unsuitable, GLP-1RA can be considered for cardiovascular support. Consultation with a healthcare provider is essential to tailor these options to the patient\u2019s comprehensive clinical picture.\n\n### References\n- [AHA Presidential Advisory (ndumele_aha_ckm_2023_p17)] - Support for SGLT2 inhibitors in CKD and HF patients.\n- [Science and Clinical Management of CKM Syndrome (ndumele_ckm_synopsis_2023_p16)] - SGLT2 inhibitors and ACE/ARBs benefit overview.\n- [AHA Presidential Advisory (ndumele_aha_ckm_2023_p19)] - GLP-1RA as recommended approach in CKD and CVD conditions."
+}

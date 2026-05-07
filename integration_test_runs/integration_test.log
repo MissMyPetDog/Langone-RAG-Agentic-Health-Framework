@@ -1,0 +1,16 @@
+
+######################################################################
+# CKD, unspecified  subject_id=16468520
+######################################################################
+/gpfs/data/razavianlab/capstone/2025_agentic/sql_agent/schema.py:15: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  return pd.read_sql(sql, conn)
+Loaded 114 rows from /gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/patient_db/subject_16468520 (dim=1024, model=BAAI/bge-m3)
+
+[turn 1/8] action=query_patient query='patient demographics: gender, anchor_age, anchor_year_group, dod'
+  thought: To begin building a clinical profile, I will first query the patient's demographics, covering gender, anchor age, anchor year group, and date of death if applicable. This covers the demographics check
+/gpfs/data/razavianlab/capstone/2025_agentic/sql_agent/agent.py:185: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  df = pd.read_sql(sql, self.conn)
+Loading encoder: BAAI/bge-m3
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/391 [00:00<?, ?it/s]Loading weights: 100%|██████████| 391/391 [00:00<00:00, 18772.15it/s]
+  device: cpu
