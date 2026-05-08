@@ -99,6 +99,8 @@ OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 | (참고) | `vectordb.py` | hash 임베딩(`embed.py`와 동일 계열) 데모 검색 |
 | (유틸) | `scripts/list_raw_orphans.py` | `data/raw`에만 있고 `assets.jsonl`에 없는 doc_id 나열 |
 | (유틸) | `scripts/run_cases_vision.sh` | `CASE_01`~`CASE_N`에 대해 `generate.py --vision` 일괄 실행 (인자: 시작·끝 번호, 선택 `CASE_TEXT_DIR`) |
+| (유틸) | `orchestrator_tools/build_papers_jsonl.py` | `data/raw/`의 PDF들로부터 `papers.jsonl` 재생성. 우선 PDF `/Title` 메타데이터, 메타가 비거나 잡파일명(`*.indd`/`*.docx` 등)이면 1페이지 최대 폰트 텍스트로 fallback |
+| (통합) | `orchestrator_tools/run_all_8.sbatch` | CKD 8명 환자 일괄 실행 (팀원 orchestrator README의 `python -m orchestrator.run --subject-id <sid>` 명령을 SLURM `cpu_short`에서 순차 호출) |
 
 ### 스크립트별 입·출력
 
@@ -273,4 +275,38 @@ srun --partition=gpu4_dev --gres=gpu:1 --cpus-per-task=4 --mem=32G --time=04:00:
   `export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH}`  
   `DEVICE=cuda BATCH_SIZE=8 INCREMENTAL=0 OCR_CLIP_FUSION_ALPHA=0.35 .venv/bin/python -u multimodal_embed.py`
 - **`embed_multimodal_resume.sh`**: 내부적으로 배치 1·이미지 1장 단위로만 돌리므로, 대량 작업은 GPU에서 위처럼 직접 호출하는 편이 빠를 수 있음.
+
+### Orchestrator 통합 (팀원 SQL Agent + 환자 vector DB 연동)
+
+팀원 프로젝트 [`/gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/orchestrator/`](file:///gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/orchestrator/README.md)는 plan-act 루프로 **본 RAG의 literature**(`retrieval.py` + `generate._call_llm`)와 팀원 측 **SQL agent**(MIMIC-IV) + **환자 vector DB**(`agentic_workflow/retrieve_ehr`)를 함께 호출해 환자별 치료 추천을 생성합니다. 본 워크스페이스 쪽 통합 산출물은 다음과 같습니다.
+
+| 경로 | 내용 |
+|---|---|
+| `orchestrator_runs/` | 팀원 `Chronic_Kidney_Disease/orchestrator/runs/`로 거는 symlink. 환자별 transcript JSON이 여기 쌓임 |
+| `orchestrator_tools/run_all_8.sbatch` | CKD cohort 8명(CKD unspecified, ESRD, Stage 1~5) 일괄 실행 SLURM 스크립트 |
+| `orchestrator_tools/build_papers_jsonl.py` | `data/raw/`만으로 `papers.jsonl` 재생성 |
+| `orchestrator_tools/all_8_<jobid>.{out,err}` | 최신 batch 로그 |
+| `papers.jsonl` | doc_id → title 매핑. orchestrator의 `lit_retrieval._load_papers_meta()`가 자동 로드해 recommendation의 인용에 사람이 읽는 논문 제목을 부착 |
+
+**일반 사용**
+
+```bash
+# 8명 일괄 실행 (compute node, 약 7~8분)
+cd /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739/orchestrator_tools
+sbatch run_all_8.sbatch
+
+# data/raw에 PDF 추가/제거 후 papers.jsonl 갱신
+module load python/gpu/3.10.6
+/gpfs/scratch/kk5739/rag_venv/bin/python orchestrator_tools/build_papers_jsonl.py
+
+# 결과 보기 (symlink 통해 본 워크스페이스에서 직접)
+ls -lt orchestrator_runs/
+```
+
+**환경 주의**
+
+- `KONG_API_KEY`는 팀원 `sql_agent.config`에 하드코딩되어 있어 별도 설정 불필요
+- DB 사용자는 `PGUSER`가 비어 있을 때 기본 `zh1461`(MIMIC SELECT 권한 보유). 본인 user로 강제하면 `role does not exist` → SLURM 스크립트는 `unset PGUSER` 안 함, 호출 환경의 `PGUSER`만 비어 있으면 됨
+- **Login node에서는 절대 직접 실행 금지**: `bigpurple-ln1`은 4분 CPU 한도가 있어 `python -m orchestrator.run --subject-id ...`가 중간(보통 turn 3 부근)에서 SIGKILL됨. 반드시 SLURM(`sbatch`) 또는 `srun`으로 compute node에서 실행
+- `Chronic_Kidney_Disease/` 디렉토리는 그룹 `razavianlab_capstone`(SGID 적용)으로 공유되므로, 본인이 만든 결과 JSON도 자동으로 팀원이 읽기/쓰기 가능
 

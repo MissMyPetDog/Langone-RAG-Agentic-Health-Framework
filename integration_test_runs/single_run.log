@@ -1,20 +1,0 @@
-/gpfs/data/razavianlab/capstone/2025_agentic/sql_agent/schema.py:15: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  return pd.read_sql(sql, conn)
-Loaded 114 rows from /gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/patient_db/subject_16468520 (dim=1024, model=BAAI/bge-m3)
-
-[turn 1/4] action=query_patient query='patient demographics: gender, anchor_age, anchor_year_group, dod'
-  thought: To begin, I'll gather demographics which is a required baseline item. This will include gender, anchor_age, anchor_year_group, and dod.
-/gpfs/data/razavianlab/capstone/2025_agentic/sql_agent/agent.py:185: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  df = pd.read_sql(sql, self.conn)
-Loading encoder: BAAI/bge-m3
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/391 [00:00<?, ?it/s]Loading weights: 100%|██████████| 391/391 [00:00<00:00, 18225.57it/s]
-  device: cpu
-
-[turn 2/4] action=query_patient query='all hospital admissions before cutoff with type and length of stay'
-  thought: Since the demographics query resulted in an error from the SQL agent, I will continue with the next baseline requirement, which is to gather data on the patient's admissions before the cutoff. This wi
-/gpfs/data/razavianlab/capstone/2025_agentic/sql_agent/agent.py:185: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
-  df = pd.read_sql(sql, self.conn)
-
-[turn 3/4] action=query_patient query='active diagnoses with ICD long titles'
-  thought: To continue building the baseline coverage, I need to investigate active diagnoses for this patient. Active diagnoses provide insight into the comorbid conditions that may influence CKD management and
