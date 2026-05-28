@@ -1,8 +1,10 @@
-"""Build a fresh data/papers.jsonl from PDFs currently in data/raw/.
+"""Build papers.jsonl and assets.jsonl from PDFs currently in data/raw/.
 
 For each doc_id (folder/pdf in data/raw/), extracts a title via:
   1. PDF /Title metadata (if non-empty and looks meaningful)
   2. fallback: largest font run on page 1 (concatenated text spans)
+
+Also writes assets.jsonl (parse.py input) with one pdf row per doc_id.
 
 Source label is inferred from the doc_id prefix:
   pmid_* -> pubmed
@@ -11,7 +13,7 @@ Source label is inferred from the doc_id prefix:
 
 Usage:
   module load python/gpu/3.10.6
-  /gpfs/scratch/kk5739/rag_venv/bin/python build_papers_jsonl.py
+  .venv/bin/python orchestrator_tools/build_papers_jsonl.py
 """
 from __future__ import annotations
 
@@ -25,6 +27,7 @@ import fitz  # pymupdf
 WORKSPACE = Path("/gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739")
 RAW_DIR = WORKSPACE / "data" / "raw"
 OUT_PATH = WORKSPACE / "papers.jsonl"
+ASSETS_PATH = WORKSPACE / "assets.jsonl"
 
 
 def find_pdf(doc_id: str) -> Path | None:
@@ -131,7 +134,8 @@ def main():
 
     print(f"=== Building papers.jsonl from {RAW_DIR} ({len(doc_ids)} doc_ids) ===\n")
 
-    rows = []
+    paper_rows = []
+    asset_rows = []
     for did in doc_ids:
         pdf = find_pdf(did)
         if pdf is None:
@@ -139,22 +143,31 @@ def main():
             continue
         title, method = extract_title(pdf)
         source = infer_source(did)
+        rel_pdf = str(pdf.relative_to(WORKSPACE))
         row = {
             "doc_id":     did,
             "title":      title,
             "source":     source,
-            "pdf_path":   str(pdf.relative_to(WORKSPACE)),
+            "pdf_path":   rel_pdf,
             "fetched_at": now,
         }
-        rows.append(row)
+        paper_rows.append(row)
+        asset_rows.append({
+            "id": f"asset_{did}_pdf",
+            "doc_id": did,
+            "kind": "pdf",
+            "path": rel_pdf,
+        })
         print(f"  {did}")
         print(f"    title  ({method}): {title!r}")
         print(f"    source: {source}")
-        print(f"    pdf   : {row['pdf_path']}")
+        print(f"    pdf   : {rel_pdf}")
         print()
 
-    OUT_PATH.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
-    print(f"=== wrote {len(rows)} entries to {OUT_PATH} ===")
+    OUT_PATH.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in paper_rows))
+    ASSETS_PATH.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in asset_rows))
+    print(f"=== wrote {len(paper_rows)} entries to {OUT_PATH} ===")
+    print(f"=== wrote {len(asset_rows)} entries to {ASSETS_PATH} ===")
 
 
 if __name__ == "__main__":

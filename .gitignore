@@ -6,14 +6,26 @@ __pycache__/
 # Env / secrets
 .env
 
-# 데이터 파일 (원하면 나중에 선택적으로 포함)
+# Large / generated data (rebuild with pipeline)
 data/
 
-# 편집기 메타데이터
-.cursor/
-.DS_Store
+# Generated run outputs
+outputs/
+outputs_baseline_v1/
 
-# 멀티모달 CPU 재개 로그
+# Logs
+logs/
 _nohup_embed.out
 _embed_multimodal_*.log
+_mm_regen.log
+orchestrator_tools/*.out
+orchestrator_tools/*.err
+orchestrator_tools/.last_all_jobid
 
+# Local symlinks (each member creates after clone)
+orchestrator_runs
+
+# Editor / IDE
+.cursor/
+.vscode/
+.DS_Store

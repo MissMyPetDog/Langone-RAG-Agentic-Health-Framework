@@ -1,312 +1,318 @@
 # Agentic RAG (의학 문헌)
 
-환자 질병명 기반 PubMed·상위 저널(Nature, Lancet, JAMA, BMJ, NEJM) 문헌 수집 → 파싱·청킹·링킹 → 텍스트(BGE) + 멀티모달(테이블·이미지, CLIP) 벡터 DB 구축 → 검색/생성.
+환자·질병명 기반 PubMed·상위 저널 문헌 수집 → PDF 파싱·청킹·링킹 → 텍스트(BGE) + 멀티모달(테이블·이미지, CLIP) 벡터 DB → 검색·생성.
 
-### 환경 준비
+> English: [README_EN.md](README_EN.md)
 
-클러스터 등에서 venv를 새로 만들 때는 `scripts/install_venv.sh`를 쓰면 로그인 노드 OOM을 줄이기 위해 **CPU용 torch를 먼저** 깐 뒤 `requirements.txt`를 설치합니다.
+**팀 레포**: [MissMyPetDog/Langone-RAG-Agentic-Health-Framework](https://github.com/MissMyPetDog/Langone-RAG-Agentic-Health-Framework)
 
 ```bash
+git clone git@github.com:MissMyPetDog/Langone-RAG-Agentic-Health-Framework.git
+cd Langone-RAG-Agentic-Health-Framework
+cp .env.example .env   # KONG_API_KEY 입력
+bash scripts/install_venv.sh && source .venv/bin/activate
+```
+
+`data/`는 git에 포함되지 않습니다. GPFS 공유 경로 symlink 또는 README **빠른 시작** 파이프라인으로 로컬에서 재생성하세요.
+
+---
+
+## 디렉터리 구조
+
+```text
+agentic_rag_kk5739/
+├── fetch.py                    # PubMed 풀텍스트 수집
+├── parse.py                    # PDF → blocks.jsonl
+├── fill_image_ocr.py           # 이미지 OCR 보충 (chunk 전)
+├── chunk.py                    # blocks → chunks
+├── link.py                     # parent_block_id 부여
+├── embed.py                    # hash 임베딩 (데모)
+├── real_embed.py               # BGE 텍스트 임베딩
+├── multimodal_embed.py         # CLIP 테이블·이미지 임베딩
+├── prune_multimodal_vectors.py # 멀티모달 벡터 정리
+├── embed_multimodal_resume.sh  # CPU에서 멀티모달 재개
+├── retrieval.py                # 검색 + parent 확장
+├── rerank.py                   # BGE + cross-encoder 2단계 (실험용)
+├── generate.py                 # RAG + Kong LLM 답변 생성
+├── query_generator.py          # PubMed/RAG 쿼리 LLM 생성
+├── schema.py                   # JSONL TypedDict
+├── vectordb.py                 # hash 벡터 데모 검색
+├── requirements.txt
+├── scripts/
+│   ├── install_venv.sh         # venv + CPU torch 설치
+│   ├── list_raw_orphans.py     # raw 폴더 vs assets.jsonl 불일치
+│   ├── list_raw_orphans.sh
+│   ├── run_cases_vision.sh     # CASE_01~N --vision 일괄 실행
+│   └── reports/
+│       ├── vision_two_way.py   # Vision vs Text-only A/B 집계
+│       └── vision_three_way.py # Vision vs OCR-only vs Text-only
+├── orchestrator_tools/
+│   ├── build_papers_jsonl.py   # data/raw → papers.jsonl + assets.jsonl
+│   └── run_all_8.sbatch        # CKD 8명 orchestrator 일괄 SLURM
+├── orchestrator_runs/          # → 팀 orchestrator/runs/ symlink
+├── papers.jsonl                # doc_id → title (인용·메타)
+├── assets.jsonl                # doc_id → PDF 경로 (parse 입력)
+├── data/
+│   ├── raw/                    # 원본 PDF + 추출 figure
+│   ├── blocks.jsonl            # 파싱 블록
+│   ├── chunks.jsonl            # 청크
+│   ├── linked_chunks.jsonl     # parent 링크
+│   ├── real_vectors.jsonl      # BGE 텍스트 벡터
+│   └── vectors_multimodal.jsonl
+├── outputs/                    # generate.py 최신 결과 (CASE_01~20 등)
+├── outputs_baseline_v1/        # 초기 baseline CASE_01~20
+├── reports/                    # Vision A/B 분석 리포트 (MD)
+└── logs/                       # 실행 로그 (_mm_regen, ocronly_batch 등)
+```
+
+---
+
+## 현재 코퍼스 (2026-05)
+
+| doc_id | 제목 (요약) | source |
+|--------|-------------|--------|
+| `gilbert_acc_weight_2025` | ACC 2025 Medical Weight Management | manual |
+| `ndumele_aha_ckm_2023` | AHA CKM Presidential Advisory | manual |
+| `ndumele_ckm_synopsis_2023` | AHA CKM Synopsis | manual |
+| `nihms_1913084` | Life's Essential 8 (AHA) | pubmed_central |
+| `pmid_23499048` | KDIGO 2012 AKI Guideline | pubmed |
+
+**데이터 규모 (최근 빌드 기준)**
+
+| 파일 | 행 수 |
+|------|------:|
+| `blocks.jsonl` | 1,221 |
+| `chunks.jsonl` / `linked_chunks.jsonl` | 2,386 |
+| `real_vectors.jsonl` | 2,345 (text만) |
+| `vectors_multimodal.jsonl` | 41 (table+image) |
+
+PDF를 `data/raw/`에 넣거나 `fetch.py`로 받은 뒤, 메타는 `orchestrator_tools/build_papers_jsonl.py`로 `papers.jsonl` + `assets.jsonl`을 함께 갱신합니다.
+
+---
+
+## 빠른 시작
+
+```bash
+# 1) 환경
 bash scripts/install_venv.sh
 source .venv/bin/activate
-```
-
-**HPC 공유 Python 기반 venv 주의 (libpython3.10.so.1.0 오류)**
-
-이 프로젝트의 `.venv/bin/python`은 bigpurple 공유 Python(`/gpfs/share/apps/python/gpu/3.10.6`)을 심볼릭 링크로 참조합니다. 새 셸에서 바로 실행하면 다음과 같이 공유 라이브러리를 못 찾을 수 있습니다.
-
-```
-./.venv/bin/python: error while loading shared libraries:
-libpython3.10.so.1.0: cannot open shared object file: No such file or directory
-```
-
-그래서 `generate.py` 등을 돌리기 **전에** 반드시 Python 라이브러리 경로를 잡아줘야 합니다. 둘 중 하나를 쓰세요.
-
-```bash
-# 방법 A: LD_LIBRARY_PATH 직접 지정 (셸 세션에서 한 번만)
 export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
+export KONG_API_KEY=...
 
-# 방법 B: 환경 모듈 로드 (가능한 클러스터에서)
-module load python/gpu/3.10.6
+# 2) 수동 PDF 코퍼스 (이미 data/raw/에 PDF가 있을 때)
+.venv/bin/python orchestrator_tools/build_papers_jsonl.py
+
+# 3) 파이프라인 (parse → chunk → link → embed)
+.venv/bin/python parse.py
+.venv/bin/python chunk.py
+.venv/bin/python link.py
+.venv/bin/python real_embed.py
+.venv/bin/python multimodal_embed.py
+
+# 4) 환자 케이스 답변 생성
+.venv/bin/python generate.py --patient-data-file /path/to/CASE_01.txt --vision
 ```
 
-설정 후 아래로 정상 동작 확인.
+PubMed에서 새 논문을 가져올 때는 2) 대신 `fetch.py`를 사용합니다.
+
+---
+
+## 환경 준비
+
+클러스터에서 venv를 새로 만들 때는 `scripts/install_venv.sh`를 쓰면 로그인 노드 OOM을 줄이기 위해 **CPU용 torch를 먼저** 깐 뒤 `requirements.txt`를 설치합니다.
+
+**HPC 공유 Python (`libpython3.10.so.1.0` 오류)**
+
+`.venv/bin/python`은 bigpurple 공유 Python을 참조합니다. 실행 전에 라이브러리 경로를 잡아주세요.
 
 ```bash
-./.venv/bin/python --version          # Python 3.10.6
-ldd ./.venv/bin/python3 | grep libpython   # libpython3.10.so.1.0 => ... 경로 잡힘
+export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
+# 또는: module load python/gpu/3.10.6
 ```
-
-`.bashrc`에 `export LD_LIBRARY_PATH=...` 줄을 넣어두면 매번 신경 쓰지 않아도 됩니다.
 
 ### 요구 사항
 
-- **Python**: 3.10+
-- **패키지**: `typing_extensions`, `sentence-transformers`, `torch`, `python-dotenv`, `openai`, `pymupdf`, `pillow` 등 (`requirements.txt`)
-- **이메일**: PubMed/Unpaywall 사용 시 이메일 설정 권장 (예: `kk5739@nyu.edu`)
-- **Kong API 키**: `KONG_API_KEY` (`query_generator`·`generate`·`fetch --patient-info` 등 LLM 호출 시)
+- **Python** 3.10+
+- **패키지**: `requirements.txt` (`sentence-transformers`, `torch`, `pymupdf`, `openai`, `pillow` 등)
+- **이메일**: PubMed/Unpaywall (`kk5739@nyu.edu` 등)
+- **KONG_API_KEY**: `query_generator`, `generate`, `fetch --patient-info`
 
-**Embed 단계(5–6)**: 클러스터에서 다른 venv(예: `rag_venv`)와 섞이면 torch/typing_extensions 충돌이 납니다.  
-→ 반드시 **프로젝트 `.venv`만 사용**하세요.  
-→ `real_embed.py`, `multimodal_embed.py` 실행 시:
+**Embed 단계**: 다른 venv와 섞지 말고 **프로젝트 `.venv`만** 사용하세요.
 
 ```bash
 .venv/bin/python real_embed.py
 .venv/bin/python multimodal_embed.py
 ```
 
-**CPU에서 `multimodal_embed.py`가 세션 시간 안에 끝나지 않을 때**: 환경 변수 `MULTIMODAL_IMAGE_LIMIT=1`과 `INCREMENTAL=1`로 한 장씩 저장하며 재실행할 수 있습니다. 편의용 스크립트 `embed_multimodal_resume.sh`는 루프 안에서 **`BATCH_SIZE=1`**, **`MULTIMODAL_IMAGE_LIMIT=1`** 로 고정해 로그인 노드에서도 끊기지 않게 합니다(직접 `multimodal_embed.py`를 호출할 때는 기본 배치 16 등이 적용됨).
+---
+
+## 파이프라인
+
+| 단계 | 스크립트 | 설명 |
+|------|----------|------|
+| 1 | `fetch.py` | PubMed 검색 → PMC OA / Unpaywall → PDF (`papers.jsonl`, `assets.jsonl`) |
+| 1b | `build_papers_jsonl.py` | `data/raw/` PDF만으로 `papers.jsonl` + `assets.jsonl` 재생성 |
+| 2 | `parse.py` | PDF → `data/blocks.jsonl` |
+| 2b | `fill_image_ocr.py` | 빈 이미지 OCR 보충 (**`chunk.py` 전**) |
+| 3 | `chunk.py` | `blocks.jsonl` → `chunks.jsonl` (전체 덮어쓰기) |
+| 4 | `link.py` | `(doc_id, page)` parent → `linked_chunks.jsonl` |
+| 5a | `embed.py` | hash 임베딩 → `vectors.jsonl` (데모) |
+| 5b | `real_embed.py` | BGE 텍스트만 → `real_vectors.jsonl` |
+| 5c | `multimodal_embed.py` | CLIP table/image → `vectors_multimodal.jsonl` |
+| 6 | `retrieval.py` | 검색 + parent 확장 (`--rerank` 선택) |
+| 7 | `generate.py` | Kong LLM 답변 + `outputs/*.md` 저장 |
+
+### 입·출력
+
+| 스크립트 | 입력 | 출력 |
+|----------|------|------|
+| `fetch.py` | 질병명 / `--patient-info` / DOI | `papers.jsonl`, `assets.jsonl`, `data/raw/{doc_id}/fulltext.pdf` |
+| `build_papers_jsonl.py` | `data/raw/*.pdf`, `data/raw/{doc_id}/` | `papers.jsonl`, `assets.jsonl` |
+| `parse.py` | `assets.jsonl` (또는 `data/assets.jsonl`) | `data/blocks.jsonl` |
+| `chunk.py` | `data/blocks.jsonl` | `data/chunks.jsonl` |
+| `link.py` | `data/chunks.jsonl` | `data/linked_chunks.jsonl` |
+| `real_embed.py` | chunks + linked | `data/real_vectors.jsonl` |
+| `multimodal_embed.py` | chunks + linked | `data/vectors_multimodal.jsonl` |
+| `generate.py` | 질문 또는 `--patient-data-file`, 벡터·청크 | 터미널 + `outputs/{case_id}.md` |
+
+### 증분 업데이트 (`INCREMENTAL`)
+
+`INCREMENTAL=1` / `true` / `yes`일 때만 켜짐. 적용: **`fetch`**, **`real_embed`**, **`multimodal_embed`**.
+
+- **`parse.py`**: `PARSE_DOC_IDS=doc1,doc2`로 일부 doc만 재파싱 가능
+- **`chunk.py` / `link.py`**: 항상 전체 재생성
+
+---
+
+## 멀티모달 임베딩 팁
+
+CPU에서 `multimodal_embed.py`가 끊기면:
 
 ```bash
-# 목표 행 수(embed_multimodal_resume.sh 내부 Python과 동일: linked_chunks+chunks 기준 유효 table+image 청크 수)까지 α=0으로 채움
-nohup ./embed_multimodal_resume.sh 0 >> _nohup_embed.out 2>&1 &
-
-# 위가 끝난 뒤, 이미지 modality 행만 제거한 뒤 OCR+CLIP 융합(α=0.35)으로 이미지 재임베딩
+nohup ./embed_multimodal_resume.sh 0 >> logs/_nohup_embed.out 2>&1 &
 .venv/bin/python prune_multimodal_vectors.py --strip-images
-nohup ./embed_multimodal_resume.sh 35 >> _nohup_embed.out 2>&1 &
+nohup ./embed_multimodal_resume.sh 35 >> logs/_nohup_embed.out 2>&1 &
 ```
 
-**`--strip-images` 주의**: 테이블 멀티모달 대상이 없고 **이미지 청크만** 있으면, 이미지 행을 모두 지우므로 `vectors_multimodal.jsonl`이 비게 됩니다. 이 경우 `embed_multimodal_resume.sh 35`가 TARGET까지 **전부 α=0.35로 다시 채우는** 흐름이 됩니다(테이블 벡터를 남겨 두려는 시나리오와 다름).
-
-`parse.py`와 분리해 `blocks.jsonl`의 빈 이미지 OCR만 채울 때는 `fill_image_ocr.py`(doc_id 인자 1개). **`chunk.py`보다 먼저** 돌려야 청크의 `text`에 OCR이 들어갑니다.
+이미지 OCR만 먼저 채울 때 (`chunk.py` **이전**):
 
 ```bash
 OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
 ```
 
-오래된 `vectors_multimodal.jsonl` 행을 현재 청크 집합에 맞출 때는 인자 없이 `prune_multimodal_vectors.py`, 이미지 행만 지울 때는 `--strip-images`.
+GPU SLURM 예시:
 
-**코퍼스·청크를 갈아엎은 뒤** `vectors_multimodal.jsonl`에 예전 `doc_id`가 남아 있으면 파일을 지우거나 비운 다음 `INCREMENTAL=0`으로 `multimodal_embed.py`를 다시 실행하는 편이 안전합니다. 같은 출력 파일을 두고 **`multimodal_embed.py`를 동시에 여러 번** 돌리지 마세요.
+```bash
+srun --partition=gpu4_dev --gres=gpu:1 --cpus-per-task=4 --mem=32G --time=04:00:00 --pty bash
+DEVICE=cuda BATCH_SIZE=8 INCREMENTAL=0 OCR_CLIP_FUSION_ALPHA=0.35 .venv/bin/python -u multimodal_embed.py
+```
 
-### 파이프라인 순서
+---
 
-| 단계 | 스크립트 | 설명 |
-|------|----------|------|
-| 1 | `fetch.py` | 질병명으로 PubMed 검색, PMC OA → Unpaywall → 풀텍스트 수집 (`papers.jsonl`, `assets.jsonl`) |
-| 2 | `parse.py` | PDF/TXT에서 텍스트·테이블·이미지 블록 추출 → `data/blocks.jsonl` (선택: `PARSE_DOC_IDS`, `OCR_BACKEND`, `OCR_ON_IMAGES`, `PARSE_NORMALIZE_JP2_IMAGES` 기본 1=`.jpx`/`.jp2`/`.j2k`→PNG) |
-| 2b (선택) | `fill_image_ocr.py` | 이미지 블록 빈 `text`만 RapidOCR로 채움. **반드시 `chunk.py` 전** |
-| 3 | `chunk.py` | `blocks.jsonl` 전체를 읽어 **`chunks.jsonl`을 매번 통째로 다시 씀** (증분 없음) |
-| 4 | `link.py` | (doc_id, page)로 `parent_block_id` 부여 → `linked_chunks.jsonl` **전체 재생성** |
-| 5a | `embed.py` | hash 기반 임베딩 → `data/vectors.jsonl` |
-| 5b | `real_embed.py` | **`modality == text` 청크만** BGE 임베딩 → `data/real_vectors.jsonl` (이미지/테이블 행 수만큼 줄 수가 `chunks.jsonl`보다 적을 수 있음) |
-| 5c | `multimodal_embed.py` | CLIP 테이블·이미지 임베딩 → `data/vectors_multimodal.jsonl` (`MULTIMODAL_IMAGE_LIMIT`, `OCR_CLIP_FUSION_ALPHA`, `DEVICE`) |
-| 보조 | `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`에서 무효 chunk 제거 또는 `--strip-images` |
-| 보조 | `embed_multimodal_resume.sh` | CPU에서 멀티모달 임베딩을 끊어서 재개 (`0` 또는 `35`) |
-| 6 | `retrieval.py` | 쿼리 → 텍스트 검색 + parent 확장. `--rerank` 시 cross-encoder 재순위 |
-| 7 | `generate.py` | Kong API로 답변 생성. `--rerank`, `--dry-run`, `--patient-data` / `--patient-data-file`, **`--vision`**(figure를 `image_url`로 전달), **`--text-only`**(이미지 chunk 전부 제거: OCR·픽셀 둘 다 off). 결과 자동 MD 저장 |
-| (단독) | `rerank.py` | BGE 검색 + cross-encoder 재순위 2단계(실험·디버그용 CLI) |
-| (참고) | `schema.py` | JSONL 레코드 TypedDict 정의 |
-| (참고) | `vectordb.py` | hash 임베딩(`embed.py`와 동일 계열) 데모 검색 |
-| (유틸) | `scripts/list_raw_orphans.py` | `data/raw`에만 있고 `assets.jsonl`에 없는 doc_id 나열 |
-| (유틸) | `scripts/run_cases_vision.sh` | `CASE_01`~`CASE_N`에 대해 `generate.py --vision` 일괄 실행 (인자: 시작·끝 번호, 선택 `CASE_TEXT_DIR`) |
-| (유틸) | `orchestrator_tools/build_papers_jsonl.py` | `data/raw/`의 PDF들로부터 `papers.jsonl` 재생성. 우선 PDF `/Title` 메타데이터, 메타가 비거나 잡파일명(`*.indd`/`*.docx` 등)이면 1페이지 최대 폰트 텍스트로 fallback |
-| (통합) | `orchestrator_tools/run_all_8.sbatch` | CKD 8명 환자 일괄 실행 (팀원 orchestrator README의 `python -m orchestrator.run --subject-id <sid>` 명령을 SLURM `cpu_short`에서 순차 호출) |
+## Query Generation (`query_generator.py`)
 
-### 스크립트별 입·출력
+| 함수 | 용도 | 연결 |
+|------|------|------|
+| `generate_pubmed_search_queries` | PubMed 검색어 여러 개 | `fetch.py --patient-info` |
+| `generate_retrieval_query_for_treatment` | RAG 질문 한 줄 | `generate.py --patient-data` |
 
-| 스크립트 | 입력 | 출력 |
-|----------|------|------|
-| `fetch.py` | 질병명 인자 또는 `--patient-info`, (선택) 기존 `papers.jsonl`·`assets.jsonl` | `papers.jsonl`, `assets.jsonl`, `data/raw/{doc_id}/fulltext.pdf` |
-| `parse.py` | `data/assets.jsonl` 또는 `assets.jsonl` | `data/blocks.jsonl` |
-| `chunk.py` | `data/blocks.jsonl` | `data/chunks.jsonl` |
-| `link.py` | `data/chunks.jsonl` | `data/linked_chunks.jsonl` |
-| `embed.py` | `data/chunks.jsonl`, `data/linked_chunks.jsonl` | `data/vectors.jsonl` |
-| `real_embed.py` | `data/chunks.jsonl`, `data/linked_chunks.jsonl` | `data/real_vectors.jsonl` |
-| `multimodal_embed.py` | `data/chunks.jsonl`, `data/linked_chunks.jsonl` | `data/vectors_multimodal.jsonl` |
-| `retrieval.py` | 쿼리 인자, `data/real_vectors.jsonl`(또는 `vectors.jsonl`), `data/linked_chunks.jsonl`, `data/chunks.jsonl` | 터미널 출력 (검색 결과·확장 청크) |
-| `generate.py` | 질문 인자 또는 `--patient-data` / `--patient-data-file`, 위 벡터·청크·linked_chunks, `papers.jsonl` | 터미널 출력 + `outputs/{case_id}.md` 또는 `outputs/result_*.md` 자동 저장 (`--case-id` 생략 시 patient 파일 basename 사용) |
-| `query_generator.py` | 환자/케이스 서술 문자열, `KONG_API_KEY` | 표준출력에 PubMed용 검색어(여러 개) 또는 RAG용 질문(한 줄) |
-| `fill_image_ocr.py` | `data/blocks.jsonl`, doc_id 인자 | 같은 파일 갱신(해당 doc의 빈 이미지 OCR만). **`chunk.py` 이전**에 실행 |
-| `prune_multimodal_vectors.py` | `vectors_multimodal.jsonl`, `chunks`/`linked_chunks` | 정리된 `vectors_multimodal.jsonl` |
+```bash
+.venv/bin/python fetch.py --patient-info "65yo male, dementia, hypertension"
+.venv/bin/python generate.py --patient-data "hospitalized COVID-19, renal impairment"
+.venv/bin/python query_generator.py pubmed "65yo male, dementia"
+.venv/bin/python query_generator.py retrieval "동일한 환자 서술..."
+```
 
-### 증분 업데이트 (`INCREMENTAL`)
+---
 
-환경 변수 **`INCREMENTAL`은 숫자 단계가 아니라 스위치**입니다. 값이 `1` / `true` / `yes`(소문자)일 때만 켜지고, **`0`·미설정·그 외 문자열은 모두 꺼짐**으로 처리됩니다.
+## generate.py
 
-**`INCREMENTAL=1`이 실제로 적용되는 단계** (`fetch`, `real_embed`, `multimodal_embed`):
+결과는 항상 `outputs/`에 MD로 저장됩니다.
 
-| 단계 | `INCREMENTAL=1`일 때 |
-|------|---------------------|
-| **fetch** | 기존 `papers.jsonl`/`assets.jsonl`의 doc_id를 보고 PubMed에서 **새 논문만** 가져와 뒤에 append |
-| **real_embed** | 기존 `real_vectors.jsonl`의 `chunk_id`는 건너뛰고 **새 텍스트 청크만** append |
-| **multimodal_embed** | 기존 `vectors_multimodal.jsonl`의 `chunk_id`는 건너뛰고 **새 table/image만** append. 켜져 있을 때는 배치마다 파일에 flush. `MULTIMODAL_IMAGE_LIMIT`로 이미지 N장만 처리 후 종료 가능 |
+- `--case-id CASE_01` → `outputs/CASE_01.md`
+- `--patient-data-file CASE_01.txt` (case-id 생략) → `outputs/CASE_01.md`
+- 질문만 → `outputs/result_YYYY-MM-DD_HH-MM-SS.md`
 
-**`parse.py`**: `INCREMENTAL`을 읽지 않습니다. `assets.jsonl`에 있는 문서를 전부 다시 파싱해 `blocks.jsonl`을 갱신합니다. **일부 doc만 다시 파싱**할 때는 `PARSE_DOC_IDS=doc1,doc2` — 이때만 기존 `blocks.jsonl`에서 해당 doc 행을 빼고 나머지 doc 블록과 합칩니다.
+### Vision / Text-only 모드
 
-**`chunk.py`**: `INCREMENTAL` 없음. **`blocks.jsonl` 전체 → `chunks.jsonl` 전체 덮어쓰기**이므로, 블록을 바꾼 뒤에는 항상 `chunk` → `link`를 다시 돌립니다.
+| 모드 | OCR 텍스트 | 이미지 픽셀 | 명령 |
+|------|:---:|:---:|------|
+| Vision full | ✅ | ✅ | `--vision` |
+| OCR only (default) | ✅ | ❌ | (플래그 없음) |
+| Text only | ❌ | ❌ | `--text-only` |
 
-**`link.py`**: 항상 `chunks.jsonl` 전체를 읽어 `linked_chunks.jsonl`을 **통째로 다시 씀**.
+- `--vision` + `--text-only` 동시 지정 시 text-only 우선
+- MD 상단에 `Retrieval hits` 표(BGE cosine 또는 rerank score) 포함
 
-### 검색 워크플로우
+### 케이스 배치
+
+```bash
+./scripts/run_cases_vision.sh          # CASE_01 .. CASE_20
+./scripts/run_cases_vision.sh 3 20     # CASE_03 .. CASE_20
+```
+
+기본 케이스 텍스트: `/gpfs/data/razavianlab/capstone/2025_agentic/tester_for_momo/case_texts`
+
+---
+
+## 평가·리포트
+
+| 경로 | 내용 |
+|------|------|
+| `outputs/` | 최신 generate 결과 (`CASE_NN.md`, `CASE_NN_textOnly.md` 등) |
+| `outputs_baseline_v1/` | 초기 baseline 20케이스 |
+| `reports/VISION_AB_REPORT.md` | Vision vs Text-only A/B (한국어) |
+| `reports/VISION_AB_REPORT_EN.md` | 동일 리포트 (영어) |
+| `scripts/reports/vision_two_way.py` | 2-way 메트릭 재집계 |
+| `scripts/reports/vision_three_way.py` | 3-way (vision / ocrOnly / textOnly) |
+
+---
+
+## Orchestrator 통합
+
+팀 프로젝트 [`Chronic_Kidney_Disease/orchestrator`](file:///gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/orchestrator/README.md)와 연동합니다. 본 RAG literature + MIMIC SQL agent + 환자 vector DB를 함께 호출합니다.
+
+| 경로 | 내용 |
+|------|------|
+| `orchestrator_runs/` | 팀 `orchestrator/runs/` symlink |
+| `orchestrator_tools/run_all_8.sbatch` | CKD 8명 일괄 SLURM (`cpu_short`) |
+| `orchestrator_tools/build_papers_jsonl.py` | `data/raw/` → `papers.jsonl` + `assets.jsonl` |
+| `papers.jsonl` | orchestrator literature 인용 제목 매핑 |
+
+```bash
+cd orchestrator_tools && sbatch run_all_8.sbatch
+ls -lt ../orchestrator_runs/
+```
+
+**주의**: login node에서 `python -m orchestrator.run` 직접 실행 금지 → SLURM(`sbatch` / `srun`) 사용.
+
+---
+
+## 환경 변수 (요약)
+
+| 변수 | 용도 |
+|------|------|
+| `INCREMENTAL` | fetch / real_embed / multimodal_embed 증분 |
+| `KONG_API_KEY`, `LLM_MODEL` | LLM (`gpt-4o` 기본) |
+| `GENERATE_VISION`, `VISION_MAX_IMAGES`, `VISION_MAX_EDGE` | generate 비전 |
+| `EMBED_MODEL`, `BATCH_SIZE`, `TEXT_WAVE_CHUNKS` | real_embed |
+| `MULTIMODAL_EMBED_MODEL`, `OCR_CLIP_FUSION_ALPHA`, `MULTIMODAL_IMAGE_LIMIT` | multimodal |
+| `DEVICE` | `cuda` / `cpu` / `mps` |
+| `PARSE_DOC_IDS`, `OCR_BACKEND`, `OCR_ON_IMAGES`, `PARSE_NORMALIZE_JP2_IMAGES` | parse |
+| `LD_LIBRARY_PATH` | bigpurple `.venv` Python |
+
+---
+
+## 검색 워크플로우
 
 ```text
 쿼리 입력
     ↓
-텍스트 DB 검색 (real_vectors 또는 vectors)
+텍스트 DB 검색 (real_vectors)
     ↓
-[--rerank 시] topn 후보 → cross-encoder rerank → topk
+[--rerank] topn → cross-encoder → topk
     ↓
-매칭된 parent_block_id에 대해 같은 페이지의 텍스트·테이블·이미지 확장
+parent_block_id 기준 같은 페이지 text·table·image 확장
     ↓
-컨텍스트 조립 → LLM (generate 시)
+컨텍스트 조립 → LLM (generate)
 ```
-
-### Optimized Query Generation (`query_generator.py`)
-
-환자·케이스 서술을 넣으면 Kong(LLM)으로 **두 종류**의 문구를 만들 수 있습니다. 둘 다 `KONG_API_KEY`(및 선택 `LLM_MODEL`, 기본 `gpt-4o`)가 필요합니다. 키가 없으면 API를 부르지 않고 입력 문자열을 그대로 씁니다.
-
-| 구분 | 모듈 함수 | 용도 | 파이프라인에서의 연결 |
-|------|-----------|------|------------------------|
-| **1-1** | `generate_pubmed_search_queries` | PubMed에 넣기 좋은 **짧은 검색어 여러 개** (상위 1개가 `fetch` 검색어로 사용) | `fetch.py --patient-info "..."` 가 내부에서 호출 |
-| **1-2** | `generate_retrieval_query_for_treatment` | 시맨틱 검색·근거 조회용 **질문 한 덩어리** (치료/진단 맥락 반영) | `generate.py --patient-data "..."` 가 내부에서 호출 |
-
-**통합 실행 (권장)**
-
-```bash
-export KONG_API_KEY=...
-
-# 1-1 → 생성된 쿼리로 PubMed fetch까지 이어짐
-.venv/bin/python fetch.py --patient-info "65yo male, dementia, hypertension, on ACE inhibitor"
-
-# 1-2 → 생성된 질문으로 retrieval 후 Kong으로 답변 생성
-.venv/bin/python generate.py --patient-data "hospitalized COVID-19, diabetes, renal impairment, dexamethasone consideration"
-```
-
-**`query_generator.py`만 단독 실행** (쿼리만 보고 싶을 때)
-
-```bash
-export KONG_API_KEY=...
-
-# PubMed용 검색어 여러 줄 출력
-.venv/bin/python query_generator.py pubmed "65yo male, dementia, hypertension"
-# 선택: -n 5 로 최대 개수 조정
-
-# RAG retrieval / generate에 넣을 질문 한 줄 출력
-.venv/bin/python query_generator.py retrieval "동일한 환자 서술..."
-```
-
-`retrieval.py`는 질문 문자열만 인자로 받으므로, `query_generator.py retrieval ...` 출력을 복사해 `.venv/bin/python retrieval.py "복사한 질문"` 에 넣어도 됩니다.
-
-### generate.py 결과 자동 저장·비전·케이스 배치
-
-`generate.py` 실행 후 결과가 **항상** `outputs/` 폴더에 MD 파일로 저장됩니다.
-
-- `--case-id` 지정 시: `outputs/{case_id}.md`
-- `--patient-data-file`만 쓰고 `--case-id` 생략 시: 파일 basename(예: `CASE_01.txt` → `outputs/CASE_01.md`)
-- 위 둘 다 없고 질문만 있을 때: `outputs/result_YYYY-MM-DD_HH-MM-SS.md`
-
-**`--vision`**: 검색에 걸린 figure를 디스크에서 읽어 API에 `image_url`(base64 data URL)로 붙입니다. RAG용 CLIP 벡터와는 별개이며, **비전 가능 모델**(기본 `gpt-4o`)이어야 합니다. 환경 변수 `GENERATE_VISION=1`로 플래그와 동일하게 켤 수 있음. `VISION_MAX_IMAGES`(기본 6), `VISION_MAX_EDGE`(기본 1536, 긴 변 기준 리사이즈 후 JPEG).
-
-**`--text-only`**: 검색된 이미지 chunk 자체를 LLM 컨텍스트에서 완전히 제거합니다 (OCR 텍스트·`asset_path` 둘 다 빠짐). `--vision`이 **픽셀만** 켜고 `--text-only`는 **OCR까지** 끄는 관계라, 비전 파이프라인 기여도 A/B/C 비교가 아래처럼 됩니다.
-
-| 모드 | OCR 텍스트 | 이미지 픽셀 | 명령 예 |
-|---|---|---|---|
-| Vision full | ✅ 컨텍스트 포함 | ✅ `image_url` 첨부 | `generate.py --patient-data-file ... --vision` |
-| OCR only (default) | ✅ 컨텍스트 포함 | ❌ | `generate.py --patient-data-file ...` |
-| Text only | ❌ | ❌ | `generate.py --patient-data-file ... --text-only` |
-
-- `--vision`과 `--text-only`가 동시에 주어지면 `--text-only`가 우선이고 비전은 경고와 함께 자동 off.
-- 결과 MD의 `Run configuration`에 `**Text-only context:** image chunks stripped (no OCR, no pixels)` 줄이 추가되어 파일이 자기기술적.
-
-**Used Sources / 답변 텍스트**: 디스크에 `stem.png`가 있으면 chunk의 `asset_path`가 `.jpx` 등이어도 **미리보기·컨텍스트에는 PNG 경로를 우선**합니다. LLM 본문에 잘못된 `.jpx` 경로가 나오면 저장 전에 figure 경로만 `.png`로 치환하는 후처리가 들어갑니다.
-
-**Retrieval hits 표 (점수 포함)**: MD 상단 `Run configuration` 바로 아래에 retrieval 후보 top-k가 표로 같이 저장됩니다.
-
-```markdown
-### Retrieval hits
-| rank | score | chunk_id | doc_id | parent_block_id |
-...
-<sub>Score: cosine similarity (BGE bge-base-en-v1.5, L2-normalized → dot product). ...</sub>
-```
-
-- **`--rerank` OFF**: `score` = BGE bi-encoder **cosine similarity**(쿼리·청크 벡터 내적). 범위 ≈ `[-1, 1]`, 높을수록 관련. BGE 경험칙 `>0.7` strong / `0.5–0.7` moderate / `<0.5` weak.
-- **`--rerank` ON**: 헤더가 `### Retrieval hits (reranked)`로 바뀌고, `score` = `bge-reranker-base` **cross-encoder relevance**(정규화 X, 음수 가능). Stage-1 후보는 BGE cosine top-`topn`에서 뽑음.
-- 터미널에도 동일하게 `Top hits:` 프린트가 나오므로 실행 중 빠르게 확인 가능.
-
-**케이스 여러 개 (`CASE_01`~`CASE_20` 등)**:
-
-```bash
-cd /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739
-export LD_LIBRARY_PATH="/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}"
-D=/gpfs/data/razavianlab/capstone/2025_agentic/tester_for_momo/case_texts
-for n in $(seq 1 20); do
-
-  i=$(printf 'CASE_%02d' "$n")
-  ./.venv/bin/python generate.py --patient-data-file "$D/${i}.txt" --vision
-done
-```
-
-또는 `./scripts/run_cases_vision.sh 3 20` (기본 `CASE_TEXT_DIR`는 위와 동일 경로).
-
-### 환경 변수
-
-- `INCREMENTAL`: `1` / `true` / `yes`만 증분 ON (`fetch`, `real_embed`, `multimodal_embed`). `0`이나 비우면 OFF(전체 재임베딩 시 기존 벡터 파일을 덮어쓰거나, multimodal은 끝에 한 번 flush)
-- `KONG_API_KEY`: Kong LLM (`generate`, `query_generator`, `fetch --patient-info` 등)
-- `LLM_MODEL`: `query_generator`·`generate` 등에서 사용할 모델명 (미설정 시 `gpt-4o`)
-- **`generate` + 비전**: `GENERATE_VISION=1`(또는 CLI `--vision`), `VISION_MAX_IMAGES`, `VISION_MAX_EDGE`
-- `EMBED_MODEL`, `BATCH_SIZE`: real_embed (기본 BGE)
-- `TEXT_WAVE_CHUNKS`: real_embed에서 본문을 몇 개 청크씩만 RAM에 올릴지 (기본 512; OOM 시 256 등). `0`이면 전부 한 번에 로드.
-- `MULTIMODAL_EMBED_MODEL`: multimodal_embed (기본 clip-ViT-B-32)
-- `OCR_CLIP_FUSION_ALPHA`: 이미지 임베딩 시 CLIP vs OCR 텍스트 벡터 가중 (0=이미지만, 1=텍스트만; 기본 0.35)
-- `MULTIMODAL_IMAGE_LIMIT`: 양의 정수면 이미지를 그 개수만 인코딩하고 종료(재실행으로 이어서 처리)
-- `DEVICE`: `cuda` \| `cpu` \| `mps`. 미설정 시 CUDA 가능하면 `cuda`, 아니면 `cpu`
-- **parse**: `PARSE_DOC_IDS`, `OCR_BACKEND`, `OCR_ON_IMAGES`, `OCR_MAX_CHARS`, `EASYOCR_LANGS`, `PARSE_NORMALIZE_JP2_IMAGES`(기본 1: JPEG2000 figure를 PNG로 저장; 미리보기·호환용, `0`이면 PDF 내장 바이트 그대로)
-- **fill_image_ocr**: `OCR_MAX_CHARS` 등
-- 클러스터에서 `.venv/bin/python`이 `libpython3.10.so`를 못 찾으면(예):  
-  `export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH}`
-
-#### SLURM GPU 대화형 세션 (예시)
-
-로그인 노드에서 GPU가 필요한 작업(`real_embed`, `multimodal_embed`, `generate.py --rerank` 등)은 **GPU 파티션에서 대화형 셸**을 연 뒤 실행하는 것을 권장합니다.
-
-```bash
-srun --partition=gpu4_dev --gres=gpu:1 --cpus-per-task=4 --mem=32G --time=04:00:00 --pty bash
-```
-
-할당 후 `nvidia-smi`로 GPU가 보이는지 확인하세요.
-
-#### Embed 속도 올리기
-
-- **GPU 사용**: `DEVICE`를 비우면 CUDA가 있으면 `cuda`, 없으면 `cpu`. CPU만 강제하려면 `DEVICE=cpu`.
-- **real_embed**: 기본 `BATCH_SIZE=1`(OOM 방지). **GPU 있을 때** `BATCH_SIZE=32` 또는 `64`로 올리면 체감 속도 크게 향상.  
-  예: `BATCH_SIZE=32 .venv/bin/python real_embed.py`
-- **multimodal_embed**: 테이블/이미지를 배치로 인코딩. 기본 `BATCH_SIZE=16`. GPU 메모리가 부족하면 `8` 등으로 낮추기. 로그인 노드(CPU)에서는 한 번에 끝까지 쓰려면 `INCREMENTAL=0`이어도 되지만 시간이 오래 걸릴 수 있음.  
-  SLURM GPU 노드에서 처음부터 다시 채우기 예:  
-  `export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH}`  
-  `DEVICE=cuda BATCH_SIZE=8 INCREMENTAL=0 OCR_CLIP_FUSION_ALPHA=0.35 .venv/bin/python -u multimodal_embed.py`
-- **`embed_multimodal_resume.sh`**: 내부적으로 배치 1·이미지 1장 단위로만 돌리므로, 대량 작업은 GPU에서 위처럼 직접 호출하는 편이 빠를 수 있음.
-
-### Orchestrator 통합 (팀원 SQL Agent + 환자 vector DB 연동)
-
-팀원 프로젝트 [`/gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/orchestrator/`](file:///gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/orchestrator/README.md)는 plan-act 루프로 **본 RAG의 literature**(`retrieval.py` + `generate._call_llm`)와 팀원 측 **SQL agent**(MIMIC-IV) + **환자 vector DB**(`agentic_workflow/retrieve_ehr`)를 함께 호출해 환자별 치료 추천을 생성합니다. 본 워크스페이스 쪽 통합 산출물은 다음과 같습니다.
-
-| 경로 | 내용 |
-|---|---|
-| `orchestrator_runs/` | 팀원 `Chronic_Kidney_Disease/orchestrator/runs/`로 거는 symlink. 환자별 transcript JSON이 여기 쌓임 |
-| `orchestrator_tools/run_all_8.sbatch` | CKD cohort 8명(CKD unspecified, ESRD, Stage 1~5) 일괄 실행 SLURM 스크립트 |
-| `orchestrator_tools/build_papers_jsonl.py` | `data/raw/`만으로 `papers.jsonl` 재생성 |
-| `orchestrator_tools/all_8_<jobid>.{out,err}` | 최신 batch 로그 |
-| `papers.jsonl` | doc_id → title 매핑. orchestrator의 `lit_retrieval._load_papers_meta()`가 자동 로드해 recommendation의 인용에 사람이 읽는 논문 제목을 부착 |
-
-**일반 사용**
-
-```bash
-# 8명 일괄 실행 (compute node, 약 7~8분)
-cd /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739/orchestrator_tools
-sbatch run_all_8.sbatch
-
-# data/raw에 PDF 추가/제거 후 papers.jsonl 갱신
-module load python/gpu/3.10.6
-/gpfs/scratch/kk5739/rag_venv/bin/python orchestrator_tools/build_papers_jsonl.py
-
-# 결과 보기 (symlink 통해 본 워크스페이스에서 직접)
-ls -lt orchestrator_runs/
-```
-
-**환경 주의**
-
-- `KONG_API_KEY`는 팀원 `sql_agent.config`에 하드코딩되어 있어 별도 설정 불필요
-- DB 사용자는 `PGUSER`가 비어 있을 때 기본 `zh1461`(MIMIC SELECT 권한 보유). 본인 user로 강제하면 `role does not exist` → SLURM 스크립트는 `unset PGUSER` 안 함, 호출 환경의 `PGUSER`만 비어 있으면 됨
-- **Login node에서는 절대 직접 실행 금지**: `bigpurple-ln1`은 4분 CPU 한도가 있어 `python -m orchestrator.run --subject-id ...`가 중간(보통 turn 3 부근)에서 SIGKILL됨. 반드시 SLURM(`sbatch`) 또는 `srun`으로 compute node에서 실행
-- `Chronic_Kidney_Disease/` 디렉토리는 그룹 `razavianlab_capstone`(SGID 적용)으로 공유되므로, 본인이 만든 결과 JSON도 자동으로 팀원이 읽기/쓰기 가능
-
