@@ -155,9 +155,32 @@ export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/p
 ### Requirements
 
 - **Python** 3.10+
-- **Packages**: `requirements.txt` (minimal deps); exact pin: `requirements-lock.txt` (`pip freeze` from working `.venv`)
 - **Email**: recommended for PubMed/Unpaywall (e.g. `you@nyu.edu`)
 - **KONG_API_KEY**: required for `query_generator`, `generate`, `fetch --patient-info`
+
+#### `requirements.txt` vs `requirements-lock.txt`
+
+| File | What it is | When to use |
+|------|------------|-------------|
+| **`requirements.txt`** | Short list of **direct** project dependencies (no version pin, except `anyio`) | **Default.** Used by `scripts/install_venv.sh` after CPU torch is installed |
+| **`requirements-lock.txt`** | Full **`pip freeze`** from a working `.venv` (~109 packages, exact versions) | When you need to **match this repo’s tested environment** exactly |
+
+**For teammates (recommended):**
+
+```bash
+bash scripts/install_venv.sh    # installs CPU torch, then requirements.txt
+source .venv/bin/activate
+```
+
+**Do not** replace `install_venv.sh` with `pip install -r requirements-lock.txt` on login nodes — the lock file includes many transitive/CUDA-related packages and is much heavier.
+
+**When you change packages:** edit `requirements.txt` → reinstall → optionally refresh the lock file:
+
+```bash
+.venv/bin/pip install -r requirements.txt   # or pip install <new-package>
+.venv/bin/pip freeze > requirements-lock.txt
+git add requirements.txt requirements-lock.txt && git commit -m "Update deps"
+```
 
 **Embed steps**: use **only this project's `.venv`**. Do not mix with other venvs (torch / typing_extensions conflicts).
 
