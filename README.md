@@ -155,7 +155,7 @@ export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/p
 ### Requirements
 
 - **Python** 3.10+
-- **Packages**: see `requirements.txt` (`sentence-transformers`, `torch`, `pymupdf`, `openai`, `pillow`, etc.)
+- **Packages**: `requirements.txt` (minimal deps); exact pin: `requirements-lock.txt` (`pip freeze` from working `.venv`)
 - **Email**: recommended for PubMed/Unpaywall (e.g. `you@nyu.edu`)
 - **KONG_API_KEY**: required for `query_generator`, `generate`, `fetch --patient-info`
 
