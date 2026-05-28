@@ -2,16 +2,40 @@
 
 End-to-end pipeline: collect literature from PubMed and top journals using patient/disease queries → parse PDFs, chunk, and link → build a text (BGE) + multimodal (tables/images, CLIP) vector DB → retrieve and generate answers.
 
-**Team repository**: [MissMyPetDog/Langone-RAG-Agentic-Health-Framework](https://github.com/MissMyPetDog/Langone-RAG-Agentic-Health-Framework)
+`data/` is not in git. Symlink from shared GPFS or rebuild via the **Quick start** pipeline.
+
+---
+
+## Before every run (new terminal)
+
+If the repo is **already cloned** on BigPurple (e.g. under GPFS), run this **at the start of each shell session** before any `python` command:
+
+```bash
+cd /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739   # your clone path
+export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
+source .venv/bin/activate
+```
+
+- **`LD_LIBRARY_PATH`** — required on BigPurple so `.venv/bin/python` finds `libpython3.10.so.1.0`. Alternative: `module load python/gpu/3.10.6`
+- **`KONG_API_KEY`** — put it in `.env` once (`cp .env.example .env`); `generate.py` / `query_generator.py` load it via `load_dotenv()`. You do not need to `export` it every time if `.env` exists.
+- **`data/`** — if missing, symlink shared data or run the pipeline in **Quick start** step 2–3.
+
+Then run what you need, e.g.:
+
+```bash
+.venv/bin/python generate.py --patient-data-file /path/to/CASE_01.txt --vision
+.venv/bin/python retrieval.py "your question here"
+```
+
+### First-time setup only
 
 ```bash
 git clone git@github.com:MissMyPetDog/Langone-RAG-Agentic-Health-Framework.git
 cd Langone-RAG-Agentic-Health-Framework
-cp .env.example .env   # set KONG_API_KEY
-bash scripts/install_venv.sh && source .venv/bin/activate
+bash scripts/install_venv.sh          # once: creates .venv + installs deps
+cp .env.example .env                  # once: add KONG_API_KEY
+ln -s /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739/data data   # optional shared data
 ```
-
-`data/` is not in git. Symlink from shared GPFS or rebuild via the **Quick start** pipeline.
 
 ---
 
@@ -88,13 +112,14 @@ After adding PDFs under `data/raw/` or fetching via `fetch.py`, refresh metadata
 
 ## Quick start
 
+**Already set up?** See [Before every run (new terminal)](#before-every-run-new-terminal) above.
+
 ```bash
-# 1) Environment
+# 1) Environment (first time only — skip if .venv exists)
 bash scripts/install_venv.sh
 source .venv/bin/activate
-cp .env.example .env   # then fill in KONG_API_KEY
+cp .env.example .env   # once: fill in KONG_API_KEY
 export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
-export KONG_API_KEY=...
 
 # 2) Manual PDF corpus (PDFs already in data/raw/)
 .venv/bin/python orchestrator_tools/build_papers_jsonl.py
