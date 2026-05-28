@@ -29,3 +29,6 @@ orchestrator_runs
 .cursor/
 .vscode/
 .DS_Store
+
+# Local-only Korean docs (team repo uses English README.md only)
+README_KR.md
