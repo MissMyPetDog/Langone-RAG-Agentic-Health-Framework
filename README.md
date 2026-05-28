@@ -2,7 +2,7 @@
 
 End-to-end pipeline: collect literature from PubMed and top journals using patient/disease queries → parse PDFs, chunk, and link → build a text (BGE) + multimodal (tables/images, CLIP) vector DB → retrieve and generate answers.
 
-`data/` is not in git. Symlink from shared GPFS or rebuild via the **Quick start** pipeline.
+`data/` (PDFs, parsed JSONL, vectors) is included on the **`momo`** branch (~62MB). Clone with `git checkout momo` — no separate GPFS symlink required for the default corpus.
 
 ---
 
@@ -18,7 +18,7 @@ source .venv/bin/activate
 
 - **`LD_LIBRARY_PATH`** — required on BigPurple so `.venv/bin/python` finds `libpython3.10.so.1.0`. Alternative: `module load python/gpu/3.10.6`
 - **`KONG_API_KEY`** — put it in `.env` once (`cp .env.example .env`); `generate.py` / `query_generator.py` load it via `load_dotenv()`. You do not need to `export` it every time if `.env` exists.
-- **`data/`** — if missing, symlink shared data or run the pipeline in **Quick start** step 2–3.
+- **`data/`** — tracked on **`momo`** (~62MB). If missing, restore from GPFS snapshot or rerun **Quick start** steps 2–3.
 
 Then run what you need, e.g.:
 
@@ -34,7 +34,7 @@ git clone git@github.com:MissMyPetDog/Langone-RAG-Agentic-Health-Framework.git
 cd Langone-RAG-Agentic-Health-Framework
 bash scripts/install_venv.sh          # once: creates .venv + installs deps
 cp .env.example .env                  # once: add KONG_API_KEY
-ln -s /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739/data data   # optional shared data
+ln -s /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739/data data   # optional if not using bundled data/
 ```
 
 ---
@@ -74,7 +74,7 @@ agentic_rag_kk5739/
 ├── orchestrator_runs/          # Symlink → team orchestrator/runs/
 ├── papers.jsonl                # doc_id → title (citations, metadata)
 ├── assets.jsonl                # doc_id → PDF path (parse input)
-├── data/                       # Gitignored — build locally (see below)
+├── data/                       # PDFs + JSONL + vectors (tracked on momo, ~62MB)
 ├── outputs/                    # Gitignored — generate.py results
 ├── outputs_baseline_v1/        # Gitignored — initial baseline runs
 ├── reports/                    # Vision A/B analysis reports

@@ -6,10 +6,7 @@ __pycache__/
 # Env / secrets
 .env
 
-# Large / generated data (rebuild with pipeline)
-data/
-
-# Generated run outputs
+# Generated run outputs (data/ is tracked on momo for team handoff)
 outputs/
 outputs_baseline_v1/
 
