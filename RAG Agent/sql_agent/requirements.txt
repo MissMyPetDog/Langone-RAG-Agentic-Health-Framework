@@ -1,0 +1,4 @@
+psycopg2-binary
+pandas
+openai>=1.0.0
+pyyaml
