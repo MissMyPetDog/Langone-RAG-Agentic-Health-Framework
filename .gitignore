@@ -1,55 +1,63 @@
-# ===================== Python =====================
+# ============================================================
+# Shared — Python / env / editor / OS
+# ============================================================
 __pycache__/
 *.py[cod]
 *.egg-info/
 .venv/
 venv/
 env/
-
-# ===================== Secrets / env =====================
 .env
 *.env
 .env.*
+.vscode/
+.cursor/
+.idea/
+.DS_Store
 
 # ============================================================
-# MIMIC-IV / PHI — credentialed PhysioNet data. NEVER commit.
-# (matched by directory name, robust to relocation)
+# Downstream literature RAG (momo half) — local outputs & logs.
+# NOTE: data/ is intentionally TRACKED on main for team handoff (public literature).
+# ============================================================
+outputs/
+outputs_baseline_v1/
+logs/
+_nohup_embed.out
+_embed_multimodal_*.log
+_mm_regen.log
+orchestrator_tools/*.out
+orchestrator_tools/*.err
+orchestrator_tools/.last_all_jobid
+orchestrator_runs
+README_KR.md
+
+# ============================================================
+# Agentic workflow (RAG Agent/) — MIMIC-IV / PHI. NEVER commit.
+# Credentialed PhysioNet data, patient-derived stores, run transcripts.
+# Format rules are scoped to "RAG Agent/" so momo's literature data/ is unaffected.
 # ============================================================
 ckd_samples/
 lookup_tables/
 patient_db/
 NotesDB/
-
-# Patient-derived data formats (defense-in-depth blanket rules).
-# There is no benign file of these types in this codebase; if a
-# truly non-PHI file ever needs sharing, force-add it explicitly.
-*.csv
-*.parquet
-*.pkl
-*.npy
-*_chunks.jsonl
-
-# EDA / analysis notebooks — output cells may embed patient data.
-# Review and clear outputs before sharing any notebook.
-*.ipynb
-
-# Schema / table-description metadata (e.g. sql_agent/metadata.yaml) — keep local.
-*.yaml
-*.yml
-
-# ============================================================
-# Agent run outputs / transcripts — contain patient data
-# ============================================================
 runs/
-logs/
+RAG Agent/**/cohort_nodes.csv
+RAG Agent/**/*_chunks.jsonl
+RAG Agent/sql_agent/metadata.yaml
 
-# ===================== Logs / temp =====================
+# Patient-derived data formats — scoped to the agentic workflow only
+RAG Agent/**/*.csv
+RAG Agent/**/*.parquet
+RAG Agent/**/*.pkl
+RAG Agent/**/*.npy
+RAG Agent/**/*.yaml
+RAG Agent/**/*.yml
+RAG Agent/**/*.ipynb
+
+# ============================================================
+# Misc logs / backups
+# ============================================================
 *.log
 *.err
 *.out
 *.bak
-
-# ===================== Editor / OS =====================
-.vscode/
-.idea/
-.DS_Store

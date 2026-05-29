@@ -1,48 +1,397 @@
-# Langone RAG + Agentic Health Framework
+# Langone RAG Agentic Health Framework
 
-This repository holds the **integrated capstone codebase**. Work happens on **feature branches**; the advisor reviews and merges into **`main`**.
+This is the **integrated `main`** branch — a monorepo combining two halves that
+are developed independently on their own branches and merged here.
 
-## Branch layout
+| Half | Location | Source branch | Docs |
+|---|---|---|---|
+| **Agentic clinical workflow** — SQL agent + patient vector DB + discharge-notes retrieval + orchestrator | [`RAG Agent/`](RAG%20Agent/) | `zh-agentic` | [`RAG Agent/README.md`](RAG%20Agent/README.md) |
+| **Downstream literature RAG** — fetch / parse / chunk / embed / retrieve / generate over clinical literature | repository root (`retrieval.py`, `generate.py`, `data/`, …) | `momo` | the document below |
 
-```text
-main                 ← Integration branch (advisor merges here)
-├── momo             ← RAG pipeline (literature fetch, parse, embed, retrieve, generate)
-└── (teammate branch) ← SQL agent + orchestration (plan-act, MIMIC, EHR)
+**How they connect.** The orchestrator's `lit_retrieval.py` / `lit_generate.py`
+call the literature-RAG modules at the repository root (`retrieval.py`,
+`generate.py`); at runtime it locates them via the `LIT_RAG_PATH` environment
+variable.
+
+> **Status.** `main` currently *contains* both halves plus the bundled literature
+> `data/` (~62 MB, public clinical literature). Hardcoded `/gpfs/...` paths in the
+> agentic workflow are not yet parametrized, so end-to-end "one-clone" execution
+> still needs path configuration — tracked as follow-up work.
+
+**Branch model.** `momo` and `zh-agentic` stay as independent development
+branches and are **not modified** by the integration; `main` is built by merging
+both and is the integration target.
+
+**Data policy.** MIMIC-IV / PHI is credentialed and is **never** committed (see
+`.gitignore`); the agentic workflow expects those artifacts to be supplied
+locally. The literature `data/` bundled here is public.
+
+---
+
+# Agentic RAG (Medical Literature)
+
+End-to-end pipeline: collect literature from PubMed and top journals using patient/disease queries → parse PDFs, chunk, and link → build a text (BGE) + multimodal (tables/images, CLIP) vector DB → retrieve and generate answers.
+
+`data/` (PDFs, parsed JSONL, vectors) is included on the **`momo`** branch (~62MB). Clone with `git checkout momo` — no separate GPFS symlink required for the default corpus.
+
+---
+
+## Before every run (new terminal)
+
+If the repo is **already cloned** on BigPurple (e.g. under GPFS), run this **at the start of each shell session** before any `python` command:
+
+```bash
+cd /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739   # your clone path
+export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
+source .venv/bin/activate
 ```
 
-| Branch | Owner | Scope |
-|--------|-------|--------|
-| **`main`** | Advisor / team | Stable integrated system after review |
-| **`momo`** | Mo | Multimodal RAG for medical literature — see [`momo` branch README](https://github.com/MissMyPetDog/Langone-RAG-Agentic-Health-Framework/tree/momo) |
-| **Teammate branch** | TBD | SQL agent, orchestrator, patient workflow |
+- **`LD_LIBRARY_PATH`** — required on BigPurple so `.venv/bin/python` finds `libpython3.10.so.1.0`. Alternative: `module load python/gpu/3.10.6`
+- **`KONG_API_KEY`** — put it in `.env` once (`cp .env.example .env`); `generate.py` / `query_generator.py` load it via `load_dotenv()`. You do not need to `export` it every time if `.env` exists.
+- **`data/`** — tracked on **`momo`** (~62MB). If missing, restore from GPFS snapshot or rerun **Quick start** steps 2–3.
 
-## Workflow
+Then run what you need, e.g.:
 
-1. Each member works on their own branch (`momo`, or a teammate branch such as `feature/orchestrator`).
-2. Open a **Pull Request** into `main`.
-3. Advisor reviews and merges when ready.
-4. **`main`** becomes the single source of truth for the full agentic health framework.
+```bash
+.venv/bin/python generate.py --patient-data-file /path/to/CASE_01.txt --vision
+.venv/bin/python retrieval.py "your question here"
+```
 
-## Getting started
-
-**RAG (literature pipeline):**
+### First-time setup only
 
 ```bash
 git clone git@github.com:MissMyPetDog/Langone-RAG-Agentic-Health-Framework.git
 cd Langone-RAG-Agentic-Health-Framework
-git checkout momo
-cp .env.example .env   # set KONG_API_KEY
-bash scripts/install_venv.sh && source .venv/bin/activate
+bash scripts/install_venv.sh          # once: creates .venv + installs deps
+cp .env.example .env                  # once: add KONG_API_KEY
+ln -s /gpfs/data/razavianlab/capstone/2025_rag/agentic_rag_kk5739/data data   # optional if not using bundled data/
 ```
 
-See the **`momo`** branch README for the full RAG pipeline (parse, embed, generate, BigPurple setup).
+---
 
-**SQL + orchestration:** clone this repo, create or checkout the orchestrator branch (name TBD by teammate), follow that branch’s README.
+## Directory layout
 
-## Data
+```text
+agentic_rag_kk5739/
+├── fetch.py                    # PubMed full-text fetch
+├── parse.py                    # PDF → blocks.jsonl
+├── fill_image_ocr.py           # Fill missing image OCR (before chunk)
+├── chunk.py                    # blocks → chunks
+├── link.py                     # Assign parent_block_id
+├── embed.py                    # Hash embedding (demo)
+├── real_embed.py               # BGE text embedding
+├── multimodal_embed.py         # CLIP table/image embedding
+├── prune_multimodal_vectors.py # Trim multimodal vectors
+├── embed_multimodal_resume.sh  # Resume multimodal embed on CPU
+├── retrieval.py                # Search + parent expansion
+├── rerank.py                   # BGE + cross-encoder (experimental CLI)
+├── generate.py                 # RAG + Kong LLM answer generation
+├── query_generator.py          # LLM query generation for PubMed/RAG
+├── schema.py                   # JSONL TypedDict definitions
+├── vectordb.py                 # Hash vector demo search
+├── requirements.txt
+├── scripts/
+│   ├── install_venv.sh         # venv + CPU torch install
+│   ├── list_raw_orphans.py     # raw/ vs assets.jsonl mismatch
+│   ├── list_raw_orphans.sh
+│   ├── run_cases_vision.sh     # Batch CASE_01~N with --vision
+│   └── reports/
+│       ├── vision_two_way.py   # Vision vs Text-only A/B metrics
+│       └── vision_three_way.py # Vision vs OCR-only vs Text-only
+├── orchestrator_tools/
+│   ├── build_papers_jsonl.py   # data/raw → papers.jsonl + assets.jsonl
+│   └── run_all_8.sbatch        # SLURM batch for 8 CKD patients
+├── orchestrator_runs/          # Symlink → team orchestrator/runs/
+├── papers.jsonl                # doc_id → title (citations, metadata)
+├── assets.jsonl                # doc_id → PDF path (parse input)
+├── data/                       # PDFs + JSONL + vectors (tracked on momo, ~62MB)
+├── outputs/                    # Gitignored — generate.py results
+├── outputs_baseline_v1/        # Gitignored — initial baseline runs
+├── reports/                    # Vision A/B analysis reports
+└── logs/                       # Gitignored — run logs
+```
 
-Large artifacts (`data/`, `outputs/`, `.venv/`) are not committed. Use shared GPFS paths or rebuild via the RAG pipeline on the `momo` branch.
+---
 
-## Repository
+## Current corpus (2026-05)
 
-https://github.com/MissMyPetDog/Langone-RAG-Agentic-Health-Framework
+| doc_id | Title (short) | source |
+|--------|---------------|--------|
+| `gilbert_acc_weight_2025` | ACC 2025 Medical Weight Management | manual |
+| `ndumele_aha_ckm_2023` | AHA CKM Presidential Advisory | manual |
+| `ndumele_ckm_synopsis_2023` | AHA CKM Synopsis | manual |
+| `nihms_1913084` | Life's Essential 8 (AHA) | pubmed_central |
+| `pmid_23499048` | KDIGO 2012 AKI Guideline | pubmed |
+
+**Data scale (recent build)**
+
+| File | Rows |
+|------|-----:|
+| `blocks.jsonl` | 1,221 |
+| `chunks.jsonl` / `linked_chunks.jsonl` | 2,386 |
+| `real_vectors.jsonl` | 2,345 (text only) |
+| `vectors_multimodal.jsonl` | 41 (table + image) |
+
+After adding PDFs under `data/raw/` or fetching via `fetch.py`, refresh metadata with:
+
+```bash
+.venv/bin/python orchestrator_tools/build_papers_jsonl.py
+```
+
+---
+
+## Quick start
+
+**Already set up?** See [Before every run (new terminal)](#before-every-run-new-terminal) above.
+
+```bash
+# 1) Environment (first time only — skip if .venv exists)
+bash scripts/install_venv.sh
+source .venv/bin/activate
+cp .env.example .env   # once: fill in KONG_API_KEY
+export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
+
+# 2) Manual PDF corpus (PDFs already in data/raw/)
+.venv/bin/python orchestrator_tools/build_papers_jsonl.py
+
+# 3) Pipeline (parse → chunk → link → embed)
+.venv/bin/python parse.py
+.venv/bin/python chunk.py
+.venv/bin/python link.py
+.venv/bin/python real_embed.py
+.venv/bin/python multimodal_embed.py
+
+# 4) Generate answer for a patient case
+.venv/bin/python generate.py --patient-data-file /path/to/CASE_01.txt --vision
+```
+
+Use `fetch.py` instead of step 2 when pulling new papers from PubMed.
+
+---
+
+## Environment setup
+
+On the cluster, use `scripts/install_venv.sh` to install **CPU torch first**, then `requirements.txt`, which reduces OOM kills on login nodes.
+
+**HPC shared Python (`libpython3.10.so.1.0` error)**
+
+`.venv/bin/python` points at the BigPurple shared Python tree. Set the library path before running:
+
+```bash
+export LD_LIBRARY_PATH=/gpfs/share/apps/python/gpu/3.10.6/lib:/gpfs/share/apps/python/cpu/3.10.6/lib:${LD_LIBRARY_PATH:-}
+# or: module load python/gpu/3.10.6
+```
+
+### Requirements
+
+- **Python** 3.10+
+- **Email**: recommended for PubMed/Unpaywall (e.g. `you@nyu.edu`)
+- **KONG_API_KEY**: required for `query_generator`, `generate`, `fetch --patient-info`
+
+#### `requirements.txt` vs `requirements-lock.txt`
+
+| File | What it is | When to use |
+|------|------------|-------------|
+| **`requirements.txt`** | Short list of **direct** project dependencies (no version pin, except `anyio`) | **Default.** Used by `scripts/install_venv.sh` after CPU torch is installed |
+| **`requirements-lock.txt`** | Full **`pip freeze`** from a working `.venv` (~109 packages, exact versions) | When you need to **match this repo’s tested environment** exactly |
+
+**For teammates (recommended):**
+
+```bash
+bash scripts/install_venv.sh    # installs CPU torch, then requirements.txt
+source .venv/bin/activate
+```
+
+**Do not** replace `install_venv.sh` with `pip install -r requirements-lock.txt` on login nodes — the lock file includes many transitive/CUDA-related packages and is much heavier.
+
+**When you change packages:** edit `requirements.txt` → reinstall → optionally refresh the lock file:
+
+```bash
+.venv/bin/pip install -r requirements.txt   # or pip install <new-package>
+.venv/bin/pip freeze > requirements-lock.txt
+git add requirements.txt requirements-lock.txt && git commit -m "Update deps"
+```
+
+**Embed steps**: use **only this project's `.venv`**. Do not mix with other venvs (torch / typing_extensions conflicts).
+
+```bash
+.venv/bin/python real_embed.py
+.venv/bin/python multimodal_embed.py
+```
+
+---
+
+## Pipeline
+
+| Step | Script | Description |
+|------|--------|-------------|
+| 1 | `fetch.py` | PubMed search → PMC OA / Unpaywall → PDF (`papers.jsonl`, `assets.jsonl`) |
+| 1b | `build_papers_jsonl.py` | Rebuild `papers.jsonl` + `assets.jsonl` from `data/raw/` PDFs only |
+| 2 | `parse.py` | PDF → `data/blocks.jsonl` |
+| 2b | `fill_image_ocr.py` | Fill empty image OCR (**before `chunk.py`**) |
+| 3 | `chunk.py` | `blocks.jsonl` → `chunks.jsonl` (full rewrite) |
+| 4 | `link.py` | `(doc_id, page)` parent → `linked_chunks.jsonl` |
+| 5a | `embed.py` | Hash embedding → `vectors.jsonl` (demo) |
+| 5b | `real_embed.py` | BGE text only → `real_vectors.jsonl` |
+| 5c | `multimodal_embed.py` | CLIP table/image → `vectors_multimodal.jsonl` |
+| 6 | `retrieval.py` | Search + parent expansion (optional `--rerank`) |
+| 7 | `generate.py` | Kong LLM answer → `outputs/*.md` |
+
+### Inputs / outputs
+
+| Script | Input | Output |
+|--------|-------|--------|
+| `fetch.py` | Disease name / `--patient-info` / DOI | `papers.jsonl`, `assets.jsonl`, `data/raw/{doc_id}/fulltext.pdf` |
+| `build_papers_jsonl.py` | `data/raw/*.pdf`, `data/raw/{doc_id}/` | `papers.jsonl`, `assets.jsonl` |
+| `parse.py` | `assets.jsonl` (or `data/assets.jsonl`) | `data/blocks.jsonl` |
+| `chunk.py` | `data/blocks.jsonl` | `data/chunks.jsonl` |
+| `link.py` | `data/chunks.jsonl` | `data/linked_chunks.jsonl` |
+| `real_embed.py` | chunks + linked | `data/real_vectors.jsonl` |
+| `multimodal_embed.py` | chunks + linked | `data/vectors_multimodal.jsonl` |
+| `generate.py` | Question or `--patient-data-file`, vectors + chunks | Terminal + `outputs/{case_id}.md` |
+
+### Incremental updates (`INCREMENTAL`)
+
+Enabled only when `INCREMENTAL=1` / `true` / `yes`. Applies to **`fetch`**, **`real_embed`**, **`multimodal_embed`**.
+
+- **`parse.py`**: re-parse subset with `PARSE_DOC_IDS=doc1,doc2`
+- **`chunk.py` / `link.py`**: always full rebuild
+
+---
+
+## Multimodal embedding tips
+
+If `multimodal_embed.py` times out on CPU:
+
+```bash
+nohup ./embed_multimodal_resume.sh 0 >> logs/_nohup_embed.out 2>&1 &
+.venv/bin/python prune_multimodal_vectors.py --strip-images
+nohup ./embed_multimodal_resume.sh 35 >> logs/_nohup_embed.out 2>&1 &
+```
+
+Fill image OCR only (**before `chunk.py`**):
+
+```bash
+OCR_MAX_CHARS=4000 .venv/bin/python fill_image_ocr.py pmid_23499048
+```
+
+GPU SLURM example:
+
+```bash
+srun --partition=gpu4_dev --gres=gpu:1 --cpus-per-task=4 --mem=32G --time=04:00:00 --pty bash
+DEVICE=cuda BATCH_SIZE=8 INCREMENTAL=0 OCR_CLIP_FUSION_ALPHA=0.35 .venv/bin/python -u multimodal_embed.py
+```
+
+---
+
+## Query generation (`query_generator.py`)
+
+| Function | Purpose | Used by |
+|----------|---------|---------|
+| `generate_pubmed_search_queries` | Multiple short PubMed queries | `fetch.py --patient-info` |
+| `generate_retrieval_query_for_treatment` | One RAG question string | `generate.py --patient-data` |
+
+```bash
+.venv/bin/python fetch.py --patient-info "65yo male, dementia, hypertension"
+.venv/bin/python generate.py --patient-data "hospitalized COVID-19, renal impairment"
+.venv/bin/python query_generator.py pubmed "65yo male, dementia"
+.venv/bin/python query_generator.py retrieval "same patient description..."
+```
+
+---
+
+## generate.py
+
+Results are always saved under `outputs/` as Markdown.
+
+- `--case-id CASE_01` → `outputs/CASE_01.md`
+- `--patient-data-file CASE_01.txt` (no case-id) → `outputs/CASE_01.md`
+- Question only → `outputs/result_YYYY-MM-DD_HH-MM-SS.md`
+
+### Vision / Text-only modes
+
+| Mode | OCR text | Image pixels | Command |
+|------|:--------:|:------------:|---------|
+| Vision full | ✅ | ✅ | `--vision` |
+| OCR only (default) | ✅ | ❌ | (no flag) |
+| Text only | ❌ | ❌ | `--text-only` |
+
+- If both `--vision` and `--text-only` are set, text-only wins
+- Saved MD includes a `Retrieval hits` table (BGE cosine or rerank score)
+
+### Batch cases
+
+```bash
+./scripts/run_cases_vision.sh          # CASE_01 .. CASE_20
+./scripts/run_cases_vision.sh 3 20     # CASE_03 .. CASE_20
+```
+
+Default case texts: `/gpfs/data/razavianlab/capstone/2025_agentic/tester_for_momo/case_texts`  
+Override with `export CASE_TEXT_DIR=/your/path`.
+
+---
+
+## Evaluation & reports
+
+| Path | Contents |
+|------|----------|
+| `outputs/` | Latest generate results (`CASE_NN.md`, `CASE_NN_textOnly.md`, etc.) |
+| `outputs_baseline_v1/` | Initial baseline (20 cases) |
+| `reports/VISION_AB_REPORT.md` | Vision vs Text-only A/B (Korean) |
+| `reports/VISION_AB_REPORT_EN.md` | Same report (English) |
+| `scripts/reports/vision_two_way.py` | Recompute 2-way metrics |
+| `scripts/reports/vision_three_way.py` | 3-way (vision / ocrOnly / textOnly) |
+
+---
+
+## Orchestrator integration
+
+Works with the team project [`Chronic_Kidney_Disease/orchestrator`](file:///gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/orchestrator/README.md): this RAG literature module + MIMIC SQL agent + patient vector DB.
+
+| Path | Contents |
+|------|----------|
+| `orchestrator_runs/` | Symlink to team `orchestrator/runs/` (create locally — not in git) |
+| `orchestrator_tools/run_all_8.sbatch` | SLURM batch for 8 CKD patients (`cpu_short`) |
+| `orchestrator_tools/build_papers_jsonl.py` | `data/raw/` → `papers.jsonl` + `assets.jsonl` |
+| `papers.jsonl` | Paper title map for orchestrator literature citations |
+
+```bash
+# Create symlink after clone (adjust path if needed)
+ln -s /gpfs/data/razavianlab/capstone/2025_agentic/Chronic_Kidney_Disease/orchestrator/runs orchestrator_runs
+
+cd orchestrator_tools && sbatch run_all_8.sbatch
+ls -lt ../orchestrator_runs/
+```
+
+**Warning**: do not run `python -m orchestrator.run` on the login node — use SLURM (`sbatch` / `srun`).
+
+---
+
+## Environment variables (summary)
+
+| Variable | Purpose |
+|----------|---------|
+| `INCREMENTAL` | Incremental fetch / real_embed / multimodal_embed |
+| `KONG_API_KEY`, `LLM_MODEL` | LLM (default `gpt-4o`) |
+| `GENERATE_VISION`, `VISION_MAX_IMAGES`, `VISION_MAX_EDGE` | Vision in generate |
+| `EMBED_MODEL`, `BATCH_SIZE`, `TEXT_WAVE_CHUNKS` | real_embed |
+| `MULTIMODAL_EMBED_MODEL`, `OCR_CLIP_FUSION_ALPHA`, `MULTIMODAL_IMAGE_LIMIT` | multimodal |
+| `DEVICE` | `cuda` / `cpu` / `mps` |
+| `PARSE_DOC_IDS`, `OCR_BACKEND`, `OCR_ON_IMAGES`, `PARSE_NORMALIZE_JP2_IMAGES` | parse |
+| `LD_LIBRARY_PATH` | BigPurple `.venv` Python |
+
+---
+
+## Retrieval workflow
+
+```text
+Query input
+    ↓
+Text DB search (real_vectors)
+    ↓
+[--rerank] topn → cross-encoder → topk
+    ↓
+Expand same-page text · table · image by parent_block_id
+    ↓
+Assemble context → LLM (generate)
+```
